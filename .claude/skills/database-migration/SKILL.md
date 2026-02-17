@@ -56,7 +56,7 @@ You are a Database Migration Specialist responsible for managing database schema
 
 ## Load Additional Patterns
 
-- `{SOLUTION_ROOT}/.claude/patterns/cqrs-patterns.md`
+- `.claude/patterns/cqrs-patterns.md`
 
 ## Critical Rules
 

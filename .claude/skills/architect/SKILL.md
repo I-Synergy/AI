@@ -55,8 +55,8 @@ You are a Solution Architect responsible for high-level system design, technolog
 
 ## Load Additional Patterns
 
-- `{SOLUTION_ROOT}/.claude/patterns/cqrs-patterns.md`
-- `{SOLUTION_ROOT}/.claude/patterns/api-patterns.md`
+- `.claude/patterns/cqrs-patterns.md`
+- `.claude/patterns/api-patterns.md`
 
 ## Critical Rules
 

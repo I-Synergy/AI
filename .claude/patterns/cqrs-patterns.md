@@ -13,11 +13,14 @@ Complete patterns for implementing Command Query Responsibility Segregation.
 
 ### Key Principles
 
-1. Commands use **individual parameters** (NOT model objects)
+1. Commands use **individual primitive parameters** (NOT model objects, NOT entities)
 2. Queries use **named parameters** for optional filters
 3. Handlers inject **DataContext directly** (NO repository layer)
-4. Always return **DTOs/Models**, never domain entities
+4. **Never expose** domain entities in public APIs — not as parameters, not as return values
 5. One handler per command/query (Single Responsibility)
+6. **Data access** uses `<TEntity, TModel>` pattern for reads (`GetItemByIdAsync<TEntity, TModel, TId>`)
+7. **Mapping flow**: Command → Entity (write) | Entity → Model → Response DTO (read)
+8. Entities are used **internally** for domain logic and persistence — never passed across layer boundaries
 
 ---
 
@@ -241,14 +244,20 @@ public sealed class Create{Entity}Handler(
             "Creating {EntityType} with Property1: {Property1}",
             nameof({Entity}), command.Property1);
 
-        // Map command to entity
-        var entity = command.Adapt<{Entity}>();
+        // Create entity directly from command properties
+        var entity = new Entities.{Domain}.{Entity}
+        {
+            {Entity}Id = Guid.NewGuid(),
+            Property1 = command.Property1,
+            Property2 = command.Property2,
+            Property3 = command.Property3
+        };
 
-        // Map entity to model and persist
-        var model = entity.Adapt<{Entity}Model>();
-        await dataContext.AddItemAsync<{Entity}, {Entity}Model>(
-            model,
-            cancellationToken);
+        dataContext.Add(entity);
+        var rowsAffected = await dataContext.SaveChangesAsync(cancellationToken);
+
+        if (rowsAffected == 0)
+            throw new InvalidOperationException($"Failed to create {nameof({Entity})}");
 
         logger.LogInformation(
             "Created {EntityType} with ID: {EntityId}",
@@ -467,10 +476,11 @@ public sealed class Get{Entity}ListHandler(
 ### Available Extension Methods
 
 ```csharp
-// Create
-await dataContext.AddItemAsync<TEntity, TModel>(model, cancellationToken);
+// Create — write entity directly, never via Model
+dataContext.Add(entity);
+var rowsAffected = await dataContext.SaveChangesAsync(cancellationToken);
 
-// Read
+// Read — uses <TEntity, TModel> pattern; Mapster maps Entity → Model
 var model = await dataContext.GetItemByIdAsync<TEntity, TModel, TKey>(id, cancellationToken);
 
 // Update

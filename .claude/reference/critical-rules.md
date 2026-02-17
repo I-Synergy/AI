@@ -148,7 +148,7 @@ Progress files MUST be in the current solution's `.claude/` folder.
 
 ```bash
 ✅ CORRECT
-{SOLUTION_ROOT}/.claude/progress/task-progress.md
+.claude/progress/task-progress.md
 
 ❌ WRONG - User profile directory
 ~/.claude/progress/task-progress.md
@@ -163,7 +163,7 @@ Every session MUST:
 
 ```bash
 ✅ CORRECT
-1. Read {SOLUTION_ROOT}/.claude/session-context.md FIRST
+1. Read .claude/session-context.md FIRST
 2. Build on established patterns
 3. Update session-context.md with learnings before ending
 

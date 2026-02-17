@@ -6,10 +6,10 @@ Use this checklist before considering any task complete.
 
 - [ ] Task was delegated to agent(s) with full repository access
 - [ ] **EVERY agent created** (main, sub, helper, parallel - ALL) had full repository access
-- [ ] Progress file created immediately at task start in `{SOLUTION_ROOT}/.claude/progress/`
+- [ ] Progress file created immediately at task start in `.claude/progress/`
 - [ ] Progress file updated in real-time throughout task by ALL agents
 - [ ] Real-time progress reported automatically by ALL agents
-- [ ] Progress file moved to `{SOLUTION_ROOT}/.claude/completed/` on completion
+- [ ] Progress file moved to `.claude/completed/` on completion
 - [ ] Session context updated with learnings before ending
 
 ## Architecture & Patterns
@@ -122,7 +122,7 @@ Use this checklist before considering any task complete.
 
 ## Progress Tracking
 
-- [ ] Progress file in correct location (`{SOLUTION_ROOT}/.claude/progress/`)
+- [ ] Progress file in correct location (`.claude/progress/`)
 - [ ] All files created/modified documented
 - [ ] Issues/blockers documented
 - [ ] On completion, moved to `.claude/completed/`

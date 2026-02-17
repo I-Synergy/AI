@@ -1,4 +1,5 @@
 {
+  "plansDirectory": "./.claude/plans",
   "permissions": {
     "allow": [
       "Bash",
@@ -10,14 +11,17 @@
     "deny": [
       "Bash(rm -rf:*)"
     ],
-    "ask": [],
-    "plansDirectory": "./.claude/plans",
     "additionalDirectories": [
       "./.claude",
-      "./.claude/completed",
-      "./.claude/progress",
       "./.claude/analysis",
-      "./.claude/plans"
+      "./.claude/checklists",
+      "./.claude/completed",
+      "./.claude/patterns",
+      "./.claude/plans",
+      "./.claude/progress",
+      "./.claude/project",
+      "./.claude/reference",
+      "./.claude/skills"
     ]
   }
 }
