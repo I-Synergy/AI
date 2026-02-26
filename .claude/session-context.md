@@ -1,6 +1,6 @@
 # Session Context Template (CUSTOMIZE THIS)
 
-**Instructions:** Copy this to `{SOLUTION_ROOT}/.claude/session-context.md` and customize for your project.
+**Instructions:** Copy this to `.claude/session-context.md` and customize for your project.
 
 # {ApplicationName} Session Context
 

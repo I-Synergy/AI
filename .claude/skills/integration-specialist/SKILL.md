@@ -56,7 +56,7 @@ You are an Integration Specialist responsible for connecting the application wit
 
 ## Load Additional Patterns
 
-- `{SOLUTION_ROOT}/.claude/patterns/api-patterns.md`
+- `.claude/patterns/api-patterns.md`
 
 ## Critical Rules
 

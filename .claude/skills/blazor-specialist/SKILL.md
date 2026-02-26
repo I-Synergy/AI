@@ -57,7 +57,7 @@ You are a Blazor UI Specialist responsible for building interactive web interfac
 
 ## Load Additional Patterns
 
-- `{SOLUTION_ROOT}/.claude/patterns/api-patterns.md`
+- `.claude/patterns/api-patterns.md`
 
 ## Critical Rules
 

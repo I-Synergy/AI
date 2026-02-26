@@ -309,7 +309,7 @@ Run through `.claude/checklists/pre-submission.md`:
 
 ### "Progress files in wrong location"
 
-**Solution:** Ensure agents create files in `{SOLUTION_ROOT}/.claude/progress/`, not `~/.claude/`
+**Solution:** Ensure agents create files in `.claude/progress/`, not `~/.claude/`
 
 ### "Forbidden technology used"
 

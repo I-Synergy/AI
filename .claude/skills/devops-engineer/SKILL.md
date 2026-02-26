@@ -58,7 +58,7 @@ You are a DevOps Engineer responsible for building CI/CD pipelines, managing con
 
 ## Load Additional Patterns
 
-- `{SOLUTION_ROOT}/.claude/patterns/api-patterns.md`
+- `.claude/patterns/api-patterns.md`
 
 ## Critical Rules
 

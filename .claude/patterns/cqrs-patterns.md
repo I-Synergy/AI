@@ -9,15 +9,68 @@ Complete patterns for implementing Command Query Responsibility Segregation.
 - **Commands** - Change system state (Create, Update, Delete)
 - **Queries** - Read data without side effects (Get, List, Search)
 - **Handlers** - Execute commands/queries
-- **Responses** - Return data from handlers
+- **Responses** - Return data from handlers (wrap Models)
 
 ### Key Principles
 
-1. Commands use **individual parameters** (NOT model objects)
+1. Commands use **individual primitive parameters** (NOT model objects, NOT entities)
 2. Queries use **named parameters** for optional filters
 3. Handlers inject **DataContext directly** (NO repository layer)
-4. Always return **DTOs/Models**, never domain entities
+4. **Never expose** domain entities in public APIs — not as parameters, not as return values
 5. One handler per command/query (Single Responsibility)
+6. **Data access** uses named DbSet properties on DataContext for **all** operations: `dataContext.{Entities}.FindAsync`, `.Add`, `.Update`, `.Remove`, `SaveChangesAsync`
+7. **Mapping flow**: Entity → Model (via Mapster) | Response wraps Model
+8. Entities are used **internally** for domain logic and persistence — never passed across layer boundaries
+9. Each operation gets its own **subfolder** with separate files for Command/Query, Handler, and Response
+10. Handler classes are named with `CommandHandler` / `QueryHandler` suffix
+
+### Framework Namespaces
+
+| Interface | Namespace |
+|-|-|
+| `ICommand<TResponse>` | `ISynergy.Framework.CQRS.Commands` |
+| `ICommandHandler<TCommand, TResponse>` | `ISynergy.Framework.CQRS.Abstractions.Commands` |
+| `IQuery<TResponse>` | `ISynergy.Framework.CQRS.Queries` |
+| `IQueryHandler<TQuery, TResponse>` | `ISynergy.Framework.CQRS.Queries` |
+
+---
+
+## File Organization
+
+Each operation gets its own subfolder with three separate files:
+
+```
+src/{ApplicationName}.Domain.{Domain}/
+  Features/{Entity}/
+    Commands/
+      Create{Entity}/
+        Create{Entity}Command.cs
+        Create{Entity}CommandHandler.cs
+        Create{Entity}Response.cs
+      Update{Entity}/
+        Update{Entity}Command.cs
+        Update{Entity}CommandHandler.cs
+        Update{Entity}Response.cs
+      Delete{Entity}/
+        Delete{Entity}Command.cs
+        Delete{Entity}CommandHandler.cs
+        Delete{Entity}Response.cs
+    Queries/
+      Get{Entity}ById/
+        Get{Entity}ByIdQuery.cs
+        Get{Entity}ByIdQueryHandler.cs
+        Get{Entity}ByIdResponse.cs
+      Get{Entities}List/
+        Get{Entities}ListQuery.cs
+        Get{Entities}ListQueryHandler.cs
+        Get{Entities}ListResponse.cs
+  Models/
+    {Entity}.cs                    (positional record)
+  Mappers/
+    Configuration.cs               (single IRegister per domain)
+  Extensions/
+    ServiceCollectionExtensions.cs
+```
 
 ---
 
@@ -26,99 +79,61 @@ Complete patterns for implementing Command Query Responsibility Segregation.
 ### Create Command
 
 ```csharp
-// File: {ApplicationName}.Domain.{Domain}/Features/{Entity}/Commands/Create{Entity}Command.cs
+// File: Create{Entity}Command.cs
+using ISynergy.Framework.CQRS.Commands;
 
-namespace {ApplicationName}.Domain.{Domain}.Features.{Entity}.Commands;
+namespace {ApplicationName}.Domain.{Domain}.Features.{Entity}.Commands.Create{Entity};
 
-using System.ComponentModel.DataAnnotations;
-
-/// <summary>
-/// Command to create a new {entity}.
-/// </summary>
 public sealed record Create{Entity}Command(
-    [Required]
-    [StringLength(100, MinimumLength = 3)]
-    string Property1,
+    string Description,
+    DateTimeOffset StartingDate,
+    DateTimeOffset EndingDate) : ICommand<Create{Entity}Response>;
+```
 
-    [Range(0.01, double.MaxValue)]
-    decimal Property2,
+```csharp
+// File: Create{Entity}Response.cs
+namespace {ApplicationName}.Domain.{Domain}.Features.{Entity}.Commands.Create{Entity};
 
-    DateTimeOffset Property3
-) : ICommand<Create{Entity}Response>, IValidatableObject
-{
-    /// <summary>
-    /// Validates the command.
-    /// </summary>
-    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
-    {
-        if (Property3 > DateTimeOffset.UtcNow.AddYears(1))
-        {
-            yield return new ValidationResult(
-                "Property3 cannot be more than 1 year in the future",
-                new[] { nameof(Property3) });
-        }
-    }
-}
-
-/// <summary>
-/// Response containing the created {entity} identifier.
-/// </summary>
 public sealed record Create{Entity}Response(Guid {Entity}Id);
 ```
 
 ### Update Command
 
 ```csharp
-// File: {ApplicationName}.Domain.{Domain}/Features/{Entity}/Commands/Update{Entity}Command.cs
+// File: Update{Entity}Command.cs
+using ISynergy.Framework.CQRS.Commands;
 
-namespace {ApplicationName}.Domain.{Domain}.Features.{Entity}.Commands;
+namespace {ApplicationName}.Domain.{Domain}.Features.{Entity}.Commands.Update{Entity};
 
-using System.ComponentModel.DataAnnotations;
-
-/// <summary>
-/// Command to update an existing {entity}.
-/// </summary>
 public sealed record Update{Entity}Command(
-    [Required]
     Guid {Entity}Id,
+    string Description,
+    DateTimeOffset StartingDate,
+    DateTimeOffset EndingDate) : ICommand<Update{Entity}Response>;
+```
 
-    [Required]
-    [StringLength(100, MinimumLength = 3)]
-    string Property1,
+```csharp
+// File: Update{Entity}Response.cs
+namespace {ApplicationName}.Domain.{Domain}.Features.{Entity}.Commands.Update{Entity};
 
-    [Range(0.01, double.MaxValue)]
-    decimal Property2
-) : ICommand<Update{Entity}Response>;
-
-/// <summary>
-/// Response for the update operation.
-/// </summary>
-public sealed record Update{Entity}Response(
-    bool Success,
-    DateTimeOffset UpdatedAt
-);
+public sealed record Update{Entity}Response(bool Success);
 ```
 
 ### Delete Command
 
 ```csharp
-// File: {ApplicationName}.Domain.{Domain}/Features/{Entity}/Commands/Delete{Entity}Command.cs
+// File: Delete{Entity}Command.cs
+using ISynergy.Framework.CQRS.Commands;
 
-namespace {ApplicationName}.Domain.{Domain}.Features.{Entity}.Commands;
+namespace {ApplicationName}.Domain.{Domain}.Features.{Entity}.Commands.Delete{Entity};
 
-using System.ComponentModel.DataAnnotations;
+public sealed record Delete{Entity}Command(Guid {Entity}Id) : ICommand<Delete{Entity}Response>;
+```
 
-/// <summary>
-/// Command to delete an existing {entity}.
-/// </summary>
-public sealed record Delete{Entity}Command(
-    [Required]
-    Guid {Entity}Id
-) : ICommand<Delete{Entity}Response>;
+```csharp
+// File: Delete{Entity}Response.cs
+namespace {ApplicationName}.Domain.{Domain}.Features.{Entity}.Commands.Delete{Entity};
 
-/// <summary>
-/// Response for the delete operation.
-/// </summary>
 public sealed record Delete{Entity}Response(bool Success);
 ```
 
@@ -129,76 +144,57 @@ public sealed record Delete{Entity}Response(bool Success);
 ### Get By ID Query
 
 ```csharp
-// File: {ApplicationName}.Domain.{Domain}/Features/{Entity}/Queries/Get{Entity}ByIdQuery.cs
+// File: Get{Entity}ByIdQuery.cs
+using ISynergy.Framework.CQRS.Queries;
 
-namespace {ApplicationName}.Domain.{Domain}.Features.{Entity}.Queries;
+namespace {ApplicationName}.Domain.{Domain}.Features.{Entity}.Queries.Get{Entity}ById;
 
-using System.ComponentModel.DataAnnotations;
+public sealed record Get{Entity}ByIdQuery(Guid {Entity}Id) : IQuery<Get{Entity}ByIdResponse>;
+```
 
-/// <summary>
-/// Query to retrieve a {entity} by its identifier.
-/// </summary>
-public sealed record Get{Entity}ByIdQuery(
-    [Required]
-    Guid {Entity}Id
-) : IQuery<{Entity}Response>;
+```csharp
+// File: Get{Entity}ByIdResponse.cs
+using {ApplicationName}.Domain.{Domain}.Models;
 
-/// <summary>
-/// Response containing {entity} details.
-/// </summary>
-public sealed record {Entity}Response(
-    Guid {Entity}Id,
-    string Property1,
-    decimal Property2,
-    DateTimeOffset Property3,
-    DateTimeOffset CreatedDate,
-    DateTimeOffset? ChangedDate
-);
+namespace {ApplicationName}.Domain.{Domain}.Features.{Entity}.Queries.Get{Entity}ById;
+
+public sealed record Get{Entity}ByIdResponse({Entity}? {Entity});
 ```
 
 ### Get List Query
 
 ```csharp
-// File: {ApplicationName}.Domain.{Domain}/Features/{Entity}/Queries/Get{Entity}ListQuery.cs
+// File: Get{Entities}ListQuery.cs
+using ISynergy.Framework.CQRS.Queries;
 
-namespace {ApplicationName}.Domain.{Domain}.Features.{Entity}.Queries;
+namespace {ApplicationName}.Domain.{Domain}.Features.{Entity}.Queries.Get{Entities}List;
 
-/// <summary>
-/// Query to retrieve a paginated list of {entities}.
-/// </summary>
-public sealed record Get{Entity}ListQuery(
-    int PageNumber = 1,
-    int PageSize = 20,
-    string? SearchTerm = null
-) : IQuery<List<{Entity}SummaryResponse>>;
+public sealed record Get{Entities}ListQuery() : IQuery<Get{Entities}ListResponse>;
+```
 
-/// <summary>
-/// Summary response for list operations.
-/// </summary>
-public sealed record {Entity}SummaryResponse(
-    Guid {Entity}Id,
-    string Property1,
-    decimal Property2
-);
+```csharp
+// File: Get{Entities}ListResponse.cs
+using {ApplicationName}.Domain.{Domain}.Models;
+
+namespace {ApplicationName}.Domain.{Domain}.Features.{Entity}.Queries.Get{Entities}List;
+
+public sealed record Get{Entities}ListResponse(IReadOnlyList<{Entity}> {Entities});
 ```
 
 ### Query with Optional Filters
 
 ```csharp
-/// <summary>
-/// Query to get total amount with optional filters.
-/// </summary>
-public sealed record Get{Entity}TotalAmountQuery(
-    Guid? Filter1Id = null,
-    Guid? Filter2Id = null,
+public sealed record GetDepositsTotalAmountQuery(
+    Guid? GoalId = null,
+    Guid? BudgetId = null,
     DateTimeOffset? StartDate = null,
     DateTimeOffset? EndDate = null
 ) : IQuery<decimal>;
 
 // Usage with named parameters
-var query = new Get{Entity}TotalAmountQuery(Filter1Id: id);
-var query = new Get{Entity}TotalAmountQuery(Filter2Id: id);
-var query = new Get{Entity}TotalAmountQuery(StartDate: start, EndDate: end);
+var query = new GetDepositsTotalAmountQuery(GoalId: id);
+var query = new GetDepositsTotalAmountQuery(BudgetId: id);
+var query = new GetDepositsTotalAmountQuery(StartDate: start, EndDate: end);
 ```
 
 ---
@@ -208,53 +204,43 @@ var query = new Get{Entity}TotalAmountQuery(StartDate: start, EndDate: end);
 ### Create Handler
 
 ```csharp
-// File: {ApplicationName}.Domain.{Domain}/Features/{Entity}/Commands/Create{Entity}Handler.cs
-
-namespace {ApplicationName}.Domain.{Domain}.Features.{Entity}.Commands;
-
-using Mapster;
+// File: Create{Entity}CommandHandler.cs
+using ISynergy.Data;
+using ISynergy.Framework.CQRS.Abstractions.Commands;
 using Microsoft.Extensions.Logging;
 
-/// <summary>
-/// Handles the creation of a new {entity}.
-/// </summary>
-public sealed class Create{Entity}Handler(
+namespace {ApplicationName}.Domain.{Domain}.Features.{Entity}.Commands.Create{Entity};
+
+public sealed class Create{Entity}CommandHandler(
     DataContext dataContext,
-    ILogger<Create{Entity}Handler> logger
-) : ICommandHandler<Create{Entity}Command, Create{Entity}Response>
+    ILogger<Create{Entity}CommandHandler> logger)
+    : ICommandHandler<Create{Entity}Command, Create{Entity}Response>
 {
-    /// <summary>
-    /// Handles the <see cref="Create{Entity}Command"/> asynchronously.
-    /// </summary>
     public async Task<Create{Entity}Response> HandleAsync(
         Create{Entity}Command command,
         CancellationToken cancellationToken = default)
     {
-        // Guard clauses
-        ArgumentNullException.ThrowIfNull(command);
-        ArgumentException.ThrowIfNullOrWhiteSpace(command.Property1, nameof(command.Property1));
+        logger.LogInformation("Creating {entity} with description {Description}", command.Description);
 
-        if (command.Property2 <= 0)
-            throw new ArgumentException("Property2 must be positive", nameof(command.Property2));
+        var entity = new Entities.{Domain}.{Entity}
+        {
+            {Entity}Id = Guid.NewGuid(),
+            Description = command.Description,
+            StartingDate = command.StartingDate,
+            EndingDate = command.EndingDate
+        };
 
-        logger.LogInformation(
-            "Creating {EntityType} with Property1: {Property1}",
-            nameof({Entity}), command.Property1);
+        dataContext.{Entities}.Add(entity);
+        var rowsAffected = await dataContext.SaveChangesAsync(cancellationToken);
 
-        // Map command to entity
-        var entity = command.Adapt<{Entity}>();
+        if (rowsAffected > 0)
+        {
+            logger.LogInformation("Successfully created {entity} {Id}", entity.{Entity}Id);
+            return new Create{Entity}Response(entity.{Entity}Id);
+        }
 
-        // Map entity to model and persist
-        var model = entity.Adapt<{Entity}Model>();
-        await dataContext.AddItemAsync<{Entity}, {Entity}Model>(
-            model,
-            cancellationToken);
-
-        logger.LogInformation(
-            "Created {EntityType} with ID: {EntityId}",
-            nameof({Entity}), entity.{Entity}Id);
-
-        return new Create{Entity}Response(entity.{Entity}Id);
+        logger.LogWarning("Failed to create {entity} - no rows affected");
+        throw new InvalidOperationException("Failed to create {entity}");
     }
 }
 ```
@@ -262,55 +248,47 @@ public sealed class Create{Entity}Handler(
 ### Update Handler
 
 ```csharp
-// File: {ApplicationName}.Domain.{Domain}/Features/{Entity}/Commands/Update{Entity}Handler.cs
-
-namespace {ApplicationName}.Domain.{Domain}.Features.{Entity}.Commands;
-
-using Mapster;
+// File: Update{Entity}CommandHandler.cs
+using ISynergy.Data;
+using ISynergy.Framework.CQRS.Abstractions.Commands;
 using Microsoft.Extensions.Logging;
 
-/// <summary>
-/// Handles updating an existing {entity}.
-/// </summary>
-public sealed class Update{Entity}Handler(
+namespace {ApplicationName}.Domain.{Domain}.Features.{Entity}.Commands.Update{Entity};
+
+public sealed class Update{Entity}CommandHandler(
     DataContext dataContext,
-    ILogger<Update{Entity}Handler> logger
-) : ICommandHandler<Update{Entity}Command, Update{Entity}Response>
+    ILogger<Update{Entity}CommandHandler> logger)
+    : ICommandHandler<Update{Entity}Command, Update{Entity}Response>
 {
-    /// <summary>
-    /// Handles the <see cref="Update{Entity}Command"/> asynchronously.
-    /// </summary>
     public async Task<Update{Entity}Response> HandleAsync(
         Update{Entity}Command command,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(command);
+        logger.LogInformation("Updating {entity} {Id}", command.{Entity}Id);
 
-        logger.LogInformation(
-            "Updating {EntityType} with ID: {EntityId}",
-            nameof({Entity}), command.{Entity}Id);
+        var entity = await dataContext.{Entities}.FindAsync([command.{Entity}Id], cancellationToken);
 
-        // Retrieve existing entity to ensure it exists
-        var existing = await dataContext.GetItemByIdAsync<{Entity}, {Entity}Model, Guid>(
-            command.{Entity}Id,
-            cancellationToken);
+        if (entity is null)
+        {
+            logger.LogWarning("{Entity} {Id} not found", command.{Entity}Id);
+            throw new InvalidOperationException("{Entity} " + command.{Entity}Id + " not found");
+        }
 
-        // Map command to entity, preserving ID
-        var entity = command.Adapt<{Entity}>();
-        entity.{Entity}Id = command.{Entity}Id;
-        entity.ChangedDate = DateTimeOffset.UtcNow;
+        entity.Description = command.Description;
+        entity.StartingDate = command.StartingDate;
+        entity.EndingDate = command.EndingDate;
 
-        // Update
-        var model = entity.Adapt<{Entity}Model>();
-        await dataContext.UpdateItemAsync<{Entity}, {Entity}Model>(
-            model,
-            cancellationToken);
+        dataContext.{Entities}.Update(entity);
+        var rowsAffected = await dataContext.SaveChangesAsync(cancellationToken);
 
-        logger.LogInformation(
-            "Updated {EntityType} with ID: {EntityId}",
-            nameof({Entity}), command.{Entity}Id);
+        if (rowsAffected > 0)
+        {
+            logger.LogInformation("Successfully updated {entity} {Id}", command.{Entity}Id);
+            return new Update{Entity}Response(true);
+        }
 
-        return new Update{Entity}Response(true, DateTimeOffset.UtcNow);
+        logger.LogWarning("{Entity} {Id} not found or no changes made", command.{Entity}Id);
+        throw new InvalidOperationException("{Entity} not found or no changes made");
     }
 }
 ```
@@ -318,43 +296,42 @@ public sealed class Update{Entity}Handler(
 ### Delete Handler
 
 ```csharp
-// File: {ApplicationName}.Domain.{Domain}/Features/{Entity}/Commands/Delete{Entity}Handler.cs
-
-namespace {ApplicationName}.Domain.{Domain}.Features.{Entity}.Commands;
-
+// File: Delete{Entity}CommandHandler.cs
+using ISynergy.Data;
+using ISynergy.Framework.CQRS.Abstractions.Commands;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-/// <summary>
-/// Handles deleting an existing {entity}.
-/// </summary>
-public sealed class Delete{Entity}Handler(
+namespace {ApplicationName}.Domain.{Domain}.Features.{Entity}.Commands.Delete{Entity};
+
+public sealed class Delete{Entity}CommandHandler(
     DataContext dataContext,
-    ILogger<Delete{Entity}Handler> logger
-) : ICommandHandler<Delete{Entity}Command, Delete{Entity}Response>
+    ILogger<Delete{Entity}CommandHandler> logger)
+    : ICommandHandler<Delete{Entity}Command, Delete{Entity}Response>
 {
-    /// <summary>
-    /// Handles the <see cref="Delete{Entity}Command"/> asynchronously.
-    /// </summary>
     public async Task<Delete{Entity}Response> HandleAsync(
         Delete{Entity}Command command,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(command);
+        var entity = await dataContext.{Entities}.FindAsync([command.{Entity}Id], cancellationToken);
 
-        logger.LogInformation(
-            "Deleting {EntityType} with ID: {EntityId}",
-            nameof({Entity}), command.{Entity}Id);
+        if (entity is null)
+        {
+            logger.LogWarning("{Entity} {Id} not found", command.{Entity}Id);
+            throw new InvalidOperationException($"{{Entity}} {command.{Entity}Id} not found");
+        }
 
-        // CRITICAL: Use RemoveItemAsync, NOT DeleteItemByIdAsync
-        await dataContext.RemoveItemAsync<{Entity}, Guid>(
-            command.{Entity}Id,
-            cancellationToken);
+        dataContext.{Entities}.Remove(entity);
+        var rowsAffected = await dataContext.SaveChangesAsync(cancellationToken);
 
-        logger.LogInformation(
-            "Deleted {EntityType} with ID: {EntityId}",
-            nameof({Entity}), command.{Entity}Id);
+        if (rowsAffected > 0)
+        {
+            logger.LogInformation("Successfully deleted {entity} {Id}", command.{Entity}Id);
+            return new Delete{Entity}Response(true);
+        }
 
-        return new Delete{Entity}Response(true);
+        logger.LogWarning("Failed to delete {entity} {Id} - no rows affected", command.{Entity}Id);
+        throw new InvalidOperationException($"Failed to delete {{Entity}} {command.{Entity}Id}");
     }
 }
 ```
@@ -362,43 +339,43 @@ public sealed class Delete{Entity}Handler(
 ### Get By ID Handler
 
 ```csharp
-// File: {ApplicationName}.Domain.{Domain}/Features/{Entity}/Queries/Get{Entity}ByIdHandler.cs
-
-namespace {ApplicationName}.Domain.{Domain}.Features.{Entity}.Queries;
-
+// File: Get{Entity}ByIdQueryHandler.cs
+using ISynergy.Data;
+using {ApplicationName}.Domain.{Domain}.Models;
+using ISynergy.Framework.CQRS.Queries;
 using Mapster;
 using Microsoft.Extensions.Logging;
 
-/// <summary>
-/// Handles retrieving a {entity} by its identifier.
-/// </summary>
-public sealed class Get{Entity}ByIdHandler(
+namespace {ApplicationName}.Domain.{Domain}.Features.{Entity}.Queries.Get{Entity}ById;
+
+public sealed class Get{Entity}ByIdQueryHandler(
     DataContext dataContext,
-    ILogger<Get{Entity}ByIdHandler> logger
-) : IQueryHandler<Get{Entity}ByIdQuery, {Entity}Response>
+    ILogger<Get{Entity}ByIdQueryHandler> logger)
+    : IQueryHandler<Get{Entity}ByIdQuery, Get{Entity}ByIdResponse>
 {
-    /// <summary>
-    /// Handles the <see cref="Get{Entity}ByIdQuery"/> asynchronously.
-    /// </summary>
-    public async Task<{Entity}Response> HandleAsync(
+    public async Task<Get{Entity}ByIdResponse> HandleAsync(
         Get{Entity}ByIdQuery query,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(query);
+        try
+        {
+            logger.LogDebug("Retrieving {entity} {Id}", query.{Entity}Id);
 
-        logger.LogDebug(
-            "Retrieving {EntityType} with ID: {EntityId}",
-            nameof({Entity}), query.{Entity}Id);
+            var entity = await dataContext.{Entities}.FindAsync([query.{Entity}Id], cancellationToken);
+            var model = entity?.Adapt<{Entity}>();
 
-        var model = await dataContext.GetItemByIdAsync<{Entity}, {Entity}Model, Guid>(
-            query.{Entity}Id,
-            cancellationToken);
+            if (model is null)
+            {
+                logger.LogDebug("{Entity} {Id} not found", query.{Entity}Id);
+            }
 
-        logger.LogDebug(
-            "Retrieved {EntityType} with ID: {EntityId}",
-            nameof({Entity}), query.{Entity}Id);
-
-        return model.Adapt<{Entity}Response>();
+            return new Get{Entity}ByIdResponse(model);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error retrieving {entity} {Id}", query.{Entity}Id);
+            throw new InvalidOperationException($"An unexpected error occurred while retrieving the {{Entity}}");
+        }
     }
 }
 ```
@@ -406,97 +383,50 @@ public sealed class Get{Entity}ByIdHandler(
 ### Get List Handler
 
 ```csharp
-// File: {ApplicationName}.Domain.{Domain}/Features/{Entity}/Queries/Get{Entity}ListHandler.cs
-
-namespace {ApplicationName}.Domain.{Domain}.Features.{Entity}.Queries;
-
+// File: Get{Entities}ListQueryHandler.cs
+using ISynergy.Data;
+using {ApplicationName}.Domain.{Domain}.Models;
+using ISynergy.Framework.CQRS.Queries;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-/// <summary>
-/// Handles retrieving a paginated list of {entities}.
-/// </summary>
-public sealed class Get{Entity}ListHandler(
+namespace {ApplicationName}.Domain.{Domain}.Features.{Entity}.Queries.Get{Entities}List;
+
+public sealed class Get{Entities}ListQueryHandler(
     DataContext dataContext,
-    ILogger<Get{Entity}ListHandler> logger
-) : IQueryHandler<Get{Entity}ListQuery, List<{Entity}SummaryResponse>>
+    ILogger<Get{Entities}ListQueryHandler> logger)
+    : IQueryHandler<Get{Entities}ListQuery, Get{Entities}ListResponse>
 {
-    /// <summary>
-    /// Handles the <see cref="Get{Entity}ListQuery"/> asynchronously.
-    /// </summary>
-    public async Task<List<{Entity}SummaryResponse>> HandleAsync(
-        Get{Entity}ListQuery query,
+    public async Task<Get{Entities}ListResponse> HandleAsync(
+        Get{Entities}ListQuery query,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(query);
+        logger.LogDebug("Retrieving all {entities}");
 
-        logger.LogDebug(
-            "Retrieving {EntityType} list - Page: {PageNumber}, Size: {PageSize}",
-            nameof({Entity}), query.PageNumber, query.PageSize);
-
-        var queryable = dataContext.Set<{Entity}>().AsQueryable();
-
-        // Apply search filter if provided
-        if (!string.IsNullOrWhiteSpace(query.SearchTerm))
-        {
-            queryable = queryable.Where(e =>
-                e.Property1.Contains(query.SearchTerm));
-        }
-
-        // Apply pagination
-        var entities = await queryable
-            .OrderByDescending(e => e.CreatedDate)
-            .Skip((query.PageNumber - 1) * query.PageSize)
-            .Take(query.PageSize)
+        var models = await dataContext.{Entities}
+            .OrderBy(e => e.Description)
+            .ProjectToType<{Entity}>()
             .ToListAsync(cancellationToken);
 
-        logger.LogDebug(
-            "Retrieved {Count} {EntityType} records",
-            entities.Count, nameof({Entity}));
+        logger.LogDebug("Retrieved {Count} {entities}", models.Count);
 
-        return entities.Adapt<List<{Entity}SummaryResponse>>();
+        return new Get{Entities}ListResponse(models);
     }
 }
 ```
 
----
-
-## Data Access Patterns
-
-### Available Extension Methods
+### Complex Query with Filters
 
 ```csharp
-// Create
-await dataContext.AddItemAsync<TEntity, TModel>(model, cancellationToken);
-
-// Read
-var model = await dataContext.GetItemByIdAsync<TEntity, TModel, TKey>(id, cancellationToken);
-
-// Update
-await dataContext.UpdateItemAsync<TEntity, TModel>(model, cancellationToken);
-
-// Delete - CRITICAL: Use RemoveItemAsync, not DeleteItemByIdAsync
-await dataContext.RemoveItemAsync<TEntity, TKey>(id, cancellationToken);
-
-// List/Query - Use LINQ directly on DbSet
-var entities = await dataContext.Set<TEntity>()
-    .Where(x => x.IsActive)
-    .ToListAsync(cancellationToken);
-```
-
-### Complex Query Example
-
-```csharp
-public async Task<List<{Entity}SummaryResponse>> HandleAsync(
-    Get{Entity}sByFilterQuery query,
+public async Task<Get{Entities}ByFilterResponse> HandleAsync(
+    Get{Entities}ByFilterQuery query,
     CancellationToken cancellationToken = default)
 {
-    var queryable = dataContext.Set<{Entity}>()
+    var queryable = dataContext.{Entities}
         .Include(e => e.RelatedEntities) // Prevent N+1
         .AsQueryable();
 
-    // Apply filters
     if (query.Filter1Id.HasValue)
         queryable = queryable.Where(e => e.Filter1Id == query.Filter1Id.Value);
 
@@ -504,15 +434,87 @@ public async Task<List<{Entity}SummaryResponse>> HandleAsync(
         queryable = queryable.Where(e => e.CreatedDate >= query.StartDate.Value);
 
     if (!string.IsNullOrWhiteSpace(query.SearchTerm))
-        queryable = queryable.Where(e => e.Name.Contains(query.SearchTerm));
+        queryable = queryable.Where(e => e.Description.Contains(query.SearchTerm));
 
-    // Execute and map
-    var entities = await queryable
-        .OrderBy(e => e.Name)
+    var models = await queryable
+        .OrderBy(e => e.Description)
+        .ProjectToType<{Entity}>()
         .ToListAsync(cancellationToken);
 
-    return entities.Adapt<List<{Entity}SummaryResponse>>();
+    return new Get{Entities}ByFilterResponse(models);
 }
+```
+
+---
+
+## Model Pattern
+
+Models are positional records in the domain project's `Models/` folder.
+
+```csharp
+// File: {ApplicationName}.Domain.{Domain}/Models/{Entity}.cs
+namespace {ApplicationName}.Domain.{Domain}.Models;
+
+/// <summary>
+/// Represents a {entity}.
+/// </summary>
+public sealed record {Entity}(
+    Guid {Entity}Id,
+    string Description,
+    DateTimeOffset StartingDate,
+    DateTimeOffset EndingDate);
+```
+
+Key rules:
+- No "Model" suffix (just `Budget`, not `BudgetModel`)
+- Positional record syntax
+- Lives in `{ApplicationName}.Domain.{Domain}.Models` namespace (inside domain project, not separate project)
+
+---
+
+## Data Access Patterns
+
+### EF Core Primitives (Correct)
+
+```csharp
+// Create — named DbSet Add, SaveChanges
+var entity = new Entities.{Domain}.{Entity} { {Entity}Id = Guid.NewGuid(), ... };
+dataContext.{Entities}.Add(entity);
+var rowsAffected = await dataContext.SaveChangesAsync(cancellationToken);
+
+// Read single — named DbSet FindAsync + Mapster Adapt
+var entity = await dataContext.{Entities}.FindAsync([id], cancellationToken);
+var model = entity?.Adapt<{Entity}>();
+
+// Read list — named DbSet + ProjectToType
+var models = await dataContext.{Entities}
+    .OrderBy(e => e.Description)
+    .ProjectToType<{Entity}>()
+    .ToListAsync(cancellationToken);
+
+// Update — named DbSet FindAsync, mutate properties, Update, SaveChanges
+var entity = await dataContext.{Entities}.FindAsync([id], cancellationToken);
+entity.Description = command.Description;
+dataContext.{Entities}.Update(entity);
+await dataContext.SaveChangesAsync(cancellationToken);
+
+// Delete — named DbSet FindAsync, Remove, SaveChanges
+var entity = await dataContext.{Entities}.FindAsync([id], cancellationToken);
+dataContext.{Entities}.Remove(entity);
+await dataContext.SaveChangesAsync(cancellationToken);
+```
+
+### NOT Used (Wrong)
+
+```csharp
+// WRONG - Extension methods are NOT used in handlers
+await dataContext.AddItemAsync<TEntity, TModel>(model, ct);
+await dataContext.GetItemByIdAsync<TEntity, TModel, TKey>(id, ct);
+await dataContext.UpdateItemAsync<TEntity, TModel>(model, ct);
+await dataContext.RemoveItemAsync<TEntity, TKey>(id, ct);
+
+// WRONG - Repositories are NOT used
+await _repository.Add(model);
 ```
 
 ---
@@ -522,138 +524,65 @@ public async Task<List<{Entity}SummaryResponse>> HandleAsync(
 ### When to Use Each Response Type
 
 | Scenario | Response Type | Example |
-|----------|---------------|---------|
-| **Create operation** | Return ID only | `CreateBudgetResponse(Guid BudgetId)` |
-| **Update operation** | Return success + metadata | `UpdateBudgetResponse(bool Success, DateTimeOffset UpdatedAt)` |
-| **Delete operation** | Return success only | `DeleteBudgetResponse(bool Success)` |
-| **Get by ID** | Return full object | `BudgetResponse` with all properties |
-| **List query** | Return collection of summaries | `List<BudgetSummaryResponse>` |
-| **Aggregate query** | Return calculated value | `decimal` (total amount) |
-
-### Response Examples
-
-```csharp
-// Minimal - Just ID for Create
-public sealed record CreateBudgetResponse(Guid BudgetId);
-
-// Moderate - Success + metadata for Update
-public sealed record UpdateBudgetResponse(
-    bool Success,
-    Guid BudgetId,
-    DateTimeOffset UpdatedAt
-);
-
-// Full - Complete object for Get
-public sealed record BudgetResponse(
-    Guid BudgetId,
-    string Name,
-    decimal Amount,
-    DateTimeOffset StartDate,
-    DateTimeOffset CreatedDate,
-    int GoalsCount,
-    decimal TotalAllocated
-);
-
-// Summary - Lightweight for Lists
-public sealed record BudgetSummaryResponse(
-    Guid BudgetId,
-    string Name,
-    decimal Amount
-);
-
-// Aggregate - Single value for calculations
-// Return type: decimal, int, bool, etc. (no wrapper record needed)
-```
+|-|-|-|
+| Create | Return ID only | `Create{Entity}Response(Guid {Entity}Id)` |
+| Update | Return success | `Update{Entity}Response(bool Success)` |
+| Delete | Return success | `Delete{Entity}Response(bool Success)` |
+| Get by ID | Wrap nullable Model | `Get{Entity}ByIdResponse({Entity}? {Entity})` |
+| List query | Wrap Model collection | `Get{Entities}ListResponse(IReadOnlyList<{Entity}> {Entities})` |
+| Aggregate | Return calculated value | `decimal` (total amount) |
 
 ---
 
-## Validation Patterns
+## Mapper Configuration
 
-### Data Annotations
-
-```csharp
-public sealed record Create{Entity}Command(
-    [Required]
-    [StringLength(100, MinimumLength = 3)]
-    string Property1,
-
-    [Range(0.01, double.MaxValue)]
-    decimal Property2,
-
-    [EmailAddress]
-    string? Email,
-
-    [Url]
-    string? Website
-) : ICommand<Create{Entity}Response>;
-```
-
-### Custom Validation (IValidatableObject)
+Single `Configuration` class per domain, containing all entity-to-model mappings:
 
 ```csharp
-public sealed record Create{Entity}Command(
-    [Required] string Property1,
-    [Range(0.01, double.MaxValue)] decimal Property2,
-    DateTimeOffset Property3
-) : ICommand<Create{Entity}Response>, IValidatableObject
+// File: Mappers/Configuration.cs
+using Mapster;
+using {ApplicationName}.Domain.{Domain}.Models;
+
+namespace {ApplicationName}.Domain.{Domain}.Mappers;
+
+internal class Configuration : IRegister
 {
-    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    public void Register(TypeAdapterConfig config)
     {
-        if (Property3 <= DateTimeOffset.UtcNow)
-        {
-            yield return new ValidationResult(
-                "Property3 must be in the future",
-                new[] { nameof(Property3) });
-        }
+        config.NewConfig<Entities.{Domain}.{Entity}, {Entity}>()
+            .Map(d => d.{Entity}Id, s => s.{Entity}Id)
+            .Map(d => d.Description, s => s.Description)
+            .Map(d => d.StartingDate, s => s.StartingDate)
+            .Map(d => d.EndingDate, s => s.EndingDate);
 
-        if (Property2 > 1_000_000m)
-        {
-            yield return new ValidationResult(
-                "Property2 exceeds maximum allowed value",
-                new[] { nameof(Property2) });
-        }
+        // Reverse mapping only when property names differ
+        // config.NewConfig<{Entity}, Entities.{Domain}.{Entity}>()
+        //     .Map(d => d.Type, s => s.EntityType);
     }
 }
 ```
 
-### Handler Guard Clauses
-
-```csharp
-public async Task<Create{Entity}Response> HandleAsync(
-    Create{Entity}Command command,
-    CancellationToken cancellationToken = default)
-{
-    // Guard clauses at method start
-    ArgumentNullException.ThrowIfNull(command);
-    ArgumentException.ThrowIfNullOrWhiteSpace(command.Property1, nameof(command.Property1));
-
-    if (command.Property2 <= 0)
-        throw new ArgumentException("Property2 must be positive", nameof(command.Property2));
-
-    // Main logic follows
-}
-```
+Key rules:
+- Class named `Configuration` (not `{Entity}MappingConfig`)
+- One per domain, all entity mappings in one class
+- Only Entity → Model mappings (and reverse when names differ)
+- NO Command → Entity mappings (handlers construct entities directly)
+- NO Model → Response mappings (responses wrap models, no mapping needed)
 
 ---
 
 ## Service Registration
 
 ```csharp
-// File: {ApplicationName}.Domain.{Domain}/Extensions/ServiceCollectionExtensions.cs
-
-namespace {ApplicationName}.Domain.{Domain}.Extensions;
-
+// File: Extensions/ServiceCollectionExtensions.cs
+using ISynergy.Framework.CQRS.Extensions;
 using Mapster;
 using Microsoft.Extensions.DependencyInjection;
 
-/// <summary>
-/// Service collection extensions for {Domain} domain.
-/// </summary>
+namespace {ApplicationName}.Domain.{Domain}.Extensions;
+
 public static class ServiceCollectionExtensions
 {
-    /// <summary>
-    /// Registers {Domain} domain handlers and mappers.
-    /// </summary>
     public static IServiceCollection With{Domain}DomainHandlers(
         this IServiceCollection services)
     {
@@ -675,11 +604,11 @@ public static class ServiceCollectionExtensions
 
 ## Common Pitfalls
 
-### ❌ Wrong: Passing Model Objects
+### Wrong: Passing Model Objects to Commands
 
 ```csharp
 // WRONG
-public sealed record CreateDebtCommand(DebtModel Debt) : ICommand<CreateDebtResponse>;
+public sealed record CreateDebtCommand(Debt Debt) : ICommand<CreateDebtResponse>;
 
 // CORRECT
 public sealed record CreateDebtCommand(
@@ -689,39 +618,69 @@ public sealed record CreateDebtCommand(
 ) : ICommand<CreateDebtResponse>;
 ```
 
-### ❌ Wrong: Using Wrong Delete Method
+### Wrong: Using Extension Methods for Data Access
 
 ```csharp
-// WRONG - This method doesn't exist
-await dataContext.DeleteItemByIdAsync<Debt, Guid>(id, ct);
+// WRONG
+await dataContext.AddItemAsync<Budget, BudgetModel>(model, ct);
+await dataContext.GetItemByIdAsync<Budget, BudgetModel, Guid>(id, ct);
+await dataContext.RemoveItemAsync<Budget, Guid>(id, ct);
+
+// CORRECT — use named DbSet properties
+dataContext.Budgets.Add(entity);
+await dataContext.Budgets.FindAsync([id], ct);
+dataContext.Budgets.Remove(entity);
+await dataContext.SaveChangesAsync(ct);
+```
+
+### Wrong: Mapping Commands to Entities via Mapster
+
+```csharp
+// WRONG
+var entity = command.Adapt<Budget>();
+
+// CORRECT - Construct entity directly
+var entity = new Entities.Budgets.Budget
+{
+    BudgetId = Guid.NewGuid(),
+    Description = command.Description,
+};
+```
+
+### Wrong: Flat DTOs as Responses
+
+```csharp
+// WRONG - Response with flat properties
+public sealed record BudgetResponse(Guid BudgetId, string Description, ...);
+
+// CORRECT - Response wraps Model
+public sealed record GetBudgetByIdResponse(Budget? Budget);
+public sealed record GetBudgetsListResponse(IReadOnlyList<Budget> Budgets);
+```
+
+### Wrong: Handler Naming Without Suffix
+
+```csharp
+// WRONG
+public sealed class CreateBudgetHandler : ICommandHandler<...>
+public sealed class GetBudgetByIdHandler : IQueryHandler<...>
 
 // CORRECT
-await dataContext.RemoveItemAsync<Debt, Guid>(id, ct);
+public sealed class CreateBudgetCommandHandler : ICommandHandler<...>
+public sealed class GetBudgetByIdQueryHandler : IQueryHandler<...>
 ```
 
-### ❌ Wrong: Positional Optional Parameters
-
-```csharp
-// WRONG - Ambiguous
-var query = new GetTotalQuery(id, true);
-
-// CORRECT - Named parameters
-var query = new GetTotalQuery(BudgetId: id);
-var query = new GetTotalQuery(GoalId: id);
-```
-
-### ❌ Wrong: Exposing Domain Entities
+### Wrong: Exposing Domain Entities
 
 ```csharp
 // WRONG - Returns domain entity
-public async Task<Budget> HandleAsync(...)
-{
-    return entity;
-}
+public async Task<Entities.Budgets.Budget> HandleAsync(...) { return entity; }
 
-// CORRECT - Returns DTO
-public async Task<BudgetResponse> HandleAsync(...)
+// CORRECT - Returns response wrapping model
+public async Task<GetBudgetByIdResponse> HandleAsync(...)
 {
-    return model.Adapt<BudgetResponse>();
+    var entity = await dataContext.Budgets.FindAsync([id], ct);
+    var budget = entity?.Adapt<Budget>();
+    return new GetBudgetByIdResponse(budget);
 }
 ```

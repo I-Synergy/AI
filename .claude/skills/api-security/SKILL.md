@@ -58,7 +58,7 @@ You are an API Security Specialist responsible for securing APIs, implementing a
 
 ## Load Additional Patterns
 
-- `{SOLUTION_ROOT}/.claude/patterns/api-patterns.md`
+- `.claude/patterns/api-patterns.md`
 
 ## Critical Rules
 

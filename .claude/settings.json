@@ -1,23 +1,41 @@
 {
+  "plansDirectory": "./.claude/plans",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "dotnet build --nologo --verbosity quiet"
+          }
+        ]
+      }
+    ]
+  },
   "permissions": {
     "allow": [
       "Bash",
       "Edit",
       "Write",
       "Read",
-      "WebFetch"
+      "WebFetch",
+      "WebSearch"
     ],
     "deny": [
       "Bash(rm -rf:*)"
     ],
-    "ask": [],
-    "plansDirectory": "./.claude/plans",
     "additionalDirectories": [
       "./.claude",
-      "./.claude/completed",
-      "./.claude/progress",
       "./.claude/analysis",
-      "./.claude/plans"
+      "./.claude/checklists",
+      "./.claude/completed",
+      "./.claude/patterns",
+      "./.claude/plans",
+      "./.claude/progress",
+      "./.claude/project",
+      "./.claude/reference",
+      "./.claude/skills"
     ]
   }
 }

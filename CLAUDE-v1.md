@@ -4,7 +4,7 @@
 
 ## Quick Start
 
-1. **Read Session Context First:** `{SOLUTION_ROOT}/.claude/session-context.md`
+1. **Read Session Context First:** `.claude/session-context.md`
 2. **Check Critical Rules:** `.claude/reference/critical-rules.md`
 3. **Review Tokens:** `.claude/reference/tokens.md`
 4. **Follow Patterns:** `.claude/patterns/`
@@ -49,17 +49,17 @@ See `.claude/reference/tokens.md` for complete list.
    - **EVERY agent** must:
      - Have full repository access
      - Report progress in real-time
-     - Create/update progress files in `{SOLUTION_ROOT}/.claude/progress/`
+     - Create/update progress files in `.claude/progress/`
      - Follow all workflow requirements
 
 4. **Progress Files**
-   - **Location:** `{SOLUTION_ROOT}/.claude/progress/[task].md`
+   - **Location:** `.claude/progress/[task].md`
    - **Created:** Immediately when task starts
    - **Updated:** In real-time as work progresses
-   - **Completed:** Moved to `{SOLUTION_ROOT}/.claude/completed/`
+   - **Completed:** Moved to `.claude/completed/`
 
 5. **Session Context**
-   - **READ FIRST:** `{SOLUTION_ROOT}/.claude/session-context.md`
+   - **READ FIRST:** `.claude/session-context.md`
    - **UPDATE LAST:** Document learnings before ending
 
 ### Workflow Pattern
@@ -365,7 +365,7 @@ See `.claude/reference/critical-rules.md` for detailed examples.
 
 ### Every Session MUST:
 
-1. **Read First:** `{SOLUTION_ROOT}/.claude/session-context.md`
+1. **Read First:** `.claude/session-context.md`
 2. **Build On:** Use established patterns and preferences
 3. **Update Last:** Document learnings before ending
 
@@ -380,7 +380,7 @@ See `.claude/reference/critical-rules.md` for detailed examples.
 ## File Organization
 
 ```
-{SOLUTION_ROOT}/
+
 ├── .claude/
 │   ├── reference/
 │   │   ├── tokens.md

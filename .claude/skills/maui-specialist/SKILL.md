@@ -61,8 +61,8 @@ You are a MAUI Mobile Specialist responsible for building cross-platform mobile 
 
 ## Load Additional Patterns
 
-- `{SOLUTION_ROOT}/.claude/patterns/cqrs-patterns.md`
-- `{SOLUTION_ROOT}/.claude/patterns/api-patterns.md`
+- `.claude/patterns/cqrs-patterns.md`
+- `.claude/patterns/api-patterns.md`
 
 ## Critical Rules
 

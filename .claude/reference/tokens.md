@@ -7,11 +7,11 @@ Throughout this template, the following placeholders are used. Replace them when
 | `{ApplicationName}` | Your application name | `BudgetTracker` |
 | `{Domain}` | Domain/bounded context name | `Budgets`, `Goals`, `Debts` |
 | `{Entity}` | Entity name (PascalCase) | `Budget`, `Goal`, `Debt` |
+| `{Entities}` | Entity plural (PascalCase) — used for DbSet names | `Budgets`, `Goals`, `Debts` |
 | `{entity}` | Entity name (lowercase) | `budget`, `goal`, `debt` |
 | `{entities}` | Entity plural (lowercase) | `budgets`, `goals`, `debts` |
-| `{SOLUTION_ROOT}` | Root directory of current solution | `/path/to/BudgetTracker` |
 
-## Special Files (Always in {SOLUTION_ROOT}/.claude/)
+## Special Files (Always in .claude/)
 
 - **session-context.md** - Read FIRST at session start, update before session end
 - **progress/[task].md** - Active task progress files
