@@ -34,11 +34,11 @@ app.MapPost("/debts", async (Debt model, ICommandHandler handler) =>
 var command = new CreateDebtCommand(model);
 ```
 
-## 2. Delete Operations: Use FindAsync + Remove + SaveChangesAsync
+## 2. Delete Operations: Use FirstOrDefaultAsync + Remove + SaveChangesAsync
 
 ```csharp
 // CORRECT
-var entity = await dataContext.Debts.FindAsync([command.DebtId], cancellationToken);
+var entity = await dataContext.Debts.FirstOrDefaultAsync(e => e.DebtId == command.DebtId, cancellationToken);
 
 if (entity is null)
     throw new InvalidOperationException($"Debt {command.DebtId} not found");
@@ -79,7 +79,7 @@ dataContext.Budgets.Add(entity);
 await dataContext.SaveChangesAsync(cancellationToken);
 
 // Read single
-var entity = await dataContext.Budgets.FindAsync([id], cancellationToken);
+var entity = await dataContext.Budgets.FirstOrDefaultAsync(e => e.BudgetId == id, cancellationToken);
 var model = entity?.Adapt<Budget>();
 
 // Read list (using named DbSet + ProjectToType)
@@ -88,14 +88,13 @@ var models = await dataContext.Budgets
     .ProjectToType<Budget>()
     .ToListAsync(cancellationToken);
 
-// Update
-var entity = await dataContext.Budgets.FindAsync([id], cancellationToken);
+// Update — no .Update() call needed; change tracker detects property mutations on tracked entities
+var entity = await dataContext.Budgets.FirstOrDefaultAsync(e => e.BudgetId == command.BudgetId, cancellationToken);
 entity.Description = command.Description;
-dataContext.Budgets.Update(entity);
 await dataContext.SaveChangesAsync(cancellationToken);
 
 // Delete
-var entity = await dataContext.Budgets.FindAsync([id], cancellationToken);
+var entity = await dataContext.Budgets.FirstOrDefaultAsync(e => e.BudgetId == command.BudgetId, cancellationToken);
 dataContext.Budgets.Remove(entity);
 await dataContext.SaveChangesAsync(cancellationToken);
 
@@ -145,7 +144,7 @@ public async Task<GetBudgetByIdResponse> HandleAsync(
     GetBudgetByIdQuery query,
     CancellationToken cancellationToken = default)
 {
-    var entity = await dataContext.Budgets.FindAsync([query.BudgetId], cancellationToken);
+    var entity = await dataContext.Budgets.FirstOrDefaultAsync(e => e.BudgetId == query.BudgetId, cancellationToken);
     var budget = entity?.Adapt<Budget>();
     return new GetBudgetByIdResponse(budget);
 }
@@ -153,8 +152,8 @@ public async Task<GetBudgetByIdResponse> HandleAsync(
 // WRONG - Blocking on async
 public GetBudgetByIdResponse Handle(GetBudgetByIdQuery query)
 {
-    var entity = dataContext.Budgets.FindAsync(
-        [query.BudgetId],
+    var entity = dataContext.Budgets.FirstOrDefaultAsync(
+        e => e.BudgetId == query.BudgetId,
         CancellationToken.None).Result; // DEADLOCK RISK!
 }
 
@@ -173,7 +172,7 @@ Always map to Models before returning from handlers. Responses wrap Models.
 // CORRECT - Response wraps Model
 public async Task<GetBudgetByIdResponse> HandleAsync(...)
 {
-    var entity = await dataContext.Budgets.FindAsync([query.BudgetId], ct);
+    var entity = await dataContext.Budgets.FirstOrDefaultAsync(e => e.BudgetId == query.BudgetId, ct);
     var budget = entity?.Adapt<Budget>();
     return new GetBudgetByIdResponse(budget);
 }
@@ -181,7 +180,7 @@ public async Task<GetBudgetByIdResponse> HandleAsync(...)
 // WRONG - Return domain entity directly
 public async Task<Entities.Budgets.Budget> HandleAsync(...)
 {
-    return await dataContext.Budgets.FindAsync([id], ct);
+    return await dataContext.Budgets.FirstOrDefaultAsync(e => e.BudgetId == id, ct);
 }
 ```
 
@@ -280,14 +279,26 @@ public int SubscriptionStatus { get; set; }
 public int StatusId { get; set; }
 ```
 
+## 14. Plan Files: Always in `.claude/plans/`
+
+Plans and design docs MUST be saved in the project-local `.claude/plans/` folder. The `writing-plans` and `brainstorming` skills default to `docs/plans/` — always override that to `.claude/plans/`.
+
+```
+CORRECT:   .claude/plans/2026-02-28-feature-name.md
+WRONG:     docs/plans/2026-02-28-feature-name.md
+WRONG:     ~/.claude/plans/2026-02-28-feature-name.md
+```
+
+This is configured via `plansDirectory` in `.claude/settings.json` and must not be bypassed by skill defaults.
+
 ## Quick Violation Checklist
 
 Before submitting code, verify you haven't violated these:
 
 - [ ] Commands use individual parameters (not model objects)
-- [ ] Delete operations use `FindAsync` + `Remove` + `SaveChangesAsync`
+- [ ] Delete operations use `FirstOrDefaultAsync` + `Remove` + `SaveChangesAsync`
 - [ ] Queries use named parameters for optional filters
-- [ ] Data access uses named DbSet properties on DataContext (no `.Set<T>()`, no extension methods, no repositories)
+- [ ] Data access uses named DbSet properties on DataContext with `FirstOrDefaultAsync` for single lookups (no `.Set<T>()`, no `FindAsync`, no extension methods, no repositories)
 - [ ] Mapping uses Mapster (not AutoMapper or manual for reads)
 - [ ] Create handlers construct entities directly (not via `command.Adapt<Entity>()`)
 - [ ] All async methods include CancellationToken
@@ -295,6 +306,7 @@ Before submitting code, verify you haven't violated these:
 - [ ] Handlers named with `CommandHandler` / `QueryHandler` suffix
 - [ ] Each type in its own file, each operation in its own subfolder
 - [ ] Progress files in current solution's `.claude/` folder
+- [ ] Plan files saved to `.claude/plans/` (not `docs/plans/`)
 - [ ] Session context read first and updated last
 - [ ] Enum names are plural (except *Status suffix enums)
 - [ ] EF Core entity properties use enum types, not raw int
