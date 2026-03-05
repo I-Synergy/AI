@@ -2,68 +2,79 @@
 
 You are assisting with a .NET project following Clean Architecture, CQRS, and DDD patterns.
 
-## Code Standards
+## Project Context
 
-**Critical Rules:**
-- See `.claude/reference/critical-rules.md` for non-negotiable patterns
-- Commands use individual parameters (NOT model objects)
-- Use DataContext extension methods (NOT repository interfaces)
-- Delete operations: `RemoveItemAsync<TEntity, TKey>()` NOT `DeleteItemByIdAsync`
-- Mapster for mapping (NOT AutoMapper)
-- Async all the way (NO `.Wait()` or `.Result`)
+See `.ai/project/architecture.md` for complete architecture documentation and `.ai/project/tech-stack.md` for the full technology stack.
 
-**Forbidden Technologies:**
-- See `.claude/reference/forbidden-tech.md`
-- NO MediatR → Use I-Synergy.Framework.CQRS
-- NO AutoMapper → Use Mapster
-- NO xUnit/NUnit → Use MSTest
-- NO FluentValidation → Use DataAnnotations
+## Critical Rules
 
-**Architecture:**
-- Domain: `{ApplicationName}.Domain.*` - CQRS, entities
-- Application: `{ApplicationName}.Services.*` - API endpoints
-- Infrastructure: `{ApplicationName}.Data.*` - Persistence
-- Presentation: `{ApplicationName}.UI.*` - Blazor/MAUI
+See `.ai/reference/critical-rules.md` for complete rules with examples. Violations cause bugs.
 
-**Patterns:**
-- CQRS: `.claude/patterns/cqrs-patterns.md`
-- API: `.claude/patterns/api-patterns.md`
-- Testing: `.claude/patterns/testing-patterns.md`
+**Key rules:**
+- Commands use individual parameters (NOT model objects passed directly)
+- Data access: EF Core primitives on named DbSet properties only — `FirstOrDefaultAsync`, `Add`, `Remove`, `SaveChangesAsync`
+- Delete: `FirstOrDefaultAsync` + `Remove` + check `rowsAffected > 0` — no extension methods
+- Update: `FirstOrDefaultAsync` + mutate properties + `SaveChangesAsync` — NO `.Update()` call (change tracker handles it)
+- Mapping: Mapster only — `entity.Adapt<T>()` or `ProjectToType<T>()` — NOT AutoMapper, NOT manual mapping
+- Async: always `CancellationToken` — NO `.Wait()` or `.Result`
+- Return types: responses wrap models — never return domain entities directly
+- Handler naming: `Create{Entity}CommandHandler` / `Get{Entity}ByIdQueryHandler` (must end in `CommandHandler` or `QueryHandler`)
+- Entity construction: direct `new Entity { ... }` in handlers — NOT `command.Adapt<Entity>()`
+- Enum naming: plural names (`PaymentProviders`, not `PaymentProvider`) except `*Status` enums
 
-**Naming:**
-- Commands: `{Action}{Entity}Command` → `CreateBudgetCommand`
-- Queries: `Get{Entity}{Criteria}Query` → `GetBudgetByIdQuery`
-- Handlers: `{CommandOrQuery}Handler` → `CreateBudgetHandler`
+## Architecture
 
-**Templates:**
-Refer to `.claude/reference/templates/` for copy-paste patterns:
-- `command-handler.cs.txt`
-- `query-handler.cs.txt`
-- `endpoint.cs.txt`
-- `mapping-config.cs.txt`
+**Clean Architecture Layers:**
+- Domain: `{ApplicationName}.Domain.*` — CQRS handlers, domain logic
+- Application: `{ApplicationName}.Services.*` — API endpoints
+- Infrastructure: `{ApplicationName}.Data.*` — EF Core persistence
+- Presentation: `{ApplicationName}.UI.*` — Blazor/MAUI
 
-**Testing:**
-- MSTest + Moq + Reqnroll
-- Unit tests for handlers
-- Integration tests for endpoints
-- Gherkin for complex flows
+**Vertical Slice Organization:**
+```
+{ApplicationName}.Domain.{Domain}/
+  Features/{Entity}/
+    Commands/Create{Entity}/
+      Create{Entity}Command.cs
+      Create{Entity}CommandHandler.cs
+      Create{Entity}Response.cs
+    Queries/Get{Entity}ById/
+      ...
+  Models/{Entity}.cs             (positional record, no "Model" suffix)
+  Mappers/Configuration.cs       (single Mapster IRegister per domain)
+  Extensions/ServiceCollectionExtensions.cs
+```
+
+## Forbidden Technologies
+
+See `.ai/reference/forbidden-tech.md` for the complete list.
+
+- NO MediatR — use I-Synergy.Framework.CQRS
+- NO AutoMapper — use Mapster
+- NO xUnit/NUnit — use MSTest
+- NO FluentValidation — use DataAnnotations
+- NO repository interfaces — use EF Core directly via named DbSet properties
+- NO `.Update()` on tracked EF entities — change tracker handles it
+
+## Patterns & Templates
+
+- CQRS: `.ai/patterns/cqrs-patterns.md`
+- API: `.ai/patterns/api-patterns.md`
+- Testing: `.ai/patterns/testing-patterns.md`
+- Templates: `.ai/reference/templates/` — `command-handler.cs.txt`, `query-handler.cs.txt`, `endpoint.cs.txt`, `mapping-config.cs.txt`
+
+## Naming Conventions
+
+- Commands: `{Action}{Entity}Command` — e.g. `CreateBudgetCommand`
+- Queries: `Get{Entity}{Criteria}Query` — e.g. `GetBudgetByIdQuery`
+- Command handlers: `{Action}{Entity}CommandHandler` — e.g. `CreateBudgetCommandHandler`
+- Query handlers: `Get{Entity}{Criteria}QueryHandler` — e.g. `GetBudgetByIdQueryHandler`
+- Models: no "Model" suffix — `Budget` not `BudgetModel`
 
 ## Token Replacements
 
-Replace throughout codebase:
-- `{ApplicationName}` - Your application name
-- `{Domain}` - Domain/bounded context
-- `{Entity}` - Entity name (PascalCase)
+See `.ai/reference/tokens.md` for complete definitions.
 
-For complete definitions: `.claude/reference/tokens.md`
-
-## Code Generation
-
-When generating code:
-1. Follow vertical slice organization
-2. Include XML documentation
-3. Use proper namespacing
-4. Apply SOLID principles
-5. Validate inputs with guard clauses
-6. Use structured logging
-7. Handle errors appropriately
+- `{ApplicationName}` — your application name
+- `{Domain}` — domain/bounded context
+- `{Entity}` — entity name (PascalCase)

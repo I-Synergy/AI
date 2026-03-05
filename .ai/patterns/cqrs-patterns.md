@@ -18,7 +18,7 @@ Complete patterns for implementing Command Query Responsibility Segregation.
 3. Handlers inject **DataContext directly** (NO repository layer)
 4. **Never expose** domain entities in public APIs — not as parameters, not as return values
 5. One handler per command/query (Single Responsibility)
-6. **Data access** uses named DbSet properties on DataContext for **all** operations: `dataContext.{Entities}.FindAsync`, `.Add`, `.Update`, `.Remove`, `SaveChangesAsync`
+6. **Data access** uses named DbSet properties on DataContext for **all** operations: `dataContext.{Entities}.FirstOrDefaultAsync`, `.Add`, `.Remove`, `SaveChangesAsync` — **never call `.Update()` on tracked entities** (change tracker handles property mutations automatically)
 7. **Mapping flow**: Entity → Model (via Mapster) | Response wraps Model
 8. Entities are used **internally** for domain logic and persistence — never passed across layer boundaries
 9. Each operation gets its own **subfolder** with separate files for Command/Query, Handler, and Response
@@ -266,7 +266,7 @@ public sealed class Update{Entity}CommandHandler(
     {
         logger.LogInformation("Updating {entity} {Id}", command.{Entity}Id);
 
-        var entity = await dataContext.{Entities}.FindAsync([command.{Entity}Id], cancellationToken);
+        var entity = await dataContext.{Entities}.FirstOrDefaultAsync(e => e.{Entity}Id == command.{Entity}Id, cancellationToken);
 
         if (entity is null)
         {
@@ -278,7 +278,6 @@ public sealed class Update{Entity}CommandHandler(
         entity.StartingDate = command.StartingDate;
         entity.EndingDate = command.EndingDate;
 
-        dataContext.{Entities}.Update(entity);
         var rowsAffected = await dataContext.SaveChangesAsync(cancellationToken);
 
         if (rowsAffected > 0)
@@ -313,7 +312,7 @@ public sealed class Delete{Entity}CommandHandler(
         Delete{Entity}Command command,
         CancellationToken cancellationToken = default)
     {
-        var entity = await dataContext.{Entities}.FindAsync([command.{Entity}Id], cancellationToken);
+        var entity = await dataContext.{Entities}.FirstOrDefaultAsync(e => e.{Entity}Id == command.{Entity}Id, cancellationToken);
 
         if (entity is null)
         {
@@ -361,7 +360,7 @@ public sealed class Get{Entity}ByIdQueryHandler(
         {
             logger.LogDebug("Retrieving {entity} {Id}", query.{Entity}Id);
 
-            var entity = await dataContext.{Entities}.FindAsync([query.{Entity}Id], cancellationToken);
+            var entity = await dataContext.{Entities}.FirstOrDefaultAsync(e => e.{Entity}Id == query.{Entity}Id, cancellationToken);
             var model = entity?.Adapt<{Entity}>();
 
             if (model is null)
@@ -482,8 +481,8 @@ var entity = new Entities.{Domain}.{Entity} { {Entity}Id = Guid.NewGuid(), ... }
 dataContext.{Entities}.Add(entity);
 var rowsAffected = await dataContext.SaveChangesAsync(cancellationToken);
 
-// Read single — named DbSet FindAsync + Mapster Adapt
-var entity = await dataContext.{Entities}.FindAsync([id], cancellationToken);
+// Read single — named DbSet FirstOrDefaultAsync + Mapster Adapt
+var entity = await dataContext.{Entities}.FirstOrDefaultAsync(e => e.{Entity}Id == id, cancellationToken);
 var model = entity?.Adapt<{Entity}>();
 
 // Read list — named DbSet + ProjectToType
@@ -492,14 +491,13 @@ var models = await dataContext.{Entities}
     .ProjectToType<{Entity}>()
     .ToListAsync(cancellationToken);
 
-// Update — named DbSet FindAsync, mutate properties, Update, SaveChanges
-var entity = await dataContext.{Entities}.FindAsync([id], cancellationToken);
+// Update — FirstOrDefaultAsync + property mutation (no .Update() needed — change tracker handles it)
+var entity = await dataContext.{Entities}.FirstOrDefaultAsync(e => e.{Entity}Id == command.{Entity}Id, cancellationToken);
 entity.Description = command.Description;
-dataContext.{Entities}.Update(entity);
 await dataContext.SaveChangesAsync(cancellationToken);
 
-// Delete — named DbSet FindAsync, Remove, SaveChanges
-var entity = await dataContext.{Entities}.FindAsync([id], cancellationToken);
+// Delete — named DbSet FirstOrDefaultAsync, Remove, SaveChanges
+var entity = await dataContext.{Entities}.FirstOrDefaultAsync(e => e.{Entity}Id == command.{Entity}Id, cancellationToken);
 dataContext.{Entities}.Remove(entity);
 await dataContext.SaveChangesAsync(cancellationToken);
 ```
@@ -568,6 +566,7 @@ Key rules:
 - Only Entity → Model mappings (and reverse when names differ)
 - NO Command → Entity mappings (handlers construct entities directly)
 - NO Model → Response mappings (responses wrap models, no mapping needed)
+- Cross-domain entity mappings are allowed when a domain references entities from another domain (e.g., Budgets domain mapping `Entities.Settings.ExpenseType` → `ExpenseType`)
 
 ---
 
@@ -628,7 +627,7 @@ await dataContext.RemoveItemAsync<Budget, Guid>(id, ct);
 
 // CORRECT — use named DbSet properties
 dataContext.Budgets.Add(entity);
-await dataContext.Budgets.FindAsync([id], ct);
+await dataContext.Budgets.FirstOrDefaultAsync(e => e.BudgetId == id, ct);
 dataContext.Budgets.Remove(entity);
 await dataContext.SaveChangesAsync(ct);
 ```
@@ -679,7 +678,7 @@ public async Task<Entities.Budgets.Budget> HandleAsync(...) { return entity; }
 // CORRECT - Returns response wrapping model
 public async Task<GetBudgetByIdResponse> HandleAsync(...)
 {
-    var entity = await dataContext.Budgets.FindAsync([id], ct);
+    var entity = await dataContext.Budgets.FirstOrDefaultAsync(e => e.BudgetId == query.BudgetId, ct);
     var budget = entity?.Adapt<Budget>();
     return new GetBudgetByIdResponse(budget);
 }
