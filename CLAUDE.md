@@ -6,7 +6,7 @@ You are a development agent working within a generic .NET project template.
 
 ## Template Tokens
 
-See `.ai/reference/tokens.md` for complete token definitions. Replace `{ApplicationName}`, `{Domain}`, `{Entity}` throughout the codebase.
+See `.claude/reference/tokens.md` for complete token definitions. Replace `{ApplicationName}`, `{Domain}`, `{Entity}` throughout the codebase.
 
 ## Environment
 
@@ -18,25 +18,24 @@ When searching for code references, frameworks, or dependencies, search the ENTI
 
 ## Configuration
 
-- Use local `.ai/` folder (project-level) for documentation, patterns, skills, progress, and plan files.
-- Claude Code config stays in `.claude/settings.json` — do NOT move or duplicate it.
+- Use local `.claude/` folder (project-level) for project-specific settings like progress and plan files.
 - Do NOT place project-specific config in the global `~/.claude/` directory unless explicitly instructed.
 - When modifying CLAUDE.md or any configuration files, always read the existing file first and preserve existing conventions before making changes.
 
 ## Core Operational Rules
 
-1. Read session context first: `.ai/session-context.md` (never mix project contexts)
-2. Load context on demand from `.ai/` based on work type only
+1. Read session context first: `.claude/session-context.md` (never mix project contexts)
+2. Load context on demand from `.claude/` based on work type only
 3. Mark open questions OPEN or ASSUMED, never resolve silently
-4. Before session end: Write structured handoff to `.ai/session-context.md`
-5. Verify against `.ai/checklists/pre-submission.md` before completion
+4. Before session end: Write structured handoff to `.claude/session-context.md`
+5. Verify against `.claude/checklists/pre-submission.md` before completion
 
 ## Task Execution Protocol
 
 **On every non-trivial task (3+ steps or multi-file):**
 
 1. **Enter plan mode first** — call `EnterPlanMode`, present the plan, wait for approval before writing any code
-2. **Create a progress file** — immediately write `.ai/progress/{task-slug}.md` using this structure:
+2. **Create a progress file** — immediately write `.claude/progress/{task-slug}.md` using this structure:
    ```
    # {Task Name}
    Status: IN PROGRESS
@@ -51,17 +50,17 @@ When searching for code references, frameworks, or dependencies, search the ENTI
 3. **Update progress file** after completing each step — use Edit to change `- [ ]` to `- [x]`, never overwrite the whole file
 4. **On completion (mandatory, not optional):**
    - Edit the progress file: add `**Status:** DONE` near the top
-   - Move the file: `mv .ai/progress/{task-slug}.md .ai/completed/`
-   - If a copy already exists in `.ai/completed/`, delete the one in `progress/` instead
+   - Move the file: `mv .claude/progress/{task-slug}.md .claude/completed/`
+   - If a copy already exists in `.claude/completed/`, delete the one in `progress/` instead
    - **Do not end the session without completing this step**
 
-> **Why this matters:** Files left in `.ai/progress/` are treated as in-progress work in future sessions, causing confusion about what is still pending.
+> **Why this matters:** Files left in `.claude/progress/` are treated as in-progress work in future sessions, causing confusion about what is still pending.
 
 **Trivial tasks** (single file, obvious fix): skip plan mode and progress file.
 
 ### Progress Tracking: Local Files Only
 
-**Do NOT use the built-in `TaskCreate`/`TaskUpdate`/`TaskList` tools** — they store data globally in `~/.claude/todos/` and are not visible in the repository. Instead, always use local `.ai/progress/` markdown files for tracking task progress. Plans are already configured to write locally via `plansDirectory` in `.claude/settings.json`.
+**Do NOT use the built-in `TaskCreate`/`TaskUpdate`/`TaskList` tools** — they store data globally in `~/.claude/todos/` and are not visible in the repository. Instead, always use local `.claude/progress/` markdown files for tracking task progress. Plans are already configured to write locally via `plansDirectory` in `.claude/settings.json`.
 
 ### Subagent Template
 
@@ -77,7 +76,7 @@ When searching for code references, frameworks, or dependencies, search the ENTI
 When delegating to a subagent via the Task tool, always include in the task prompt:
 
 ```
-Progress file: .ai/progress/{task-slug}.md
+Progress file: .claude/progress/{task-slug}.md
 After completing each step, use the Edit tool to mark it done:
   old: "- [ ] {step description}"
   new: "- [x] {step description}"
@@ -88,7 +87,7 @@ Subagents do not inherit this CLAUDE.md. All progress instructions must be expli
 
 ## Critical Coding Rules
 
-These cause bugs if violated. Full examples in `.ai/reference/critical-rules.md`.
+These cause bugs if violated. Full examples in `.claude/reference/critical-rules.md`.
 
 | Rule | Correct | Wrong |
 |-|-|-|
@@ -158,22 +157,22 @@ Load these files based on task type:
 
 | Task Type | Files to Load |
 |-|-|
-| .NET Development | `.ai/skills/dotnet-engineer/SKILL.md`, `.ai/patterns/object-oriented-programming.md` |
-| CQRS | `.ai/skills/dotnet-engineer/SKILL.md`, `.ai/patterns/cqrs-patterns.md`, `.ai/reference/critical-rules.md`, `.ai/reference/templates/command-handler.cs.txt`, `.ai/reference/templates/query-handler.cs.txt`, `.ai/reference/templates/mapping-config.cs.txt` |
-| API Endpoints | `.ai/patterns/api-patterns.md`, `.ai/reference/templates/endpoint.cs.txt` |
-| Unit Tests | `.ai/skills/unit-tester/SKILL.md`, `.ai/patterns/testing-patterns.md`, `.ai/patterns/test-driven-development.md`, `.ai/reference/templates/test-class.cs.txt`, `.ai/reference/templates/feature-file.feature.txt` |
-| UI/E2E Tests | `.ai/skills/playwright-tester/SKILL.md`, `.ai/patterns/testing-patterns.md` |
-| Integration | `.ai/skills/integration-specialist/SKILL.md`, `.ai/patterns/service-oriented-architecture.md` |
-| Architecture | `.ai/skills/architect/SKILL.md`, `.ai/project/architecture.md` |
-| Code Review | `.ai/skills/code-reviewer/SKILL.md`, `.ai/checklists/pre-submission.md` |
-| Security | `.ai/skills/security/SKILL.md`, `.ai/skills/api-security/SKILL.md`, `.ai/skills/software-security/SKILL.md` |
-| Performance | `.ai/skills/performance-engineer/SKILL.md` |
-| Microservices | `.ai/patterns/microservices.md`, `.ai/skills/integration-specialist/SKILL.md` |
-| Blazor UI | `.ai/skills/blazor-specialist/SKILL.md`, `.ai/patterns/mvvm.md` |
-| MAUI | `.ai/skills/maui-specialist/SKILL.md`, `.ai/patterns/mvvm.md` |
-| Database | `.ai/skills/database-migration/SKILL.md` |
-| DevOps | `.ai/skills/devops-engineer/SKILL.md` |
-| Documentation | `.ai/skills/technical-writer/SKILL.md` |
+| .NET Development | `.claude/skills/dotnet-engineer/SKILL.md`, `.claude/patterns/object-oriented-programming.md` |
+| CQRS | `.claude/skills/dotnet-engineer/SKILL.md`, `.claude/patterns/cqrs-patterns.md`, `.claude/reference/critical-rules.md`, `.claude/reference/templates/command-handler.cs.txt`, `.claude/reference/templates/query-handler.cs.txt`, `.claude/reference/templates/mapping-config.cs.txt` |
+| API Endpoints | `.claude/patterns/api-patterns.md`, `.claude/reference/templates/endpoint.cs.txt` |
+| Unit Tests | `.claude/skills/unit-tester/SKILL.md`, `.claude/patterns/testing-patterns.md`, `.claude/patterns/test-driven-development.md`, `.claude/reference/templates/test-class.cs.txt`, `.claude/reference/templates/feature-file.feature.txt` |
+| UI/E2E Tests | `.claude/skills/playwright-tester/SKILL.md`, `.claude/patterns/testing-patterns.md` |
+| Integration | `.claude/skills/integration-specialist/SKILL.md`, `.claude/patterns/service-oriented-architecture.md` |
+| Architecture | `.claude/skills/architect/SKILL.md`, `.claude/project/architecture.md` |
+| Code Review | `.claude/skills/code-reviewer/SKILL.md`, `.claude/checklists/pre-submission.md` |
+| Security | `.claude/skills/security/SKILL.md`, `.claude/skills/api-security/SKILL.md`, `.claude/skills/software-security/SKILL.md` |
+| Performance | `.claude/skills/performance-engineer/SKILL.md` |
+| Microservices | `.claude/patterns/microservices.md`, `.claude/skills/integration-specialist/SKILL.md` |
+| Blazor UI | `.claude/skills/blazor-specialist/SKILL.md`, `.claude/patterns/mvvm.md` |
+| MAUI | `.claude/skills/maui-specialist/SKILL.md`, `.claude/patterns/mvvm.md` |
+| Database | `.claude/skills/database-migration/SKILL.md` |
+| DevOps | `.claude/skills/devops-engineer/SKILL.md` |
+| Documentation | `.claude/skills/technical-writer/SKILL.md` |
 
 ## Task Definition Template
 
@@ -194,10 +193,10 @@ Use this structure for all tasks:
 - [ ] Criterion 3
 
 ## Verify
-Run pre-submission checklist: `.ai/checklists/pre-submission.md`
+Run pre-submission checklist: `.claude/checklists/pre-submission.md`
 
 ## Done
-- Progress file moved to `.ai/completed/`
+- Progress file moved to `.claude/completed/`
 - Session context updated with learnings
 - All acceptance criteria met
 ```
@@ -205,14 +204,14 @@ Run pre-submission checklist: `.ai/checklists/pre-submission.md`
 ## Session Management
 
 **Every session:**
-1. Read `.ai/session-context.md`
-2. Read `.ai/completed/` (relevant tasks)
+1. Read `.claude/session-context.md`
+2. Read `.claude/completed/` (relevant tasks)
 3. Work with real-time progress reporting
 4. Write structured handoff before ending
 
 **Agent delegation:**
 - All agents have full repository access
-- All agents report progress in real-time to `.ai/progress/`
+- All agents report progress in real-time to `.claude/progress/`
 - All agents use structured output (not free-form prose)
 
 ## Session Switching
@@ -223,7 +222,7 @@ Start new session when:
 - Changing work types
 - Session reached completion
 
-Before ending: Use `.ai/reference/templates/session-handoff.md.txt` template. Write to `.ai/session-context.md`.
+Before ending: Use `.claude/reference/templates/session-handoff.md.txt` template. Write to `.claude/session-context.md`.
 
 ## Reference Architecture
 
@@ -260,27 +259,27 @@ Before ending: Use `.ai/reference/templates/session-handoff.md.txt` template. Wr
 ## Key Reference Files
 
 **Critical Information:**
-- `.ai/reference/critical-rules.md` — non-negotiable patterns with full examples
-- `.ai/reference/forbidden-tech.md` — banned libraries/approaches
-- `.ai/reference/tokens.md` — template token definitions
-- `.ai/reference/glossary.md`
+- `.claude/reference/critical-rules.md` — non-negotiable patterns with full examples
+- `.claude/reference/forbidden-tech.md` — banned libraries/approaches
+- `.claude/reference/tokens.md` — template token definitions
+- `.claude/reference/glossary.md`
 
 **Project Context:**
-- `.ai/project/architecture.md` — complete architecture documentation
-- `.ai/project/domains.md` — business domain catalog
-- `.ai/project/tech-stack.md` — full technology stack
+- `.claude/project/architecture.md` — complete architecture documentation
+- `.claude/project/domains.md` — business domain catalog
+- `.claude/project/tech-stack.md` — full technology stack
 
 **Patterns:**
-- `.ai/patterns/cqrs-patterns.md`
-- `.ai/patterns/api-patterns.md`
-- `.ai/patterns/testing-patterns.md`
+- `.claude/patterns/cqrs-patterns.md`
+- `.claude/patterns/api-patterns.md`
+- `.claude/patterns/testing-patterns.md`
 
 **Templates:**
-- `.ai/reference/templates/` — code generation templates
-- `.ai/reference/templates/session-handoff.md.txt` — session handoff template
+- `.claude/reference/templates/` — code generation templates
+- `.claude/reference/templates/session-handoff.md.txt` — session handoff template
 
 **Checklists:**
-- `.ai/checklists/pre-submission.md` — run before marking any task complete
+- `.claude/checklists/pre-submission.md` — run before marking any task complete
 
 ## Refactoring Conventions
 
@@ -303,10 +302,10 @@ Before ending: Use `.ai/reference/templates/session-handoff.md.txt` template. Wr
 
 ## Documentation Maintenance
 
-- When making architectural changes (new CQRS patterns, data access conventions, mapping approaches, project structure changes), update CLAUDE.md and the relevant `.ai/` reference files to reflect the new patterns in the same session.
-- After completing a feature or refactor that introduces new conventions, verify that CLAUDE.md, `.ai/reference/critical-rules.md`, and `.ai/patterns/cqrs-patterns.md` still accurately describe the codebase. Flag any drift to the user.
+- When making architectural changes (new CQRS patterns, data access conventions, mapping approaches, project structure changes), update CLAUDE.md and the relevant `.claude/` reference files to reflect the new patterns in the same session.
+- After completing a feature or refactor that introduces new conventions, verify that CLAUDE.md, `.claude/reference/critical-rules.md`, and `.claude/patterns/cqrs-patterns.md` still accurately describe the codebase. Flag any drift to the user.
 - Run `/verify-config` periodically to audit CLAUDE.md against the actual codebase.
 
 ## Verification
 
-Before marking any task complete: `.ai/checklists/pre-submission.md`
+Before marking any task complete: `.claude/checklists/pre-submission.md`
