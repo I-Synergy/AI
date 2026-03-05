@@ -6,7 +6,7 @@ Professional .NET development template with AI-powered agent orchestration and m
 
 A **production-ready .NET project template** that provides comprehensive development patterns, specialized agent skills, and quality assurance tools for building enterprise applications with Clean Architecture, CQRS, and Domain-Driven Design.
 
-AI context lives in `.ai/` (vendor-neutral). Claude Code configuration lives in `.claude/settings.json`.
+AI context lives in `.claude/` (auto-loaded by Claude Code).
 
 ## Features
 
@@ -53,7 +53,7 @@ AI context lives in `.ai/` (vendor-neutral). Claude Code configuration lives in 
 | `{entity}` | Entity name (lowercase) | `budget`, `goal`, `debt` |
 | `{entities}` | Entity plural (lowercase) | `budgets`, `goals`, `debts` |
 
-See `.ai/reference/tokens.md` for complete definitions.
+See `.claude/reference/tokens.md` for complete definitions.
 
 ## Quick Start
 
@@ -61,10 +61,7 @@ See `.ai/reference/tokens.md` for complete definitions.
 
 ```bash
 # Copy AI context directory to your project root
-cp -r ./.ai /path/to/YourProject/.ai
-
-# Copy Claude Code config
-cp ./.claude/settings.json /path/to/YourProject/.claude/settings.json
+cp -r ./.claude /path/to/YourProject/.claude
 
 # Copy CLAUDE.md orchestration file
 cp ./CLAUDE.md /path/to/YourProject/CLAUDE.md
@@ -72,7 +69,7 @@ cp ./CLAUDE.md /path/to/YourProject/CLAUDE.md
 
 ### 2. Customize Project Files
 
-Edit files in `.ai/project/`:
+Edit files in `.claude/project/`:
 
 | File | Purpose | Key Question |
 |------|---------|--------------|
@@ -84,19 +81,19 @@ Edit files in `.ai/project/`:
 ### 3. Replace Tokens
 
 ```bash
-find /path/to/YourProject/.ai -type f -exec sed -i 's/{ApplicationName}/BudgetTracker/g' {} +
-find /path/to/YourProject/.ai -type f -exec sed -i 's/{Domain}/Budgets/g' {} +
-find /path/to/YourProject/.ai -type f -exec sed -i 's/{Entity}/Budget/g' {} +
+find /path/to/YourProject/.claude -type f -exec sed -i 's/{ApplicationName}/BudgetTracker/g' {} +
+find /path/to/YourProject/.claude -type f -exec sed -i 's/{Domain}/Budgets/g' {} +
+find /path/to/YourProject/.claude -type f -exec sed -i 's/{Entity}/Budget/g' {} +
 ```
 
 ### 4. Initialize Session Context
 
-Edit `.ai/session-context.md` to establish your project's initial state.
+Edit `.claude/session-context.md` to establish your project's initial state.
 
 ### 5. Start Developing
 
 ```
-"Read .ai/session-context.md and implement CRUD for Budget entity following .ai/patterns/cqrs-patterns.md"
+"Read .claude/session-context.md and implement CRUD for Budget entity following .claude/patterns/cqrs-patterns.md"
 ```
 
 ## File Structure
@@ -108,9 +105,8 @@ Edit `.ai/session-context.md` to establish your project's initial state.
 ├── TEMPLATE-USAGE.md                # Detailed usage guide
 ├── TEMPLATE-FAQ.md                  # Frequently asked questions
 ├── README.md                        # This file
-├── .claude/
-│   └── settings.json                # Claude Code configuration (plansDirectory, hooks, permissions)
-└── .ai/                             # All AI context (vendor-neutral)
+└── .claude/                         # All AI context (Claude Code)
+    ├── settings.json                # Claude Code configuration (plansDirectory, hooks, permissions)
     ├── session-context.md           # Working session memory
     ├── reference/
     │   ├── critical-rules.md        # Non-negotiable patterns (read first)
@@ -176,12 +172,12 @@ Edit `.ai/session-context.md` to establish your project's initial state.
 "Implement complete CRUD for Budget entity"
 
 Claude will:
-1. Read .ai/session-context.md
-2. Load .ai/skills/dotnet-engineer/SKILL.md + .ai/patterns/cqrs-patterns.md
-3. Use templates from .ai/reference/templates/
-4. Track progress in .ai/progress/
-5. Verify against .ai/checklists/pre-submission.md
-6. Write handoff to .ai/session-context.md
+1. Read .claude/session-context.md
+2. Load .claude/skills/dotnet-engineer/SKILL.md + .claude/patterns/cqrs-patterns.md
+3. Use templates from .claude/reference/templates/
+4. Track progress in .claude/progress/
+5. Verify against .claude/checklists/pre-submission.md
+6. Write handoff to .claude/session-context.md
 ```
 
 ### Writing Tests
@@ -190,7 +186,7 @@ Claude will:
 "Write comprehensive tests for Budget handlers"
 
 Claude will:
-1. Load .ai/skills/unit-tester/SKILL.md + .ai/patterns/testing-patterns.md
+1. Load .claude/skills/unit-tester/SKILL.md + .claude/patterns/testing-patterns.md
 2. Use test-class.cs.txt and feature-file.feature.txt templates
 3. Create MSTest unit tests + Reqnroll BDD scenarios
 ```
@@ -201,10 +197,10 @@ Claude will:
 "Review the Budget implementation for compliance"
 
 Claude will:
-1. Load .ai/skills/code-reviewer/SKILL.md
-2. Check .ai/reference/critical-rules.md
-3. Verify .ai/patterns/cqrs-patterns.md compliance
-4. Run through .ai/checklists/pre-submission.md
+1. Load .claude/skills/code-reviewer/SKILL.md
+2. Check .claude/reference/critical-rules.md
+3. Verify .claude/patterns/cqrs-patterns.md compliance
+4. Run through .claude/checklists/pre-submission.md
 ```
 
 ## Work-Type Context Mapping
@@ -213,38 +209,38 @@ Claude loads these files automatically based on your task type:
 
 | Task Type | Files Loaded |
 |-----------|-------------|
-| CQRS | `.ai/skills/dotnet-engineer/SKILL.md`, `.ai/patterns/cqrs-patterns.md`, `.ai/reference/critical-rules.md`, templates |
-| API Endpoints | `.ai/patterns/api-patterns.md`, `.ai/reference/templates/endpoint.cs.txt` |
-| Unit Tests | `.ai/skills/unit-tester/SKILL.md`, `.ai/patterns/testing-patterns.md`, test templates |
-| Blazor UI | `.ai/skills/blazor-specialist/SKILL.md`, `.ai/patterns/mvvm.md` |
-| MAUI | `.ai/skills/maui-specialist/SKILL.md`, `.ai/patterns/mvvm.md` |
-| Architecture | `.ai/skills/architect/SKILL.md`, `.ai/project/architecture.md` |
-| Code Review | `.ai/skills/code-reviewer/SKILL.md`, `.ai/checklists/pre-submission.md` |
-| Security | `.ai/skills/security/SKILL.md`, `.ai/skills/api-security/SKILL.md` |
+| CQRS | `.claude/skills/dotnet-engineer/SKILL.md`, `.claude/patterns/cqrs-patterns.md`, `.claude/reference/critical-rules.md`, templates |
+| API Endpoints | `.claude/patterns/api-patterns.md`, `.claude/reference/templates/endpoint.cs.txt` |
+| Unit Tests | `.claude/skills/unit-tester/SKILL.md`, `.claude/patterns/testing-patterns.md`, test templates |
+| Blazor UI | `.claude/skills/blazor-specialist/SKILL.md`, `.claude/patterns/mvvm.md` |
+| MAUI | `.claude/skills/maui-specialist/SKILL.md`, `.claude/patterns/mvvm.md` |
+| Architecture | `.claude/skills/architect/SKILL.md`, `.claude/project/architecture.md` |
+| Code Review | `.claude/skills/code-reviewer/SKILL.md`, `.claude/checklists/pre-submission.md` |
+| Security | `.claude/skills/security/SKILL.md`, `.claude/skills/api-security/SKILL.md` |
 
 ## Customization
 
 ### Required Before Starting
 
-1. Edit files in `.ai/project/` with your project specifics
+1. Edit files in `.claude/project/` with your project specifics
 2. Replace all `{tokens}` with your actual values
-3. Update `.ai/reference/forbidden-tech.md` for your stack
-4. Initialize `.ai/session-context.md`
+3. Update `.claude/reference/forbidden-tech.md` for your stack
+4. Initialize `.claude/session-context.md`
 
 ### Optional
 
-1. Add domain-specific patterns to `.ai/patterns/`
-2. Create custom skills in `.ai/skills/`
-3. Add project-specific checklists to `.ai/checklists/`
-4. Modify code templates in `.ai/reference/templates/`
+1. Add domain-specific patterns to `.claude/patterns/`
+2. Create custom skills in `.claude/skills/`
+3. Add project-specific checklists to `.claude/checklists/`
+4. Modify code templates in `.claude/reference/templates/`
 
 ## Session Management
 
 Every session:
-1. **Start** — Read `.ai/session-context.md`
-2. **Review** — Check `.ai/completed/` for relevant prior work
-3. **Track** — Write progress to `.ai/progress/{task-slug}.md` in real time
-4. **End** — Write handoff to `.ai/session-context.md`
+1. **Start** — Read `.claude/session-context.md`
+2. **Review** — Check `.claude/completed/` for relevant prior work
+3. **Track** — Write progress to `.claude/progress/{task-slug}.md` in real time
+4. **End** — Write handoff to `.claude/session-context.md`
 
 ## Supported Technologies
 
@@ -275,9 +271,9 @@ Every session:
 | `CLAUDE.md` | AI orchestration (auto-loaded by Claude Code) |
 | `TEMPLATE-USAGE.md` | Detailed usage and customization guide |
 | `TEMPLATE-FAQ.md` | Frequently asked questions |
-| `.ai/reference/critical-rules.md` | Non-negotiable coding patterns |
-| `.ai/reference/forbidden-tech.md` | Banned libraries and approaches |
-| `.ai/project/` | Project-specific context files |
+| `.claude/reference/critical-rules.md` | Non-negotiable coding patterns |
+| `.claude/reference/forbidden-tech.md` | Banned libraries and approaches |
+| `.claude/project/` | Project-specific context files |
 
 ## License
 
