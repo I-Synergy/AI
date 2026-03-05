@@ -1,5 +1,5 @@
 {
-  "plansDirectory": "./.claude/plans",
+  "plansDirectory": "./.ai/plans",
   "hooks": {
     "PostToolUse": [
       {
@@ -27,15 +27,16 @@
     ],
     "additionalDirectories": [
       "./.claude",
-      "./.claude/analysis",
-      "./.claude/checklists",
-      "./.claude/completed",
-      "./.claude/patterns",
-      "./.claude/plans",
-      "./.claude/progress",
-      "./.claude/project",
-      "./.claude/reference",
-      "./.claude/skills"
+      "./.ai",
+      "./.ai/analysis",
+      "./.ai/checklists",
+      "./.ai/completed",
+      "./.ai/patterns",
+      "./.ai/plans",
+      "./.ai/progress",
+      "./.ai/project",
+      "./.ai/reference",
+      "./.ai/skills"
     ]
   }
 }

@@ -39,19 +39,22 @@ Use this checklist before considering any task complete.
 
 ## Data Access
 
-- [ ] Uses DataContext extension methods (AddItemAsync, GetItemByIdAsync, etc.)
-- [ ] Delete operations use `RemoveItemAsync<TEntity, TKey>()` (NOT DeleteItemByIdAsync)
+- [ ] Uses EF Core primitives on named DbSet properties (`FirstOrDefaultAsync`, `Add`, `Remove`, `SaveChangesAsync`)
+- [ ] No extension methods (`AddItemAsync`, `GetItemByIdAsync`, `RemoveItemAsync`, etc.)
+- [ ] Delete operations use `FirstOrDefaultAsync` + `Remove` + `SaveChangesAsync` (check `rowsAffected > 0`)
+- [ ] Update operations do NOT call `.Update()` on tracked entities (change tracker handles it)
 - [ ] No N+1 query problems (proper Include usage)
 - [ ] Async all the way (no .Wait() or .Result)
 - [ ] CancellationToken passed through all layers
 
 ## Mapping (Mapster)
 
-- [ ] Mapping configuration in `{Entity}MappingConfig.cs`
-- [ ] Configuration registered in ServiceCollectionExtensions
-- [ ] Uses .Adapt<T>() extension method
+- [ ] Mapping configuration in `Mappers/Configuration.cs` (single class per domain, named `Configuration`)
+- [ ] Configuration registered in ServiceCollectionExtensions via `TypeAdapterConfig.GlobalSettings.Scan(assembly)`
+- [ ] Uses `.Adapt<T>()` for single entities, `ProjectToType<T>()` for list queries
 - [ ] No AutoMapper used
 - [ ] No manual mapping used
+- [ ] No Command → Entity mappings (handlers construct entities directly)
 
 ## Error Handling & Logging
 
