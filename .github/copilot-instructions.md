@@ -4,11 +4,11 @@ You are assisting with a .NET project following Clean Architecture, CQRS, and DD
 
 ## Project Context
 
-See `.ai/project/architecture.md` for complete architecture documentation and `.ai/project/tech-stack.md` for the full technology stack.
+See `.claude/project/architecture.md` for complete architecture documentation and `.claude/project/tech-stack.md` for the full technology stack.
 
 ## Critical Rules
 
-See `.ai/reference/critical-rules.md` for complete rules with examples. Violations cause bugs.
+See `.claude/reference/critical-rules.md` for complete rules with examples. Violations cause bugs.
 
 **Key rules:**
 - Commands use individual parameters (NOT model objects passed directly)
@@ -47,7 +47,7 @@ See `.ai/reference/critical-rules.md` for complete rules with examples. Violatio
 
 ## Forbidden Technologies
 
-See `.ai/reference/forbidden-tech.md` for the complete list.
+See `.claude/reference/forbidden-tech.md` for the complete list.
 
 - NO MediatR — use I-Synergy.Framework.CQRS
 - NO AutoMapper — use Mapster
@@ -58,10 +58,10 @@ See `.ai/reference/forbidden-tech.md` for the complete list.
 
 ## Patterns & Templates
 
-- CQRS: `.ai/patterns/cqrs-patterns.md`
-- API: `.ai/patterns/api-patterns.md`
-- Testing: `.ai/patterns/testing-patterns.md`
-- Templates: `.ai/reference/templates/` — `command-handler.cs.txt`, `query-handler.cs.txt`, `endpoint.cs.txt`, `mapping-config.cs.txt`
+- CQRS: `.claude/patterns/cqrs-patterns.md`
+- API: `.claude/patterns/api-patterns.md`
+- Testing: `.claude/patterns/testing-patterns.md`
+- Templates: `.claude/reference/templates/` — `command-handler.cs.txt`, `query-handler.cs.txt`, `endpoint.cs.txt`, `mapping-config.cs.txt`
 
 ## Naming Conventions
 
@@ -73,7 +73,7 @@ See `.ai/reference/forbidden-tech.md` for the complete list.
 
 ## Token Replacements
 
-See `.ai/reference/tokens.md` for complete definitions.
+See `.claude/reference/tokens.md` for complete definitions.
 
 - `{ApplicationName}` — your application name
 - `{Domain}` — domain/bounded context
