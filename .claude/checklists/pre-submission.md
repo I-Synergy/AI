@@ -107,6 +107,14 @@ Use this checklist before considering any task complete.
 - [ ] NO FluentValidation (using Data Annotations)
 - [ ] NO standalone Polly (using Microsoft.Extensions.Resilience)
 
+## README Maintenance (Hard Requirement)
+
+- [ ] If any files/directories were added, removed, or renamed in `.claude/` — README.md File Structure updated
+- [ ] If any skills were added or removed — README.md Skills table updated
+- [ ] If any patterns were added or removed — README.md Pattern Guides table updated
+- [ ] If any root-level files changed — README.md Documentation table updated
+- [ ] If no structural changes occurred — explicitly confirmed README.md requires no update
+
 ## Documentation
 
 - [ ] XML documentation on public APIs
