@@ -23,6 +23,7 @@ This directory contains all available Claude skills in proper Claude Skills form
 | **maui-specialist** | MAUI mobile development | - |
 | **software-security** | Application security specialist | - |
 | **security** | Security architect and coordinator | - |
+| **refactor** | Bulk find-and-replace transformations, pattern migrations | - |
 
 ## Invocation Examples
 
