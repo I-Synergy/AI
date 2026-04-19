@@ -1,7 +1,8 @@
 #!/bin/bash
 # Validate directory structure of Claude template
 
-TEMPLATE_ROOT="/d/Projects/Template"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+TEMPLATE_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 FAILED=0
 PASSED=0
 
@@ -20,6 +21,7 @@ required_dirs=(
     ".ai/checklists"
     ".ai/project"
     ".ai/tests"
+    ".ai/scripts"
 )
 
 for dir in "${required_dirs[@]}"; do
@@ -34,35 +36,25 @@ done
 
 echo ""
 
-# Check all skills have SKILL.md
+# Check all skills have SKILL.md (dynamic discovery)
 echo "2. Checking skill SKILL.md files..."
-skills=(
-    "dotnet-engineer"
-    "unit-tester"
-    "playwright-tester"
-    "code-reviewer"
-    "technical-writer"
-    "architect"
-    "database-migration"
-    "api-security"
-    "performance-engineer"
-    "devops-engineer"
-    "integration-specialist"
-    "blazor-specialist"
-    "maui-specialist"
-    "software-security"
-    "security"
-)
-
-for skill in "${skills[@]}"; do
-    if [ ! -f "$TEMPLATE_ROOT/.ai/skills/$skill/SKILL.md" ]; then
-        echo "❌ Missing SKILL.md for: $skill"
-        FAILED=$((FAILED + 1))
-    else
-        echo "✅ Skill exists: $skill"
-        PASSED=$((PASSED + 1))
+skill_count=0
+missing_count=0
+for skill_dir in "$TEMPLATE_ROOT/.ai/skills"/*/; do
+    if [ -d "$skill_dir" ]; then
+        skill_name=$(basename "$skill_dir")
+        skill_count=$((skill_count + 1))
+        if [ ! -f "$skill_dir/SKILL.md" ]; then
+            echo "❌ Missing SKILL.md for: $skill_name"
+            FAILED=$((FAILED + 1))
+            missing_count=$((missing_count + 1))
+        fi
     fi
 done
+if [ $missing_count -eq 0 ] && [ $skill_count -gt 0 ]; then
+    echo "✅ All $skill_count skills have SKILL.md"
+    PASSED=$((PASSED + 1))
+fi
 
 echo ""
 
@@ -119,7 +111,6 @@ project_files=(
     "architecture.md"
     "domains.md"
     "preferences.md"
-    "session-context.md"
     "tech-stack.md"
 )
 
@@ -153,7 +144,6 @@ template_files=(
     "command-handler.cs.txt"
     "query-handler.cs.txt"
     "endpoint.cs.txt"
-    "mapping-config.cs.txt"
     "test-class.cs.txt"
     "feature-file.feature.txt"
 )
@@ -175,6 +165,7 @@ echo "8. Checking main documentation files..."
 main_files=(
     "CLAUDE.md"
     "README.md"
+    ".ai/session-context.md"
 )
 
 for main in "${main_files[@]}"; do
@@ -183,6 +174,25 @@ for main in "${main_files[@]}"; do
         FAILED=$((FAILED + 1))
     else
         echo "✅ Main file exists: $main"
+        PASSED=$((PASSED + 1))
+    fi
+done
+
+echo ""
+
+# Check scripts
+echo "9. Checking scripts..."
+scripts=(
+    ".ai/scripts/sync-skills.py"
+    ".ai/scripts/upgrade-template.py"
+)
+
+for script in "${scripts[@]}"; do
+    if [ ! -f "$TEMPLATE_ROOT/$script" ]; then
+        echo "❌ Missing script: $script"
+        FAILED=$((FAILED + 1))
+    else
+        echo "✅ Script exists: $script"
         PASSED=$((PASSED + 1))
     fi
 done
