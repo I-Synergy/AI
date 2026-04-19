@@ -33,13 +33,15 @@ def _run_bash(script: str) -> tuple[int, str]:
     bash = shutil.which("bash")
     if bash is None:
         pytest.skip("bash not available on PATH")
+    # Pass script as a plain filename with cwd=TESTS_DIR so bash never
+    # receives a Windows path with backslashes or drive letters.
     result = subprocess.run(
-        [bash, str(TESTS_DIR / script)],
+        [bash, script],
         capture_output=True,
         text=True,
         encoding="utf-8",
         errors="replace",
-        cwd=str(TEMPLATE_ROOT),
+        cwd=str(TESTS_DIR),
     )
     return result.returncode, result.stdout + result.stderr
 
