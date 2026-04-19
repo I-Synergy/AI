@@ -2,11 +2,56 @@
 # -*- coding: utf-8 -*-
 """Validate YAML frontmatter in all SKILL.md files."""
 
-import yaml
 import sys
 import os
 from pathlib import Path
 from typing import Tuple, List
+
+try:
+    import yaml
+    _YAML_AVAILABLE = True
+except ImportError:
+    _YAML_AVAILABLE = False
+
+def _parse_frontmatter(text: str) -> dict:
+    """Minimal YAML frontmatter parser supporting key-value and folded (>) scalars."""
+    result = {}
+    lines = text.strip().splitlines()
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        if ':' not in line:
+            i += 1
+            continue
+        key, _, rest = line.partition(':')
+        key = key.strip()
+        value = rest.strip()
+        if value == '>':
+            folded = []
+            i += 1
+            while i < len(lines) and (lines[i].startswith(' ') or lines[i].startswith('\t')):
+                folded.append(lines[i].strip())
+                i += 1
+            result[key] = ' '.join(folded)
+        elif value.lower() == 'true':
+            result[key] = True
+            i += 1
+        elif value.lower() == 'false':
+            result[key] = False
+            i += 1
+        elif value.startswith('[') and value.endswith(']'):
+            items = [x.strip().strip("'\"") for x in value[1:-1].split(',') if x.strip()]
+            result[key] = items
+            i += 1
+        else:
+            result[key] = value.strip("'\"") if value else ''
+            i += 1
+    return result
+
+def _safe_load(text: str) -> dict:
+    if _YAML_AVAILABLE:
+        return yaml.safe_load(text)
+    return _parse_frontmatter(text)
 
 # Set UTF-8 encoding for Windows console
 if sys.platform == 'win32':
@@ -51,8 +96,8 @@ def validate_skill(skill_path: Path) -> Tuple[bool, List[str]]:
 
     # Parse YAML
     try:
-        frontmatter = yaml.safe_load(parts[1])
-    except yaml.YAMLError as e:
+        frontmatter = _safe_load(parts[1])
+    except Exception as e:
         errors.append(f"YAML parse error: {e}")
         return False, errors
 
