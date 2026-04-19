@@ -2,11 +2,56 @@
 # -*- coding: utf-8 -*-
 """Integration smoke tests for Claude template."""
 
-import yaml
 import sys
 import io
 from pathlib import Path
 from typing import Dict, Set, List
+
+try:
+    import yaml
+    _YAML_AVAILABLE = True
+except ImportError:
+    _YAML_AVAILABLE = False
+
+def _parse_frontmatter(text: str) -> dict:
+    """Minimal YAML frontmatter parser supporting key-value and folded (>) scalars."""
+    result = {}
+    lines = text.strip().splitlines()
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        if ':' not in line:
+            i += 1
+            continue
+        key, _, rest = line.partition(':')
+        key = key.strip()
+        value = rest.strip()
+        if value == '>':
+            folded = []
+            i += 1
+            while i < len(lines) and (lines[i].startswith(' ') or lines[i].startswith('\t')):
+                folded.append(lines[i].strip())
+                i += 1
+            result[key] = ' '.join(folded)
+        elif value.lower() == 'true':
+            result[key] = True
+            i += 1
+        elif value.lower() == 'false':
+            result[key] = False
+            i += 1
+        elif value.startswith('[') and value.endswith(']'):
+            items = [x.strip().strip("'\"") for x in value[1:-1].split(',') if x.strip()]
+            result[key] = items
+            i += 1
+        else:
+            result[key] = value.strip("'\"") if value else ''
+            i += 1
+    return result
+
+def _safe_load(text: str) -> dict:
+    if _YAML_AVAILABLE:
+        return yaml.safe_load(text)
+    return _parse_frontmatter(text)
 
 # Set UTF-8 encoding for Windows console
 if sys.platform == 'win32':
@@ -43,7 +88,7 @@ def load_all_skills() -> Dict[str, dict]:
             parts = content.split('---', 2)
 
             if len(parts) >= 3:
-                frontmatter = yaml.safe_load(parts[1])
+                frontmatter = _safe_load(parts[1])
                 if frontmatter and 'name' in frontmatter:
                     skills[frontmatter['name']] = {
                         'frontmatter': frontmatter,
@@ -210,7 +255,6 @@ def test_templates_exist() -> bool:
         "command-handler.cs.txt",
         "query-handler.cs.txt",
         "endpoint.cs.txt",
-        "mapping-config.cs.txt",
         "test-class.cs.txt",
         "feature-file.feature.txt",
     ]

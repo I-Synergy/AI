@@ -177,6 +177,9 @@ def main():
     print("=" * 60)
 
     for file_ref in sorted(other_refs):
+        if '{' in file_ref and '}' in file_ref:
+            print(f"⚠️  SKIP (template placeholder): {file_ref}")
+            continue
         exists, msg = validate_file_exists(template_root, file_ref)
         print(msg)
         if not exists:
@@ -188,6 +191,10 @@ def main():
     print("=" * 60)
     print("TEST 4: Orphaned Skills (exist but not referenced)")
     print("=" * 60)
+
+    # Utility skills are user-invoked directly (/skill-name) — not loaded by task type.
+    # They are intentionally absent from Work-Type Context Mapping.
+    UTILITY_SKILLS = {"update-skills", "upgrade-template", "verify-config"}
 
     # Normalize existing skills to skill names
     existing_skill_names = set()
@@ -201,7 +208,7 @@ def main():
         skill_name = normalize_skill_reference(skill_ref)
         referenced_skill_names.add(skill_name)
 
-    orphaned_skills = existing_skill_names - referenced_skill_names
+    orphaned_skills = (existing_skill_names - referenced_skill_names) - UTILITY_SKILLS
 
     if orphaned_skills:
         print("⚠️  WARNING: The following skills exist but are not referenced in CLAUDE.md:")
@@ -210,7 +217,9 @@ def main():
         print()
         print("Consider adding them to the Work-Type Context Mapping section.")
     else:
-        print("✅ No orphaned skills found - all skills are referenced in CLAUDE.md")
+        print("✅ No orphaned skills found - all task-type skills are referenced in CLAUDE.md")
+        if UTILITY_SKILLS & existing_skill_names:
+            print(f"   (utility skills exempt from check: {', '.join(sorted(UTILITY_SKILLS & existing_skill_names))})")
 
     print()
 
