@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(cp .claude/session-context.md .ai/session-context.md)",
-      "Bash(cp .claude/checklists/pre-submission.md .ai/checklists/pre-submission.md)"
+      "Bash(cp .claude/checklists/pre-submission.md .ai/checklists/pre-submission.md)",
+      "Bash(mkdir -p D:/Projects/Github/CLAUDE.MD/.ai/skills/refactor)",
+      "Bash(mkdir -p D:/Projects/Github/CLAUDE.MD/.claude/skills/refactor)"
     ]
   }
 }

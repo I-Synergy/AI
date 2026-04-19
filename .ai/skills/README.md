@@ -24,6 +24,14 @@ This directory contains all available Claude skills in proper Claude Skills form
 | **software-security** | Application security specialist | - |
 | **security** | Security architect and coordinator | - |
 | **refactor** | Bulk find-and-replace transformations, pattern migrations | - |
+| **design-interrogation** | Structured design interviews — stress-test plans, resolve decision trees | - |
+| **skill-creator** | Create, test, and improve Claude skills iteratively | - |
+| **ubiquitous-language** | Capture and maintain domain vocabulary (glossary) | - |
+| **usecase-specification** | Draft and finalize use case specs with Gherkin | - |
+| **user-story** | Draft and finalize INVEST-validated user stories with Gherkin | - |
+| **solution-generator** | Scaffold a .NET solution from an architecture document | - |
+| **vertical-slices** | Translate use cases/stories to vertical slice blueprint JSON | - |
+| **gap-review** | Validate generated solution against design decisions | - |
 
 ## Invocation Examples
 
