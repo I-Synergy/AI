@@ -69,7 +69,7 @@ See `.ai/reference/tokens.md` for complete definitions.
 
 ## Quick Start
 
-### 1. Copy Template to Your Project
+### New Project — Copy Template
 
 ```bash
 # Copy AI context directory to your project root
@@ -82,7 +82,22 @@ cp -r ./.claude /path/to/YourProject/.claude
 cp ./CLAUDE.md /path/to/YourProject/CLAUDE.md
 ```
 
-### 2. Customize Project Files
+### Existing Project — Upgrade with Script
+
+```bash
+# Interactive upgrade — review each changed file before accepting
+python .ai/scripts/upgrade-template.py /path/to/YourProject
+
+# Preview only — no files written
+python .ai/scripts/upgrade-template.py /path/to/YourProject --dry-run
+
+# Skills only — copy new/updated skills without touching config
+python .ai/scripts/upgrade-template.py /path/to/YourProject --skills-only
+```
+
+The script classifies every file as **template-owned** (safe to update) or **project-owned** (never overwritten), so your `CLAUDE.md`, session context, and project files are always preserved.
+
+### Customize Project Files
 
 Edit files in `.ai/project/` to customize for your project:
 
@@ -93,7 +108,7 @@ Edit files in `.ai/project/` to customize for your project:
 | **architecture.md** | System design & patterns | **HOW** is your system structured? |
 | **domains.md** | Business context & entities | **WHAT** are you building? |
 
-### 3. Replace Tokens
+### Replace Tokens
 
 ```bash
 find /path/to/YourProject/.ai -type f -exec sed -i 's/{ApplicationName}/BudgetTracker/g' {} +
@@ -101,11 +116,11 @@ find /path/to/YourProject/.ai -type f -exec sed -i 's/{Domain}/Budgets/g' {} +
 find /path/to/YourProject/.ai -type f -exec sed -i 's/{Entity}/Budget/g' {} +
 ```
 
-### 4. Initialize Session Context
+### Initialize Session Context
 
 Edit `.ai/session-context.md` to establish your project's initial state.
 
-### 5. Start Developing
+### Start Developing
 
 ```
 "Read .ai/session-context.md and implement CRUD for Budget entity following .ai/patterns/cqrs-patterns.md"
@@ -120,6 +135,12 @@ Edit `.ai/session-context.md` to establish your project's initial state.
 ├── TEMPLATE-USAGE.md                # Detailed usage guide
 ├── TEMPLATE-FAQ.md                  # Frequently asked questions
 ├── README.md                        # This file
+├── pytest.ini                       # Pytest configuration (testpaths = .ai/tests)
+├── pip.ini                          # Project-scoped pip config (overrides corporate registry)
+├── .gitattributes                   # LF line endings enforced for *.sh
+├── .gitignore                       # Excludes __pycache__, .pytest_cache
+├── .vscode/
+│   └── settings.json                # Pytest discovery + PIP_CONFIG_FILE terminal env
 ├── .claude/                         # Claude Code config only
 │   ├── settings.json                # Claude Code configuration (hooks, permissions, additionalDirectories)
 │   ├── settings.local.json          # Local overrides (not committed)
@@ -151,8 +172,8 @@ Edit `.ai/session-context.md` to establish your project's initial state.
     │   ├── object-oriented-programming.md
     │   └── test-driven-development.md
     ├── scripts/                     # Automation scripts
-    │   ├── migrate-to-ai.py         # One-time migration from .claude/ to .ai/ structure
-    │   └── sync-skills.py           # Sync .ai/skills/ -> .claude/skills/ + .github/skills/
+    │   ├── sync-skills.py           # Sync .ai/skills/ -> .claude/skills/ + .github/skills/
+    │   └── upgrade-template.py      # Safely upgrade an existing project from this template
     ├── skills/                      # Specialized agent personas (source of truth)
     │   ├── dotnet-engineer/SKILL.md
     │   ├── unit-tester/SKILL.md
@@ -193,8 +214,10 @@ Edit `.ai/session-context.md` to establish your project's initial state.
     ├── progress/                    # Active task tracking
     ├── completed/                   # Archived completed tasks
     ├── analysis/                    # Analysis files
-    └── tests/                       # Template validation scripts (9 suites)
-        ├── run-all-tests.sh
+    └── tests/                       # Template validation suite (10 suites)
+        ├── run-all-tests.sh         # Run all 10 suites (bash)
+        ├── conftest.py              # Pytest shared fixtures
+        ├── test_suite.py            # Pytest wrappers for VS Code Test Explorer
         ├── validate-structure.sh
         ├── validate-skills.py
         ├── validate-references.sh
@@ -203,6 +226,7 @@ Edit `.ai/session-context.md` to establish your project's initial state.
         ├── validate-claude-md.py
         ├── validate-settings.py
         ├── validate-copilot.py
+        ├── validate-upgrade-script.py
         └── smoke-test.py
 ```
 
@@ -217,6 +241,40 @@ Skills live in `.ai/skills/` (single source of truth) and are synced to two targ
 | `.github/skills/<name>/SKILL.md` | Full content copy | GitHub Copilot reads directly |
 
 Run `/update-skills` (or `python .ai/scripts/sync-skills.py`) after adding or editing a skill. A PostToolUse hook auto-syncs on every `.ai/skills/` write.
+
+## Testing
+
+The template ships with a 10-suite validation suite. Run via bash or pytest:
+
+```bash
+# All suites via bash
+bash .ai/tests/run-all-tests.sh
+
+# All suites via pytest (requires: pip install pytest)
+python -m pytest .ai/tests/test_suite.py -v
+
+# VS Code Test Explorer: install pytest, then open Testing panel
+```
+
+On Windows with a corporate pip registry, use the project-scoped override:
+```bash
+pip install --config-file pip.ini pytest
+```
+
+The `.vscode/settings.json` sets `PIP_CONFIG_FILE` automatically in VS Code terminals.
+
+| Suite | Script | What it checks |
+|-------|--------|----------------|
+| 1 | `validate-structure.sh` | Required directories, files, skill SKILL.md presence |
+| 2 | `validate-skills.py` | YAML frontmatter in every SKILL.md |
+| 3 | `validate-references.sh` | File references in CLAUDE.md and templates |
+| 4 | `validate-content.py` | Content quality in skills and patterns |
+| 5 | `validate-tokens.sh` | Token consistency across templates and skills |
+| 6 | `validate-claude-md.py` | All `.ai/` paths in CLAUDE.md resolve to real files |
+| 7 | `validate-settings.py` | `.claude/settings.json` structure and no stale refs |
+| 8 | `validate-copilot.py` | Three-tier skill sync (`.ai/` → `.claude/` → `.github/`) |
+| 9 | `smoke-test.py` | Skills loadable, names/descriptions unique |
+| 10 | `validate-upgrade-script.py` | Upgrade script classification and integration |
 
 ## Usage Examples
 
@@ -245,16 +303,21 @@ Claude will:
 3. Create MSTest unit tests + Reqnroll BDD scenarios
 ```
 
-### Code Review
+### Design Interrogation Pipeline
 
 ```
-"Review the Budget implementation for compliance"
+/design-interrogation    # Phase -1 to Phase 1: intake → strategic anchors → BC interrogation
+                         # Produces: ubiquitous language, use cases, user stories, solution scaffold
+/solution-generator      # Scaffold .NET solution from architecture document
+/vertical-slices         # Generate blueprint JSON per vertical slice
+/gap-review              # Validate generated solution against design decisions
+```
 
-Claude will:
-1. Load .ai/skills/code-reviewer/SKILL.md
-2. Check .ai/reference/critical-rules.md
-3. Verify .ai/patterns/cqrs-patterns.md compliance
-4. Run through .ai/checklists/pre-submission.md
+### Upgrading an Existing Project
+
+```
+/upgrade-template        # Interactive: review each changed file before accepting
+                         # Project-owned files (CLAUDE.md, session context) are never touched
 ```
 
 ## Work-Type Context Mapping
@@ -263,6 +326,7 @@ Claude loads these files automatically based on your task type:
 
 | Task Type | Files Loaded |
 |-----------|-------------|
+| .NET Development | `.ai/skills/dotnet-engineer/SKILL.md`, `.ai/patterns/object-oriented-programming.md` |
 | CQRS | `.ai/skills/dotnet-engineer/SKILL.md`, `.ai/patterns/cqrs-patterns.md`, `.ai/reference/critical-rules.md`, templates |
 | API Endpoints | `.ai/patterns/api-patterns.md`, `.ai/reference/templates/endpoint.cs.txt` |
 | Unit Tests | `.ai/skills/unit-tester/SKILL.md`, `.ai/patterns/testing-patterns.md`, test templates |
@@ -271,6 +335,12 @@ Claude loads these files automatically based on your task type:
 | Architecture | `.ai/skills/architect/SKILL.md`, `.ai/project/architecture.md` |
 | Code Review | `.ai/skills/code-reviewer/SKILL.md`, `.ai/checklists/pre-submission.md` |
 | Security | `.ai/skills/security/SKILL.md`, `.ai/skills/api-security/SKILL.md` |
+| Bulk Refactoring | `.ai/skills/refactor/SKILL.md` |
+| Design Interrogation | `.ai/skills/design-interrogation/SKILL.md` |
+| Solution Scaffolding | `.ai/skills/solution-generator/SKILL.md`, `.ai/skills/vertical-slices/SKILL.md` |
+| Gap Validation | `.ai/skills/gap-review/SKILL.md` |
+| Domain Modeling | `.ai/skills/ubiquitous-language/SKILL.md`, `.ai/skills/usecase-specification/SKILL.md`, `.ai/skills/user-story/SKILL.md` |
+| Skill Creation | `.ai/skills/skill-creator/SKILL.md` |
 
 ## Customization
 
