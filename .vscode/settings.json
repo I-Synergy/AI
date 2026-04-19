@@ -1,0 +1,14 @@
+{
+    "python.testing.pytestEnabled": true,
+    "python.testing.pytestArgs": [".ai/tests"],
+    "python.envFile": "${workspaceFolder}/.env",
+    "terminal.integrated.env.windows": {
+        "PIP_CONFIG_FILE": "${workspaceFolder}/pip.ini"
+    },
+    "terminal.integrated.env.linux": {
+        "PIP_CONFIG_FILE": "${workspaceFolder}/pip.ini"
+    },
+    "terminal.integrated.env.osx": {
+        "PIP_CONFIG_FILE": "${workspaceFolder}/pip.ini"
+    }
+}
