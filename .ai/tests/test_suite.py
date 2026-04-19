@@ -29,8 +29,21 @@ def _run_python(script: str) -> tuple[int, str]:
     return result.returncode, result.stdout + result.stderr
 
 
+def _find_bash() -> str | None:
+    """Prefer Git Bash on Windows; WSL bash resolves drives at /mnt/d/ which
+    breaks the SCRIPT_DIR-relative path logic inside the shell scripts."""
+    if sys.platform == "win32":
+        for candidate in [
+            r"C:\Program Files\Git\bin\bash.exe",
+            r"C:\Program Files\Git\usr\bin\bash.exe",
+        ]:
+            if Path(candidate).exists():
+                return candidate
+    return shutil.which("bash")
+
+
 def _run_bash(script: str) -> tuple[int, str]:
-    bash = shutil.which("bash")
+    bash = _find_bash()
     if bash is None:
         pytest.skip("bash not available on PATH")
     # Pass script as a plain filename with cwd=TESTS_DIR so bash never

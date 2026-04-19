@@ -1,7 +1,8 @@
 #!/bin/bash
 # Validate token consistency across template files
 
-TEMPLATE_ROOT="/d/Projects/Template"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+TEMPLATE_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 FAILED=0
 PASSED=0
 

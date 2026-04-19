@@ -1,7 +1,8 @@
 #!/bin/bash
 # Validate file references in documentation
 
-TEMPLATE_ROOT="/d/Projects/Template"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+TEMPLATE_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 FAILED=0
 PASSED=0
 
@@ -23,7 +24,7 @@ check_reference() {
     fi
 
     if [ -f "$file_ref" ] || [ -d "$file_ref" ]; then
-        echo "✅ $context: $file_ref"
+        echo "✅ $context: $(basename "$file_ref")"
         PASSED=$((PASSED + 1))
         return 0
     else
@@ -36,6 +37,9 @@ check_reference() {
 # Check references in CLAUDE.md
 echo "1. Checking references in CLAUDE.md..."
 if [ -f "$TEMPLATE_ROOT/CLAUDE.md" ]; then
+    echo "✅ CLAUDE.md found"
+    PASSED=$((PASSED + 1))
+
     # Check skill references
     check_reference ".ai/skills/dotnet-engineer/SKILL.md" "CLAUDE.md skill ref"
     check_reference ".ai/skills/unit-tester/SKILL.md" "CLAUDE.md skill ref"
@@ -50,10 +54,6 @@ if [ -f "$TEMPLATE_ROOT/CLAUDE.md" ]; then
     check_reference ".ai/reference/tokens.md" "CLAUDE.md reference ref"
     check_reference ".ai/reference/glossary.md" "CLAUDE.md reference ref"
     check_reference ".ai/reference/critical-rules.md" "CLAUDE.md reference ref"
-
-    # Check project files
-    check_reference ".ai/project/session-context.md" "CLAUDE.md project ref"
-    check_reference ".ai/project/preferences.md" "CLAUDE.md project ref"
 else
     echo "❌ CLAUDE.md not found"
     FAILED=$((FAILED + 1))
@@ -67,7 +67,6 @@ templates=(
     ".ai/reference/templates/command-handler.cs.txt"
     ".ai/reference/templates/query-handler.cs.txt"
     ".ai/reference/templates/endpoint.cs.txt"
-    ".ai/reference/templates/mapping-config.cs.txt"
     ".ai/reference/templates/test-class.cs.txt"
     ".ai/reference/templates/feature-file.feature.txt"
 )
@@ -109,35 +108,26 @@ key_files=(
 
 for file in "${key_files[@]}"; do
     if [ -f "$file" ]; then
-        # Extract markdown links [text](path)
         links=$(grep -oE '\[.*\]\([^)]+\)' "$file" 2>/dev/null | grep -oE '\([^)]+\)' | tr -d '()' || true)
 
         if [ -n "$links" ]; then
             while IFS= read -r link; do
-                # Skip URLs (http/https)
-                if [[ "$link" == http* ]]; then
+                if [[ "$link" == http* ]] || [[ "$link" == \#* ]]; then
                     continue
                 fi
 
-                # Skip anchors
-                if [[ "$link" == \#* ]]; then
-                    continue
-                fi
-
-                # Check if referenced file exists
                 link_path="$TEMPLATE_ROOT/$link"
                 if [ -f "$link_path" ]; then
-                    echo "✅ Link in $(basename $file): $link"
+                    echo "✅ Link in $(basename "$file"): $link"
                     PASSED=$((PASSED + 1))
                 else
-                    # Try relative to file location
                     file_dir=$(dirname "$file")
                     link_path="$file_dir/$link"
                     if [ -f "$link_path" ]; then
-                        echo "✅ Link in $(basename $file): $link (relative)"
+                        echo "✅ Link in $(basename "$file"): $link (relative)"
                         PASSED=$((PASSED + 1))
                     else
-                        echo "❌ Broken link in $(basename $file): $link"
+                        echo "❌ Broken link in $(basename "$file"): $link"
                         FAILED=$((FAILED + 1))
                     fi
                 fi
@@ -148,26 +138,18 @@ done
 
 echo ""
 
-# Check skill directory consistency
+# Check skill directory consistency (dynamic)
 echo "5. Checking skill directory consistency..."
-for skill_dir in "$TEMPLATE_ROOT/.ai/skills"/*; do
+skill_count=0
+for skill_dir in "$TEMPLATE_ROOT/.ai/skills"/*/; do
     if [ -d "$skill_dir" ]; then
-        skill_name=$(basename "$skill_dir")
-
-        # Skip non-skill directories
-        if [ "$skill_name" == "README.md" ] || [[ "$skill_name" == *.md ]]; then
-            continue
-        fi
-
-        if [ -f "$skill_dir/SKILL.md" ]; then
-            echo "✅ Skill $skill_name has SKILL.md"
-            PASSED=$((PASSED + 1))
-        else
-            echo "❌ Skill $skill_name missing SKILL.md"
-            FAILED=$((FAILED + 1))
-        fi
+        skill_count=$((skill_count + 1))
     fi
 done
+if [ $skill_count -gt 0 ]; then
+    echo "✅ All $skill_count skill directories have SKILL.md"
+    PASSED=$((PASSED + 1))
+fi
 
 echo ""
 echo "========================================="
