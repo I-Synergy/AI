@@ -10,7 +10,7 @@ AI context lives in `.ai/` (auto-loaded by Claude Code via `additionalDirectorie
 
 ## Features
 
-### Specialized Skills (26)
+### Specialized Skills (27)
 
 | Skill | Purpose |
 |-------|---------|
@@ -38,6 +38,7 @@ AI context lives in `.ai/` (auto-loaded by Claude Code via `additionalDirectorie
 | **solution-generator** | Scaffold a .NET solution from an architecture document |
 | **vertical-slices** | Translate use cases/stories to vertical slice blueprint JSON |
 | **gap-review** | Validate generated solution against original design decisions |
+| **upgrade-template** | Sync template improvements to existing projects without losing context |
 | **verify-config** | Audit CLAUDE.md against codebase (run `/verify-config`) |
 | **update-skills** | Sync `.claude/skills/` and `.github/skills/` from `.ai/skills/` (run `/update-skills`) |
 
@@ -177,6 +178,7 @@ Edit `.ai/session-context.md` to establish your project's initial state.
     │   ├── solution-generator/SKILL.md
     │   ├── vertical-slices/SKILL.md
     │   ├── gap-review/SKILL.md
+    │   ├── upgrade-template/SKILL.md
     │   ├── verify-config/SKILL.md
     │   └── update-skills/SKILL.md
     ├── checklists/
