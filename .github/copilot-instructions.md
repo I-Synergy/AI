@@ -189,6 +189,7 @@ Load these files based on task type:
 | Database | `.ai/skills/database-migration/SKILL.md` |
 | DevOps | `.ai/skills/devops-engineer/SKILL.md` |
 | Documentation | `.ai/skills/technical-writer/SKILL.md` |
+| Bulk Refactoring | `.ai/skills/refactor/SKILL.md` |
 
 ## Session Management
 

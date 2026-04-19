@@ -42,10 +42,10 @@
 - **Reason:** [Why this pattern]
 
 **Example:**
-- **Pattern:** DataContext extension methods (AddItemAsync, RemoveItemAsync, etc.)
+- **Pattern:** EF Core primitives (Add, FirstOrDefaultAsync, Remove, SaveChangesAsync)
 - **Technology:** Entity Framework Core 10 with PostgreSQL
 - **Transactions:** Implicit per SaveChanges, explicit for multi-operation
-- **Reason:** Simplifies data access, consistent patterns, leverages EF Core features
+- **Reason:** Direct EF Core, no abstraction layers, consistent patterns
 
 ---
 
@@ -110,7 +110,7 @@
 **Key Learnings:**
 - Command handlers validate at entry, use guard clauses
 - Queries use named parameters for flexible filtering
-- Mapping configurations are explicit and testable
+- Manual entity-to-model mapping in handlers
 - Integration tests cover all endpoints
 - BDD scenarios document complex business rules
 

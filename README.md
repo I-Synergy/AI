@@ -10,7 +10,7 @@ AI context lives in `.ai/` (auto-loaded by Claude Code via `additionalDirectorie
 
 ## Features
 
-### Specialized Skills (17)
+### Specialized Skills (18)
 
 | Skill | Purpose |
 |-------|---------|
@@ -29,6 +29,7 @@ AI context lives in `.ai/` (auto-loaded by Claude Code via `additionalDirectorie
 | **devops-engineer** | CI/CD and deployment |
 | **database-migration** | Database migrations and schema |
 | **integration-specialist** | Third-party integrations |
+| **refactor** | Bulk find-and-replace and pattern migrations across the solution |
 | **verify-config** | Audit CLAUDE.md against codebase (run `/verify-config`) |
 | **update-skills** | Sync `.claude/skills/` and `.github/skills/` from `.ai/skills/` (run `/update-skills`) |
 
@@ -159,6 +160,7 @@ Edit `.ai/session-context.md` to establish your project's initial state.
     │   ├── devops-engineer/SKILL.md
     │   ├── database-migration/SKILL.md
     │   ├── integration-specialist/SKILL.md
+    │   ├── refactor/SKILL.md
     │   ├── verify-config/SKILL.md
     │   └── update-skills/SKILL.md
     ├── checklists/
