@@ -10,7 +10,7 @@ AI context lives in `.ai/` (auto-loaded by Claude Code via `additionalDirectorie
 
 ## Features
 
-### Specialized Skills (18)
+### Specialized Skills (26)
 
 | Skill | Purpose |
 |-------|---------|
@@ -30,6 +30,14 @@ AI context lives in `.ai/` (auto-loaded by Claude Code via `additionalDirectorie
 | **database-migration** | Database migrations and schema |
 | **integration-specialist** | Third-party integrations |
 | **refactor** | Bulk find-and-replace and pattern migrations across the solution |
+| **design-interrogation** | Structured design interviews — stress-test plans, resolve decision trees |
+| **skill-creator** | Create, test, and improve Claude skills iteratively |
+| **ubiquitous-language** | Capture and maintain domain vocabulary glossary |
+| **usecase-specification** | Draft and finalize use case specs with Gherkin |
+| **user-story** | Draft and finalize INVEST-validated user stories with Gherkin |
+| **solution-generator** | Scaffold a .NET solution from an architecture document |
+| **vertical-slices** | Translate use cases/stories to vertical slice blueprint JSON |
+| **gap-review** | Validate generated solution against original design decisions |
 | **verify-config** | Audit CLAUDE.md against codebase (run `/verify-config`) |
 | **update-skills** | Sync `.claude/skills/` and `.github/skills/` from `.ai/skills/` (run `/update-skills`) |
 
@@ -161,6 +169,14 @@ Edit `.ai/session-context.md` to establish your project's initial state.
     │   ├── database-migration/SKILL.md
     │   ├── integration-specialist/SKILL.md
     │   ├── refactor/SKILL.md
+    │   ├── design-interrogation/SKILL.md
+    │   ├── skill-creator/SKILL.md
+    │   ├── ubiquitous-language/SKILL.md
+    │   ├── usecase-specification/SKILL.md
+    │   ├── user-story/SKILL.md
+    │   ├── solution-generator/SKILL.md
+    │   ├── vertical-slices/SKILL.md
+    │   ├── gap-review/SKILL.md
     │   ├── verify-config/SKILL.md
     │   └── update-skills/SKILL.md
     ├── checklists/

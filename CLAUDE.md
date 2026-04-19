@@ -223,6 +223,11 @@ Load these files based on task type:
 | DevOps | `.ai/skills/devops-engineer/SKILL.md` |
 | Documentation | `.ai/skills/technical-writer/SKILL.md` |
 | Bulk Refactoring | `.ai/skills/refactor/SKILL.md` |
+| Design Interrogation | `.ai/skills/design-interrogation/SKILL.md` |
+| Solution Scaffolding | `.ai/skills/solution-generator/SKILL.md`, `.ai/skills/vertical-slices/SKILL.md` |
+| Gap Validation | `.ai/skills/gap-review/SKILL.md` |
+| Domain Modeling | `.ai/skills/ubiquitous-language/SKILL.md`, `.ai/skills/usecase-specification/SKILL.md`, `.ai/skills/user-story/SKILL.md` |
+| Skill Creation | `.ai/skills/skill-creator/SKILL.md` |
 
 ## Task Definition Template
 
