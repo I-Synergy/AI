@@ -32,6 +32,7 @@ This directory contains all available Claude skills in proper Claude Skills form
 | **solution-generator** | Scaffold a .NET solution from an architecture document | - |
 | **vertical-slices** | Translate use cases/stories to vertical slice blueprint JSON | - |
 | **gap-review** | Validate generated solution against design decisions | - |
+| **upgrade-template** | Sync template improvements to existing projects without losing context | - |
 
 ## Invocation Examples
 
