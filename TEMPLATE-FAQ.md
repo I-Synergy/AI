@@ -49,7 +49,7 @@ Just describe what you want:
 
 The AI automatically:
 - Recognizes the work type
-- Loads relevant context files from `.claude/`
+- Loads relevant context files from `.ai/`
 - Invokes appropriate skills
 - Spawns agents if needed
 - Follows all patterns and conventions
@@ -85,7 +85,7 @@ It's automatically loaded and applied to every conversation.
 
 ### What happens automatically:
 
-- Global rules from `~/.claude/CLAUDE.md` (your personal preferences)
+- Global rules from `~/.ai/CLAUDE.md` (your personal preferences)
 - Project rules from `{project}/CLAUDE.md` (template configuration)
 - Both are merged and active in every request
 
@@ -143,9 +143,9 @@ The AI will transparently inform you when spawning agents:
 ### Progress tracking:
 
 All agents automatically:
-- Write progress to `.claude/progress/[task-name]-progress.md`
+- Write progress to `.ai/progress/[task-name]-progress.md`
 - Report structured results
-- Move completed work to `.claude/completed/`
+- Move completed work to `.ai/completed/`
 
 ### You control the process:
 
@@ -205,16 +205,16 @@ These are different from skills—they're autonomous workers for complex tasks.
 
 ### 3. Context Files (Automatic Loading)
 
-**Context files from `.claude/` are loaded based on Work-Type Context Mapping:**
+**Context files from `.ai/` are loaded based on Work-Type Context Mapping:**
 
 ```
 Your request: "Implement CQRS for Budget"
 
 AI automatically loads:
-- .claude/skills/dotnet-engineer.md
-- .claude/patterns/cqrs-patterns.md
-- .claude/reference/critical-rules.md
-- .claude/reference/templates/command-handler.cs.txt
+- .ai/skills/dotnet-engineer.md
+- .ai/patterns/cqrs-patterns.md
+- .ai/reference/critical-rules.md
+- .ai/reference/templates/command-handler.cs.txt
 ```
 
 ### Complete Decision Flow Example
@@ -226,10 +226,10 @@ AI process:
 1. Recognize work type: CQRS Implementation + Testing
 
 2. Load context files automatically:
-   - .claude/skills/dotnet-engineer.md
-   - .claude/patterns/cqrs-patterns.md
-   - .claude/skills/unit-tester.md
-   - .claude/patterns/testing-patterns.md
+   - .ai/skills/dotnet-engineer.md
+   - .ai/patterns/cqrs-patterns.md
+   - .ai/skills/unit-tester.md
+   - .ai/patterns/testing-patterns.md
 
 3. Decide if skills needed:
    - Implementation work → May invoke dotnet-engineer skill
@@ -241,7 +241,7 @@ AI process:
 
 5. Execute work following loaded patterns
 
-6. Write progress to .claude/progress/
+6. Write progress to .ai/progress/
 ```
 
 ### You don't need to worry about it
@@ -272,7 +272,7 @@ The AI will transparently communicate what's happening:
 
 #### 1. Session Context Memory
 
-The template maintains a learning record in `.claude/session-context.md`:
+The template maintains a learning record in `.ai/session-context.md`:
 
 ```markdown
 # Session Context
@@ -304,7 +304,7 @@ The template maintains a learning record in `.claude/session-context.md`:
 
 #### 2. Completed Task Archive
 
-Finished tasks move to `.claude/completed/`:
+Finished tasks move to `.ai/completed/`:
 
 ```markdown
 # Implement Budget Domain - Progress
@@ -317,7 +317,7 @@ Finished tasks move to `.claude/completed/`:
 ## Patterns Established
 - Command parameters: individual values, not model objects
 - Soft delete: use DeletedAt, not IsDeleted boolean
-- Mapping: Mapster with explicit configuration
+- Mapping: Manual (`new T(...)` or LINQ `.Select`) — no mapping library
 
 ## Issues Encountered
 - Initial approach used repository pattern - refactored to DataContext extensions
@@ -326,7 +326,7 @@ Finished tasks move to `.claude/completed/`:
 
 #### 3. Progressive Pattern Documentation
 
-As project-specific patterns are discovered, they're documented in `.claude/project/` and `.claude/patterns/`.
+As project-specific patterns are discovered, they're documented in `.ai/project/` and `.ai/patterns/`.
 
 #### 4. Decision Records
 
@@ -338,7 +338,7 @@ Architectural decisions are tracked for future reference.
 |------|-------|-----|
 | **Patterns discovered** | `session-context.md` | Updated each session |
 | **Architectural decisions** | `completed/` archive | Decision records |
-| **Domain-specific rules** | `.claude/project/domains.md` | Progressive documentation |
+| **Domain-specific rules** | `.ai/project/domains.md` | Progressive documentation |
 | **Common issues** | `session-context.md` | Blockers and solutions |
 | **Code conventions** | `session-context.md` | Project-specific styles |
 | **Performance optimizations** | `completed/` tasks | What worked, what didn't |
@@ -390,7 +390,7 @@ Each session builds on previous learnings!
 ```
 "Document this pattern in session-context.md for future use"
 "Add this decision to the architecture decisions log"
-"Extract this as a reusable pattern in .claude/patterns/"
+"Extract this as a reusable pattern in .ai/patterns/"
 ```
 
 **Review and consolidate regularly:**
@@ -424,6 +424,6 @@ Each session builds on previous learnings!
 - [README.md](README.md) - Comprehensive overview
 - [CLAUDE.md](CLAUDE.md) - Orchestration file (automatically loaded)
 - [TEMPLATE-USAGE.md](TEMPLATE-USAGE.md) - Detailed usage guide
-- [.claude/session-context.md](.claude/session-context.md) - Session memory (template)
+- [.ai/session-context.md](.ai/session-context.md) - Session memory (template)
 
 **Last Updated:** 2026-02-16
