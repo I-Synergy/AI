@@ -1,5 +1,5 @@
 {
-  "plansDirectory": "./.claude/plans",
+  "plansDirectory": "./.ai/plans",
   "hooks": {
     "PostToolUse": [
       {
@@ -8,6 +8,15 @@
           {
             "type": "command",
             "command": "dotnet build --nologo --verbosity quiet"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 .ai/scripts/sync-skills.py --from-hook"
           }
         ]
       }
@@ -27,15 +36,16 @@
     ],
     "additionalDirectories": [
       "./.claude",
-      "./.claude/analysis",
-      "./.claude/checklists",
-      "./.claude/completed",
-      "./.claude/patterns",
-      "./.claude/plans",
-      "./.claude/progress",
-      "./.claude/project",
-      "./.claude/reference",
-      "./.claude/skills"
+      "./.ai",
+      "./.ai/analysis",
+      "./.ai/checklists",
+      "./.ai/completed",
+      "./.ai/patterns",
+      "./.ai/plans",
+      "./.ai/progress",
+      "./.ai/project",
+      "./.ai/reference",
+      "./.ai/skills"
     ]
   }
 }
