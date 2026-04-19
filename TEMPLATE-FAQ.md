@@ -2,8 +2,7 @@
 
 This document captures common questions about using the .NET Development Template with Claude Code.
 
-**Date:** 2026-02-16
-**Context:** Initial template orientation and understanding
+**Last Updated:** 2026-04-19
 
 ---
 
@@ -18,20 +17,32 @@ You can interact with the template in three ways:
 Invoke specialized skills directly:
 
 ```
-/dotnet-engineer     - .NET/C# development tasks
-/unit-tester         - Write MSTest unit tests
-/code-reviewer       - Review code for quality and architecture
-/architect           - System design and architecture decisions
-/blazor-specialist   - Blazor UI development
-/maui-specialist     - MAUI mobile app development
-/playwright-tester   - E2E and UI testing
-/database-migration  - EF Core migrations and database work
-/integration-specialist - External API integrations
-/performance-engineer   - Performance optimization
-/security            - Security architecture and compliance
-/api-security        - API security implementation
-/software-security   - Application security practices
-/technical-writer    - Documentation creation
+/dotnet-engineer          - .NET/C# development tasks
+/unit-tester              - Write MSTest unit tests
+/code-reviewer            - Review code for quality and architecture
+/architect                - System design and architecture decisions
+/blazor-specialist        - Blazor UI development
+/maui-specialist          - MAUI mobile app development
+/playwright-tester        - E2E and UI testing
+/database-migration       - EF Core migrations and database work
+/integration-specialist   - External API integrations
+/performance-engineer     - Performance optimization
+/security                 - Security architecture and compliance
+/api-security             - API security implementation
+/software-security        - Application security practices
+/technical-writer         - Documentation creation
+/refactor                 - Bulk find-and-replace migrations across solution
+/design-interrogation     - Structured design interviews and stress-testing
+/skill-creator            - Create and improve Claude skills
+/ubiquitous-language      - Capture domain vocabulary glossary
+/usecase-specification    - Draft use case specs with Gherkin
+/user-story               - Draft INVEST-validated user stories
+/solution-generator       - Scaffold .NET solution from architecture doc
+/vertical-slices          - Generate vertical slice blueprint JSON
+/gap-review               - Validate solution against design decisions
+/upgrade-template         - Upgrade existing project from template
+/verify-config            - Audit CLAUDE.md against actual codebase
+/update-skills            - Sync .claude/skills/ and .github/skills/
 ```
 
 #### 2. Natural Language Requests
@@ -45,11 +56,13 @@ Just describe what you want:
 "Review the current domain structure"
 "Optimize database queries in the Budgets domain"
 "Create E2E tests for the login flow"
+"Stress-test my API design"
+"Extract a ubiquitous language glossary from this spec"
 ```
 
 The AI automatically:
 - Recognizes the work type
-- Loads relevant context files from `.claude/`
+- Loads relevant context files from `.ai/`
 - Invokes appropriate skills
 - Spawns agents if needed
 - Follows all patterns and conventions
@@ -143,9 +156,9 @@ The AI will transparently inform you when spawning agents:
 ### Progress tracking:
 
 All agents automatically:
-- Write progress to `.claude/progress/[task-name]-progress.md`
+- Write progress to `.ai/progress/{task-slug}.md`
 - Report structured results
-- Move completed work to `.claude/completed/`
+- Move completed work to `.ai/completed/`
 
 ### You control the process:
 
@@ -186,12 +199,15 @@ AI: [Recognizes testing → invokes unit-tester skill]
 
 You: "Implement CQRS handlers for Budget"
 AI: [Recognizes .NET development → invokes dotnet-engineer skill]
+
+You: "Grill me on my API design"
+AI: [Recognizes stress-test request → invokes design-interrogation skill]
 ```
 
 **Matching logic:**
-- **Keywords**: "review", "test", "implement", "optimize", "secure"
-- **Context**: Code review vs. development vs. testing
-- **Scope**: Architecture vs. implementation vs. documentation
+- **Keywords**: "review", "test", "implement", "optimize", "secure", "grill me", "stress-test"
+- **Context**: Code review vs. development vs. testing vs. architecture
+- **Scope**: Implementation vs. documentation vs. design
 
 ### 2. Agents (Autonomous Workers)
 
@@ -201,20 +217,20 @@ AI: [Recognizes .NET development → invokes dotnet-engineer skill]
 - **Planning work** → `Plan` agent
 - **Git operations** → `Bash` agent
 
-These are different from skills—they're autonomous workers for complex tasks.
+These are different from skills — they're autonomous workers for complex tasks.
 
 ### 3. Context Files (Automatic Loading)
 
-**Context files from `.claude/` are loaded based on Work-Type Context Mapping:**
+**Context files from `.ai/` are loaded based on Work-Type Context Mapping:**
 
 ```
 Your request: "Implement CQRS for Budget"
 
 AI automatically loads:
-- .claude/skills/dotnet-engineer.md
-- .claude/patterns/cqrs-patterns.md
-- .claude/reference/critical-rules.md
-- .claude/reference/templates/command-handler.cs.txt
+- .ai/skills/dotnet-engineer/SKILL.md
+- .ai/patterns/cqrs-patterns.md
+- .ai/reference/critical-rules.md
+- .ai/reference/templates/command-handler.cs.txt
 ```
 
 ### Complete Decision Flow Example
@@ -226,10 +242,10 @@ AI process:
 1. Recognize work type: CQRS Implementation + Testing
 
 2. Load context files automatically:
-   - .claude/skills/dotnet-engineer.md
-   - .claude/patterns/cqrs-patterns.md
-   - .claude/skills/unit-tester.md
-   - .claude/patterns/testing-patterns.md
+   - .ai/skills/dotnet-engineer/SKILL.md
+   - .ai/patterns/cqrs-patterns.md
+   - .ai/skills/unit-tester/SKILL.md
+   - .ai/patterns/testing-patterns.md
 
 3. Decide if skills needed:
    - Implementation work → May invoke dotnet-engineer skill
@@ -241,7 +257,7 @@ AI process:
 
 5. Execute work following loaded patterns
 
-6. Write progress to .claude/progress/
+6. Write progress to .ai/progress/
 ```
 
 ### You don't need to worry about it
@@ -252,13 +268,6 @@ Just make natural requests, and the AI handles:
 - Context loading
 - Pattern following
 - Progress tracking
-
-The AI will transparently communicate what's happening:
-```
-"Loading CQRS patterns and dotnet-engineer context..."
-"Invoking unit-tester skill for test generation..."
-"Spawning Explore agent to search the codebase..."
-```
 
 ---
 
@@ -272,13 +281,13 @@ The AI will transparently communicate what's happening:
 
 #### 1. Session Context Memory
 
-The template maintains a learning record in `.claude/session-context.md`:
+The template maintains a learning record in `.ai/session-context.md`:
 
 ```markdown
 # Session Context
 
 ## Last Updated
-2026-02-16
+2026-04-19
 
 ## Project Patterns Discovered
 - Budget entity uses soft delete pattern (DeletedAt timestamp)
@@ -288,14 +297,7 @@ The template maintains a learning record in `.claude/session-context.md`:
 ## Architectural Decisions
 - Decision: Use Redis for caching reference data
   Rationale: Reference data rarely changes, reduces DB load
-  Date: 2026-02-15
-
-## Known Issues
-- None currently
-
-## Next Session Should Know
-- Budget domain is complete reference implementation
-- Follow Budget patterns for new domains
+  Date: 2026-04-19
 ```
 
 **Every session:**
@@ -304,33 +306,11 @@ The template maintains a learning record in `.claude/session-context.md`:
 
 #### 2. Completed Task Archive
 
-Finished tasks move to `.claude/completed/`:
-
-```markdown
-# Implement Budget Domain - Progress
-
-## What Was Done
-- Created Budget entity with soft delete
-- Implemented CQRS commands: Create, Update, Delete
-- Added validation: EndDate > StartDate
-
-## Patterns Established
-- Command parameters: individual values, not model objects
-- Soft delete: use DeletedAt, not IsDeleted boolean
-- Mapping: Mapster with explicit configuration
-
-## Issues Encountered
-- Initial approach used repository pattern - refactored to DataContext extensions
-- Learned: Check existing code before creating new patterns
-```
+Finished tasks move to `.ai/completed/` and serve as historical reference.
 
 #### 3. Progressive Pattern Documentation
 
-As project-specific patterns are discovered, they're documented in `.claude/project/` and `.claude/patterns/`.
-
-#### 4. Decision Records
-
-Architectural decisions are tracked for future reference.
+As project-specific patterns are discovered, they're documented in `.ai/project/` and `.ai/patterns/`.
 
 ### What Gets "Learned"
 
@@ -338,43 +318,15 @@ Architectural decisions are tracked for future reference.
 |------|-------|-----|
 | **Patterns discovered** | `session-context.md` | Updated each session |
 | **Architectural decisions** | `completed/` archive | Decision records |
-| **Domain-specific rules** | `.claude/project/domains.md` | Progressive documentation |
+| **Domain-specific rules** | `.ai/project/domains.md` | Progressive documentation |
 | **Common issues** | `session-context.md` | Blockers and solutions |
 | **Code conventions** | `session-context.md` | Project-specific styles |
-| **Performance optimizations** | `completed/` tasks | What worked, what didn't |
-| **Testing strategies** | `session-context.md` | Effective test patterns |
-
-### Continuous Improvement Workflow
-
-```
-Session 1: Implement Budget Domain
-├─ Discovers: Budget uses soft delete pattern
-├─ Writes to: session-context.md
-└─ Archives to: completed/implement-budget-domain-progress.md
-
-Session 2: Implement Goals Domain
-├─ Reads: session-context.md (learns soft delete pattern)
-├─ Applies: Same soft delete approach to Goals
-├─ Discovers: Goals require Budget foreign key validation
-├─ Writes to: session-context.md
-└─ Archives to: completed/implement-goals-domain-progress.md
-
-Session 3: Implement Debts Domain
-├─ Reads: session-context.md (learns both patterns)
-├─ Applies: Soft delete + foreign key validation
-├─ Discovers: Debts need additional audit fields
-├─ Writes to: session-context.md
-└─ Archives to: completed/implement-debts-domain-progress.md
-```
-
-Each session builds on previous learnings!
 
 ### Limitations
 
 **The template does NOT:**
 - ❌ Train the AI model itself (no fine-tuning)
 - ❌ Persist memory across projects automatically
-- ❌ Share learnings with other projects
 - ❌ Automatically detect patterns without guidance
 
 **The template DOES:**
@@ -382,23 +334,84 @@ Each session builds on previous learnings!
 - ✅ Document discovered patterns
 - ✅ Archive decision history
 - ✅ Build institutional knowledge over time
-- ✅ Enable progressive refinement
 
-### Making It Learn Better
+---
 
-**Be explicit about learnings:**
-```
-"Document this pattern in session-context.md for future use"
-"Add this decision to the architecture decisions log"
-"Extract this as a reusable pattern in .claude/patterns/"
+## Q6: How do I upgrade an existing project when the template improves?
+
+### Answer
+
+Use the included upgrade script — it safely copies template-owned files while never touching your project-owned files.
+
+```bash
+# Interactive mode — review each changed file
+python .ai/scripts/upgrade-template.py /path/to/YourProject
+
+# Preview mode — see what would change, nothing written
+python .ai/scripts/upgrade-template.py /path/to/YourProject --dry-run
+
+# Skills only — copy new/updated skills without touching anything else
+python .ai/scripts/upgrade-template.py /path/to/YourProject --skills-only
+
+# Non-interactive — accept all changes (use in CI)
+python .ai/scripts/upgrade-template.py /path/to/YourProject --non-interactive
 ```
 
-**Review and consolidate regularly:**
+### What gets updated vs. preserved
+
+| Category | Examples | Behavior |
+|----------|---------|---------|
+| **Template-owned** | `.ai/skills/`, `.ai/patterns/`, `.ai/reference/templates/`, `.ai/tests/` | Safely updated |
+| **Project-owned** | `CLAUDE.md`, `.ai/session-context.md`, `.ai/project/`, `.ai/progress/` | Never touched |
+
+Or invoke as a slash command:
 ```
-"Review session context and move stable patterns to permanent docs"
-"Analyze completed tasks and extract common patterns"
-"Update domains.md with discovered business rules"
+/upgrade-template
 ```
+
+---
+
+## Q7: How do I run the validation tests?
+
+### Answer
+
+The template includes a 10-suite validation suite that can be run via bash or pytest (VS Code Test Explorer).
+
+#### Bash (works everywhere)
+
+```bash
+bash .ai/tests/run-all-tests.sh
+```
+
+#### Pytest (VS Code Test Explorer integration)
+
+```bash
+# Install pytest (use project-scoped pip config if on corporate network)
+pip install --config-file pip.ini pytest
+
+# Run all suites
+python -m pytest .ai/tests/test_suite.py -v
+
+# Run a single suite
+python -m pytest .ai/tests/test_suite.py::test_yaml_frontmatter -v
+```
+
+Once pytest is installed, VS Code's Test Explorer panel shows all 10 suites as clickable tests with inline failure output.
+
+#### What each suite checks
+
+| # | Suite | Checks |
+|---|-------|--------|
+| 1 | Directory Structure | Required dirs, SKILL.md presence, templates |
+| 2 | YAML Frontmatter | name, description, allowed-tools in every SKILL.md |
+| 3 | File References | All paths referenced in CLAUDE.md and templates exist |
+| 4 | Content Quality | Skills and patterns have sufficient content |
+| 5 | Token Consistency | `{Entity}`, `{Domain}` etc. defined and used consistently |
+| 6 | CLAUDE.md References | No broken `.ai/` paths in CLAUDE.md |
+| 7 | Settings & Structure | `.claude/settings.json` structure, no stale paths |
+| 8 | Copilot Integration | Three-tier skill sync is correct and in sync |
+| 9 | Smoke Tests | All skills loadable, names and descriptions unique |
+| 10 | Upgrade Script | Script classification logic and integration tests |
 
 ---
 
@@ -409,6 +422,7 @@ Each session builds on previous learnings!
 3. **Agents are automatic** - Spawned when needed, you just focus on what to do
 4. **Skills are smart** - AI recognizes work type and invokes appropriate skills
 5. **Template learns** - Through session context and progressive documentation
+6. **Safe to upgrade** - The upgrade script preserves all project-owned files
 
 ## Quick Start Tips
 
@@ -416,7 +430,7 @@ Each session builds on previous learnings!
 2. **Trust the system**: It handles skill selection and agent spawning
 3. **Document learnings**: Explicitly ask to document patterns and decisions
 4. **Review regularly**: Consolidate session context into permanent docs
-5. **Let it improve**: Each session makes the template smarter
+5. **Upgrade regularly**: Run the upgrade script when the template improves
 
 ---
 
@@ -424,6 +438,4 @@ Each session builds on previous learnings!
 - [README.md](README.md) - Comprehensive overview
 - [CLAUDE.md](CLAUDE.md) - Orchestration file (automatically loaded)
 - [TEMPLATE-USAGE.md](TEMPLATE-USAGE.md) - Detailed usage guide
-- [.claude/session-context.md](.claude/session-context.md) - Session memory (template)
-
-**Last Updated:** 2026-02-16
+- [.ai/session-context.md](.ai/session-context.md) - Session memory (template)

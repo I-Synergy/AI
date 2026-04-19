@@ -12,23 +12,43 @@ A **generic, modular .NET project template** with:
 - Code templates for rapid development
 - Specialized agent skills for Claude AI assistance
 - Quality checklists and best practices
-- 57% token optimization based on Claude Context OS v2 research
+- GitHub Copilot integration via `.github/skills/`
 
 ## Quick Start
 
-### 1. Copy Template to Your Project
+### New Project — Copy Template
 
 ```bash
-# Copy the entire .claude directory to your project root
+# Copy the AI context directory to your project root
+cp -r /path/to/Template/.ai /path/to/YourProject/.ai
+
+# Copy Claude Code config
 cp -r /path/to/Template/.claude /path/to/YourProject/.claude
 
 # Copy CLAUDE.md to your project root
 cp /path/to/Template/CLAUDE.md /path/to/YourProject/CLAUDE.md
 ```
 
-### 2. Customize Project-Specific Files
+### Existing Project — Use the Upgrade Script
 
-Navigate to `.claude/project/` and customize these files. **Each file has a distinct purpose with NO duplication:**
+If you already have a project based on an older version of this template:
+
+```bash
+# Interactive: review each changed file before accepting
+python .ai/scripts/upgrade-template.py /path/to/YourProject
+
+# Preview only — nothing written
+python .ai/scripts/upgrade-template.py /path/to/YourProject --dry-run
+
+# Skills only — copy new/updated skills, leave config untouched
+python .ai/scripts/upgrade-template.py /path/to/YourProject --skills-only
+```
+
+The script never overwrites project-owned files (`CLAUDE.md`, `.ai/session-context.md`, `.ai/project/`, `.ai/progress/`, `.ai/plans/`, `.ai/completed/`).
+
+### Customize Project-Specific Files
+
+Navigate to `.ai/project/` and customize these files. **Each file has a distinct purpose with NO duplication:**
 
 | File | Purpose | Key Question | What to Customize |
 |------|---------|--------------|-------------------|
@@ -38,13 +58,7 @@ Navigate to `.claude/project/` and customize these files. **Each file has a dist
 | `domains.md` | Business context | **WHAT** are you building? | Business domains, entities, rules, events, validation, ubiquitous language |
 | `session-context.md` | Session memory | Track across sessions | Project decisions, learnings, blocked paths, established patterns |
 
-**Benefits of this separation:**
-- No duplicate information across files
-- Clear separation of concerns
-- Easy to find relevant information
-- Each file references others where appropriate
-
-### 3. Replace Tokens Throughout
+### Replace Tokens Throughout
 
 Replace these tokens with your actual values:
 
@@ -56,9 +70,9 @@ Replace these tokens with your actual values:
 | `{entity}` | Entity (lowercase) | `budget`, `goal`, `customer` |
 | `{entities}` | Entity plural (lowercase) | `budgets`, `goals`, `customers` |
 
-### 4. Initialize Session Context
+### Initialize Session Context
 
-Edit `.claude/session-context.md` to establish your project's initial context:
+Edit `.ai/session-context.md` to establish your project's initial context:
 
 ```markdown
 # {YourApplicationName} Session Context
@@ -73,50 +87,69 @@ Edit `.claude/session-context.md` to establish your project's initial context:
 
 ## Architectural Patterns Established
 [Your initial architecture decisions]
-
-## User Preferences
-[Your preferences from .claude/project/preferences.md]
 ```
 
 ## Directory Structure Explained
 
 ```
-.claude/
-├── reference/              # Quick reference guides
-│   ├── tokens.md          # Template tokens definition
-│   ├── glossary.md        # Terminology
-│   ├── critical-rules.md  # Non-negotiable patterns
-│   ├── forbidden-tech.md  # Technologies to avoid
-│   ├── naming-conventions.md  # Naming standards
-│   └── templates/         # Code templates (.cs.txt, .feature.txt)
-├── patterns/              # Implementation patterns
-│   ├── cqrs-patterns.md   # Complete CQRS guide
-│   ├── api-patterns.md    # API endpoint patterns
-│   └── testing-patterns.md  # Testing patterns
-├── skills/                # Specialized agent personas
-│   ├── dotnet-engineer.md     # .NET development
-│   ├── unit-tester.md         # Testing specialist
-│   ├── code-reviewer.md       # QA specialist
-│   ├── technical-writer.md    # Documentation
-│   └── playwright-tester.md   # UI testing
-├── checklists/            # Quality gate checklists
-│   └── pre-submission.md  # Comprehensive quality checklist
-├── project/               # **CUSTOMIZE THESE (NO DUPLICATION)**
-│   ├── preferences.md     # HOW you work (personal workflow/style)
-│   ├── tech-stack.md      # WHAT you use (technologies/versions)
-│   ├── architecture.md    # HOW it's structured (system design)
-│   ├── domains.md         # WHAT you're building (business context)
-│   └── session-context.md # Session memory (decisions/learnings)
-├── progress/              # Active task progress files
-├── completed/             # Completed task archives
-└── session-context.md     # Working session memory file
+.claude/                        # Claude Code config only
+├── settings.json               # Claude Code configuration (plansDirectory, hooks, permissions)
+├── settings.local.json         # Local overrides (not committed)
+└── skills/                     # Thin wrappers (auto-generated — do not edit)
+    └── <skill>/SKILL.md        # !`cat .ai/skills/<skill>/SKILL.md`
+
+.ai/                            # All AI context (vendor-neutral)
+├── session-context.md          # Working session memory
+├── reference/                  # Quick reference guides
+│   ├── tokens.md               # Template tokens definition
+│   ├── glossary.md             # Terminology
+│   ├── critical-rules.md       # Non-negotiable patterns
+│   ├── forbidden-tech.md       # Technologies to avoid
+│   ├── naming-conventions.md   # Naming standards
+│   └── templates/              # Code templates (.cs.txt, .feature.txt)
+├── patterns/                   # Implementation patterns
+│   ├── cqrs-patterns.md        # Complete CQRS guide
+│   ├── api-patterns.md         # API endpoint patterns
+│   ├── testing-patterns.md     # Testing patterns
+│   └── ...                     # 8 patterns total
+├── scripts/                    # Automation scripts
+│   ├── sync-skills.py          # Sync .ai/skills/ → .claude/skills/ + .github/skills/
+│   └── upgrade-template.py     # Safely upgrade existing projects
+├── skills/                     # Specialized agent personas (source of truth)
+│   ├── dotnet-engineer/SKILL.md
+│   ├── unit-tester/SKILL.md
+│   ├── refactor/SKILL.md
+│   ├── design-interrogation/SKILL.md
+│   ├── solution-generator/SKILL.md
+│   ├── vertical-slices/SKILL.md
+│   ├── gap-review/SKILL.md
+│   ├── ubiquitous-language/SKILL.md
+│   ├── usecase-specification/SKILL.md
+│   ├── user-story/SKILL.md
+│   ├── skill-creator/SKILL.md
+│   └── ...                     # 27 skills total
+├── checklists/
+│   └── pre-submission.md       # Comprehensive quality checklist
+├── project/                    # CUSTOMIZE THESE FOR YOUR PROJECT
+│   ├── preferences.md          # HOW you work (personal workflow/style)
+│   ├── tech-stack.md           # WHAT you use (technologies/versions)
+│   ├── architecture.md         # HOW it's structured (system design)
+│   └── domains.md              # WHAT you're building (business context)
+├── plans/                      # Plan files (written by Claude Code, local only)
+├── progress/                   # Active task progress files
+├── completed/                  # Completed task archives
+└── tests/                      # 10-suite validation suite
+    ├── run-all-tests.sh        # Run all suites via bash
+    ├── conftest.py             # Pytest shared fixtures
+    ├── test_suite.py           # Pytest wrappers (VS Code Test Explorer)
+    └── validate-*.py / *.sh   # Individual validation scripts
 ```
 
 ## Using Code Templates
 
 ### Example: Create a New Command
 
-1. **Copy template:** `.claude/reference/templates/command-handler.cs.txt`
+1. **Copy template:** `.ai/reference/templates/command-handler.cs.txt`
 2. **Replace tokens:**
    - `{ApplicationName}` → `BudgetTracker`
    - `{Domain}` → `Budgets`
@@ -141,18 +174,16 @@ public sealed record CreateBudgetCommand(...) : ICommand<CreateBudgetResponse>;
 
 ## Using Specialized Agent Skills
 
-When working with Claude AI, reference the appropriate skill file:
-
 ### Example: Implementing a New Feature
 
 ```
 User: "Implement complete CRUD for Budget entity"
 
-Claude should:
-1. Reference: .claude/skills/dotnet-engineer.md
-2. Follow: .claude/patterns/cqrs-patterns.md
-3. Use templates: .claude/reference/templates/
-4. Check: .claude/checklists/pre-submission.md
+Claude will:
+1. Load .ai/skills/dotnet-engineer/SKILL.md
+2. Follow .ai/patterns/cqrs-patterns.md
+3. Use templates from .ai/reference/templates/
+4. Check .ai/checklists/pre-submission.md
 ```
 
 ### Example: Writing Tests
@@ -160,18 +191,65 @@ Claude should:
 ```
 User: "Write comprehensive tests for Budget handlers"
 
-Claude should:
-1. Reference: .claude/skills/unit-tester.md
-2. Follow: .claude/patterns/testing-patterns.md
-3. Use templates: .claude/reference/templates/test-class.cs.txt
-4. Create: Reqnroll scenarios using feature-file.feature.txt
+Claude will:
+1. Load .ai/skills/unit-tester/SKILL.md
+2. Follow .ai/patterns/testing-patterns.md
+3. Use test-class.cs.txt and feature-file.feature.txt templates
+4. Create MSTest unit tests + Reqnroll BDD scenarios
 ```
+
+### Example: Design Interrogation Pipeline
+
+The design-interrogation skill orchestrates a full pipeline from raw requirements to implementation-ready blueprints:
+
+```
+/design-interrogation
+  Phase -1: Document intake (upload specs, architecture docs)
+  Phase  0: Strategic anchors (4 key decisions)
+  Phase  1: Bounded context interrogation (parallel)
+
+  Produces session deliverables:
+  → /ubiquitous-language   capture domain vocabulary
+  → /usecase-specification  use cases with Gherkin
+  → /user-story             INVEST-validated stories
+  → /solution-generator     .NET solution scaffold
+  → /vertical-slices        blueprint JSON per slice
+  → /gap-review             validate against design
+```
+
+## Validating the Template
+
+Run the validation suite to confirm everything is in order:
+
+```bash
+# Via bash (always available)
+bash .ai/tests/run-all-tests.sh
+
+# Via pytest (requires pip install pytest)
+python -m pytest .ai/tests/test_suite.py -v
+```
+
+### Installing pytest on a Corporate Network
+
+If pip is configured to use a private registry that requires authentication, use the project-scoped override:
+
+```bash
+pip install --config-file pip.ini pytest
+```
+
+The `pip.ini` at the project root routes `pip install` to public PyPI. The `.vscode/settings.json` sets `PIP_CONFIG_FILE` automatically in VS Code terminals so you don't need to specify it manually.
+
+### VS Code Test Explorer
+
+Once pytest is installed:
+1. Open the Testing panel in VS Code
+2. Click **Configure Python Tests → pytest**
+3. All 10 suites appear as clickable tests
+4. Failed tests show the full script output inline
 
 ## Customizing for Your Stack
 
 ### Clear Separation of Concerns
-
-The template now uses **non-overlapping configuration files**:
 
 - **preferences.md** = Personal workflow (communication, autonomy, code style)
 - **tech-stack.md** = Technology choices (frameworks, versions, forbidden tech)
@@ -192,29 +270,19 @@ The template now uses **non-overlapping configuration files**:
    ```markdown
    | **CQRS** | MediatR | 13.x | Industry standard, team familiarity |
    ```
-   Update forbidden technologies table - remove MediatR if present
 
-2. **Update architecture.md:**
-   Update CQRS Implementation Pattern section with MediatR examples
-   ```csharp
-   public sealed record CreateBudgetCommand(...) : IRequest<CreateBudgetResponse>;
-
-   public sealed class CreateBudgetHandler
-       : IRequestHandler<CreateBudgetCommand, CreateBudgetResponse>
-   ```
+2. **Update architecture.md** with MediatR-specific CQRS examples
 
 3. **Update patterns (if needed):**
-   Edit `.claude/patterns/cqrs-patterns.md` with MediatR-specific patterns
-
-**Don't duplicate:** Technology choice stays in tech-stack.md, pattern examples stay in architecture.md
+   Edit `.ai/patterns/cqrs-patterns.md` with MediatR-specific patterns
 
 ## Session Context Workflow
 
 ### Every Claude Session Should:
 
-1. **Start:** Read `.claude/session-context.md`
+1. **Start:** Read `.ai/session-context.md`
 2. **Work:** Follow established patterns
-3. **End:** Update `.claude/session-context.md` with learnings
+3. **End:** Update `.ai/session-context.md` with learnings using `.ai/reference/templates/session-handoff.md.txt`
 
 ### What to Document in Session Context
 
@@ -225,45 +293,32 @@ The template now uses **non-overlapping configuration files**:
 
 ## Progress Tracking
 
-### Agent Creates Progress File
-
-When Claude AI creates an agent to work on a task:
-
-1. **Immediately creates:** `.claude/progress/implement-budget-crud.md`
-2. **Updates in real-time** as work progresses
-3. **On completion:** Moves to `.claude/completed/implement-budget-crud.md`
-
 ### Progress File Format
 
 ```markdown
-# Implement Budget CRUD Progress
+# Implement Budget CRUD
 
-## Status: In Progress
-## Started: 2025-02-16 10:00
-## Last Updated: 2025-02-16 10:30
+Status: IN PROGRESS
+Started: 2026-04-19
 
-## Completed Steps
+## Steps
 - [x] Created CreateBudgetCommand and Handler
 - [x] Created GetBudgetByIdQuery and Handler
-
-## Current Step
-- [ ] Creating UpdateBudgetCommand and Handler
-
-## Pending Steps
+- [ ] CreateUpdateBudgetCommand and Handler
 - [ ] Create DeleteBudgetCommand and Handler
 - [ ] Create endpoints
 - [ ] Write tests
 
-## Files Created/Modified
-- `src/BudgetTracker.Domain.Budgets/Features/Budget/Commands/CreateBudgetCommand.cs`
-- `src/BudgetTracker.Domain.Budgets/Features/Budget/Commands/CreateBudgetHandler.cs`
+## Notes
 ```
+
+Files are created in `.ai/progress/`, updated with each step, and moved to `.ai/completed/` when done.
 
 ## Quality Assurance
 
 ### Before Completing Any Task
 
-Run through `.claude/checklists/pre-submission.md`:
+Run through `.ai/checklists/pre-submission.md`:
 
 1. **Architecture verified**
 2. **Code quality checked**
@@ -283,123 +338,95 @@ Run through `.claude/checklists/pre-submission.md`:
    {ApplicationName}.Domain.{NewDomain}/
    {ApplicationName}.Services.{NewDomain}/
    ```
-
-2. Copy templates from `.claude/reference/templates/`
+2. Copy templates from `.ai/reference/templates/`
 3. Replace tokens with your domain/entity names
-4. Follow patterns from `.claude/patterns/cqrs-patterns.md`
-5. Check `.claude/checklists/pre-submission.md`
+4. Follow patterns from `.ai/patterns/cqrs-patterns.md`
+5. Check `.ai/checklists/pre-submission.md`
 
-### Adding a New Feature
+### Bulk Refactoring
 
-1. Reference: `.claude/skills/dotnet-engineer.md`
-2. Use templates: `.claude/reference/templates/`
-3. Follow: `.claude/patterns/cqrs-patterns.md`
-4. Test using: `.claude/patterns/testing-patterns.md`
-5. Verify: `.claude/checklists/pre-submission.md`
+```
+/refactor
+
+Steps:
+1. Read reference material
+2. Grep ALL files for the pattern (including string literals and log messages)
+3. Apply replacements
+4. Verify zero remaining instances
+5. Fix any resulting build errors
+6. Delete obsolete files
+7. dotnet build
+```
+
+### Upgrading an Existing Project
+
+```bash
+python .ai/scripts/upgrade-template.py /path/to/YourProject
+
+# Review each diff interactively:
+# [a]ccept  [s]kip  [q]uit
+
+# Or run non-interactively in CI:
+python .ai/scripts/upgrade-template.py /path/to/YourProject --non-interactive
+```
 
 ## Troubleshooting
 
 ### "Claude doesn't remember previous decisions"
 
-**Solution:** Update `.claude/session-context.md` with decisions and preferences.
+**Solution:** Update `.ai/session-context.md` with decisions and preferences.
 
 ### "Generated code doesn't follow my patterns"
 
-**Solution:** Document your patterns in `.claude/project/preferences.md` and reference them.
+**Solution:** Document your patterns in `.ai/project/preferences.md` or `architecture.md` and reference them.
 
 ### "Progress files in wrong location"
 
-**Solution:** Ensure agents create files in `.claude/progress/`, not `~/.claude/`
+**Solution:** Ensure agents create files in `.ai/progress/`, not `~/.claude/todos/` (use local markdown files, not the built-in task tools).
 
 ### "Forbidden technology used"
 
-**Solution:** Update `.claude/reference/forbidden-tech.md` with your actual forbidden technologies.
+**Solution:** Update `.ai/reference/forbidden-tech.md` with your actual forbidden technologies.
+
+### "Tests failing after upgrade"
+
+**Solution:** Run `python .ai/tests/validate-skills.py` to check YAML frontmatter, then `bash .ai/tests/run-all-tests.sh` for the full suite.
+
+### "pip install failing on corporate network"
+
+**Solution:** Use the project-scoped pip config: `pip install --config-file pip.ini <package>`
 
 ## Best Practices
 
-1. **Keep session-context.md updated** - It's Claude's memory across sessions
-2. **Customize project/ files first** - Before starting development
-3. **Respect file separation** - Don't duplicate info across preferences/tech-stack/architecture/domains
-4. **Use cross-references** - Each file links to related files at the bottom
-5. **Reference patterns explicitly** - Tell Claude which pattern file to follow
-6. **Use checklists before completion** - Ensure quality
-7. **Document blockers immediately** - In progress files
-8. **Archive completed work** - Move to .claude/completed/
-
-### File Separation Guide
-
-**Where to document what:**
-- Communication style → `preferences.md`
-- Framework version → `tech-stack.md`
-- CQRS pattern structure → `architecture.md`
-- Business rules → `domains.md`
-- Project decisions → `session-context.md`
-
-**Don't put:**
-- Technology choices in preferences.md
-- Architectural patterns in tech-stack.md
-- Business rules in architecture.md
-- Workflow preferences in domains.md
+1. **Keep session-context.md updated** — It's Claude's memory across sessions
+2. **Customize project/ files first** — Before starting development
+3. **Respect file separation** — Don't duplicate info across preferences/tech-stack/architecture/domains
+4. **Use cross-references** — Each file links to related files where appropriate
+5. **Reference patterns explicitly** — Tell Claude which pattern file to follow
+6. **Use checklists before completion** — Ensure quality
+7. **Upgrade regularly** — Run the upgrade script when the template improves
 
 ## Template Maintenance
 
-### Updating the Template
+### Adding a New Skill
 
-1. Update modular files in `.claude/` subdirectories
-2. Keep `CLAUDE.md` as orchestration only (don't bloat it)
-3. Keep templates generic (use tokens, not specific names)
-4. Test token replacement with real project
+1. Create `.ai/skills/<skill-name>/SKILL.md` with correct YAML frontmatter
+2. A PostToolUse hook auto-syncs to `.claude/skills/` and `.github/skills/`
+3. If the hook isn't running: `python .ai/scripts/sync-skills.py`
+4. Add to the Work-Type Context Mapping table in `CLAUDE.md`
+5. Add to `README.md` skills table
+
+### Updating an Existing Skill
+
+Edit `.ai/skills/<skill-name>/SKILL.md` — the PostToolUse hook syncs the other tiers automatically.
 
 ### Contributing Improvements
 
-If you improve this template:
-1. Keep improvements generic
-2. Use tokens instead of specific project names
-3. Update relevant modular file (not CLAUDE.md)
-4. Test with a fresh project
-
-## Getting Help
-
-### If Claude Doesn't Follow Patterns
-
-```
-Remind Claude to:
-1. Read .claude/session-context.md FIRST
-2. Reference .claude/reference/critical-rules.md
-3. Follow .claude/patterns/{relevant-pattern}.md
-4. Check .claude/checklists/pre-submission.md before completing
-```
-
-### If Generated Code Has Issues
-
-```
-Ask Claude to:
-1. Review .claude/skills/code-reviewer.md
-2. Run through .claude/checklists/pre-submission.md
-3. Compare against .claude/patterns/{relevant-pattern}.md
-4. Fix issues and document learnings in session-context.md
-```
-
-## Example: Complete New Project Setup
-
-```bash
-# 1. Copy template
-cp -r /Template/.claude /MyProject/.claude
-cp /Template/CLAUDE.md /MyProject/CLAUDE.md
-
-# 2. Customize project files
-cd /MyProject/.claude/project
-# Edit: preferences.md, tech-stack.md, architecture.md, domains.md
-
-# 3. Initialize session context
-cd /MyProject/.claude
-cp project/session-context.md session-context.md
-# Edit session-context.md with project specifics
-
-# 4. Ready to develop!
-# Tell Claude: "Read .claude/session-context.md and implement CRUD for Customer entity"
-```
+1. Keep improvements generic — use tokens, not specific project names
+2. Update relevant modular file (not CLAUDE.md unless the rule itself changes)
+3. Run `bash .ai/tests/run-all-tests.sh` to validate
+4. Update README.md if structural changes were made
 
 ---
 
-**Remember:** This template is modular. Customize the `.claude/project/` files for your specific needs, and Claude will use those preferences throughout development.
+**Remember:** This template is modular. Customize the `.ai/project/` files for your specific needs, and Claude will use those preferences throughout development.
