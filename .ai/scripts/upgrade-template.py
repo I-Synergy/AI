@@ -235,7 +235,7 @@ def main() -> None:
         print(f"  {raw_source}")
         result = subprocess.run(
             ["git", "clone", "--depth", "1", raw_source, tmpdir],
-            capture_output=True, text=True, encoding="utf-8", errors="replace",
+            capture_output=True, text=True, errors="replace",
         )
         if result.returncode != 0:
             shutil.rmtree(tmpdir, ignore_errors=True)
@@ -328,7 +328,6 @@ def _run_upgrade(args, source: Path, target: Path, raw_source: str, tmpdir) -> N
                 cwd=str(target),
                 capture_output=True,
                 text=True,
-                encoding="utf-8",
                 errors="replace",
             )
             if result.returncode == 0:
