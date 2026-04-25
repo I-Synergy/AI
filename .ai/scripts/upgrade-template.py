@@ -211,6 +211,9 @@ def merge_settings_json(source: Path, target: Path, dry_run: bool) -> None:
 # ─── Main ─────────────────────────────────────────────────────────────────────
 
 def main() -> None:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
     parser = argparse.ArgumentParser(description="Upgrade a project from the CLAUDE.MD template.")
     parser.add_argument("--source", required=True, help="Path to the template repository")
     parser.add_argument("--target", required=True, help="Path to the project to upgrade")
@@ -232,7 +235,7 @@ def main() -> None:
         print(f"  {raw_source}")
         result = subprocess.run(
             ["git", "clone", "--depth", "1", raw_source, tmpdir],
-            capture_output=True, text=True,
+            capture_output=True, text=True, errors="replace",
         )
         if result.returncode != 0:
             shutil.rmtree(tmpdir, ignore_errors=True)
@@ -325,6 +328,7 @@ def _run_upgrade(args, source: Path, target: Path, raw_source: str, tmpdir) -> N
                 cwd=str(target),
                 capture_output=True,
                 text=True,
+                errors="replace",
             )
             if result.returncode == 0:
                 print(c(GREEN, "  ✓ Skills synced"))
