@@ -25,8 +25,11 @@ Applies template improvements to an existing project without overwriting project
 - `.ai/progress/`, `.ai/completed/`, `.ai/plans/` — task tracking
 - `.ai/analysis/` — project analysis files
 - `.github/copilot-instructions.md` — project-specific Copilot instructions
-- `.claude/settings.json` — merged (new hooks/permissions added, existing config preserved)
 - `.claude/settings.local.json` — never touched
+
+## Special-Case Merged File
+
+- `.claude/settings.json` — may be merged by the upgrade script (`ADDED`/`MERGED`/`UNCHANGED`); new hooks/permissions are added while existing project-specific config is preserved
 
 ## Template Source
 
@@ -86,7 +89,7 @@ python .ai/scripts/upgrade-template.py \
 | `.ai/checklists/` | New checklists copied; changed diffed |
 | `.ai/tests/` | New test scripts copied; changed diffed |
 | `.ai/scripts/` | New scripts copied (including this one); changed diffed |
-| `.claude/settings.json` | Merged — new hooks and permissions added, `enabledPlugins` and project config preserved |
+| `.claude/settings.json` | `ADDED` (new file): created from template, `enabledPlugins` excluded. `MERGED` (existing file): new hooks and permissions added, existing config (including `enabledPlugins`) preserved. |
 
 ## After Upgrade
 
