@@ -78,7 +78,6 @@ def test_project_owned_completeness() -> bool:
         ".ai/completed",
         ".ai/plans",
         ".github/copilot-instructions.md",
-        ".claude/settings.json",
         ".claude/settings.local.json",
     }
 

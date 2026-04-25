@@ -17,7 +17,9 @@ temporary directory and cleaned up automatically after the upgrade completes.
 """
 
 import argparse
+import copy
 import difflib
+import json
 import os
 import shutil
 import subprocess
@@ -53,7 +55,6 @@ PROJECT_OWNED = [
     ".ai/plans",
     ".ai/analysis",
     ".github/copilot-instructions.md",
-    ".claude/settings.json",
     ".claude/settings.local.json",
 ]
 
@@ -140,6 +141,71 @@ def collect_template_files(source: Path) -> list[Path]:
                 if f.is_file():
                     result.append(f.relative_to(source))
     return result
+
+
+# ─── Settings merge ───────────────────────────────────────────────────────────
+
+def _hook_commands(group: dict) -> set:
+    return {h["command"] for h in group.get("hooks", []) if "command" in h}
+
+
+def merge_settings_json(source: Path, target: Path, dry_run: bool) -> None:
+    template_path = source / ".claude" / "settings.json"
+    project_path  = target / ".claude" / "settings.json"
+
+    if not template_path.exists():
+        return
+
+    template = json.loads(template_path.read_text(encoding="utf-8"))
+
+    if not project_path.exists():
+        print(f"  {c(GREEN, 'ADDED')}    .claude/settings.json")
+        if not dry_run:
+            project_path.parent.mkdir(parents=True, exist_ok=True)
+            project_path.write_text(
+                json.dumps({k: v for k, v in template.items() if k != "enabledPlugins"}, indent=2),
+                encoding="utf-8",
+            )
+        return
+
+    project = json.loads(project_path.read_text(encoding="utf-8"))
+    merged  = copy.deepcopy(project)
+    added: list[str] = []
+
+    # plansDirectory — take from template
+    if template.get("plansDirectory") and merged.get("plansDirectory") != template["plansDirectory"]:
+        merged["plansDirectory"] = template["plansDirectory"]
+        added.append(f"plansDirectory → {template['plansDirectory']!r}")
+
+    # hooks — add groups whose commands are not yet present in the project
+    for event, groups in template.get("hooks", {}).items():
+        existing_commands: set = set()
+        for grp in merged.get("hooks", {}).get(event, []):
+            existing_commands |= _hook_commands(grp)
+        for grp in groups:
+            new_cmds = _hook_commands(grp)
+            if new_cmds and not new_cmds.issubset(existing_commands):
+                merged.setdefault("hooks", {}).setdefault(event, []).append(grp)
+                existing_commands |= new_cmds
+                added.append(f"hook [{event}]: {', '.join(sorted(new_cmds))}")
+
+    # permissions — union of allow, deny, additionalDirectories
+    for key in ("allow", "deny", "additionalDirectories"):
+        template_vals = template.get("permissions", {}).get(key, [])
+        project_list  = merged.setdefault("permissions", {}).setdefault(key, [])
+        for val in template_vals:
+            if val not in project_list:
+                project_list.append(val)
+                added.append(f"permissions.{key}: {val!r}")
+
+    if added:
+        print(f"  {c(GREEN, 'MERGED')}   .claude/settings.json")
+        for item in added:
+            print(f"             + {item}")
+        if not dry_run:
+            project_path.write_text(json.dumps(merged, indent=2), encoding="utf-8")
+    else:
+        print(f"  {c(CYAN, 'UNCHANGED')} .claude/settings.json")
 
 
 # ─── Main ─────────────────────────────────────────────────────────────────────
@@ -245,7 +311,11 @@ def _run_upgrade(args, source: Path, target: Path, raw_source: str, tmpdir) -> N
                 print(f"  {c(CYAN, '→ skipped')}")
                 counts["skipped_diff"] += 1
 
-    # ─── Post-sync: run sync-skills.py in target if skills were added ─────────
+    # ─── Merge .claude/settings.json ─────────────────────────────────────────
+    if not counts["quit"]:
+        merge_settings_json(source, target, args.dry_run)
+
+    # ─── Post-sync: run sync-skills.py in target ──────────────────────────────
     if not args.dry_run and not counts["quit"]:
         sync_script = target / ".ai" / "scripts" / "sync-skills.py"
         if sync_script.exists():
