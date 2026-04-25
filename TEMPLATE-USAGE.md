@@ -92,11 +92,9 @@ Edit `.ai/session-context.md` to establish your project's initial context:
 ## Directory Structure Explained
 
 ```
-.claude/                        # Claude Code config only
-├── settings.json               # Claude Code configuration (plansDirectory, hooks, permissions)
-├── settings.local.json         # Local overrides (not committed)
-└── skills/                     # Thin wrappers (auto-generated — do not edit)
-    └── <skill>/SKILL.md        # !`cat .ai/skills/<skill>/SKILL.md`
+.claude/settings.json           # Claude Code configuration (plansDirectory, hooks, permissions)
+.claude/settings.local.json     # Local overrides (not committed)
+                                # Note: skills/ wrappers are auto-generated — do not edit
 
 .ai/                            # All AI context (vendor-neutral)
 ├── session-context.md          # Working session memory
@@ -113,7 +111,7 @@ Edit `.ai/session-context.md` to establish your project's initial context:
 │   ├── testing-patterns.md     # Testing patterns
 │   └── ...                     # 8 patterns total
 ├── scripts/                    # Automation scripts
-│   ├── sync-skills.py          # Sync .ai/skills/ → .claude/skills/ + .github/skills/
+│   ├── sync-skills.py          # Sync .ai/skills/ to Claude Code and GitHub Copilot targets
 │   └── upgrade-template.py     # Safely upgrade existing projects
 ├── skills/                     # Specialized agent personas (source of truth)
 │   ├── dotnet-engineer/SKILL.md
@@ -411,7 +409,7 @@ python .ai/scripts/upgrade-template.py /path/to/YourProject --non-interactive
 ### Adding a New Skill
 
 1. Create `.ai/skills/<skill-name>/SKILL.md` with correct YAML frontmatter
-2. A PostToolUse hook auto-syncs to `.claude/skills/` and `.github/skills/`
+2. A PostToolUse hook auto-syncs to Claude Code and `.github/skills/`
 3. If the hook isn't running: `python .ai/scripts/sync-skills.py`
 4. Add to the Work-Type Context Mapping table in `CLAUDE.md`
 5. Add to `README.md` skills table

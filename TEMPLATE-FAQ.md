@@ -42,7 +42,7 @@ Invoke specialized skills directly:
 /gap-review               - Validate solution against design decisions
 /upgrade-template         - Upgrade existing project from template
 /verify-config            - Audit CLAUDE.md against actual codebase
-/update-skills            - Sync .claude/skills/ and .github/skills/
+/update-skills            - Sync .ai/skills/ to Claude Code and GitHub Copilot
 ```
 
 #### 2. Natural Language Requests
