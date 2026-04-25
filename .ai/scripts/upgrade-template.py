@@ -7,9 +7,13 @@ Never touches project-owned files (CLAUDE.md, session-context, project/ etc.).
 
 Usage:
     python upgrade-template.py --source <template-repo> --target <project-repo>
+    python upgrade-template.py --source https://github.com/org/repo --target <project-repo>
     python upgrade-template.py --source <template-repo> --target <project-repo> --dry-run
     python upgrade-template.py --source <template-repo> --target <project-repo> --non-interactive
     python upgrade-template.py --source <template-repo> --target <project-repo> --skills-only
+
+When --source is a URL (https:// or git@), the repo is shallow-cloned to a
+temporary directory and cleaned up automatically after the upgrade completes.
 """
 
 import argparse
@@ -18,6 +22,7 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 # ─── Ownership tables ────────────────────────────────────────────────────────
@@ -147,18 +152,42 @@ def main() -> None:
     parser.add_argument("--skills-only", action="store_true", help="Only sync .ai/skills/")
     args = parser.parse_args()
 
-    source = Path(args.source).resolve()
     target = Path(args.target).resolve()
-
-    if not source.exists():
-        print(c(RED, f"ERROR: source not found: {source}"))
-        sys.exit(1)
     if not target.exists():
         print(c(RED, f"ERROR: target not found: {target}"))
         sys.exit(1)
 
+    tmpdir = None
+    raw_source = args.source
+    if raw_source.startswith(("https://", "git@", "http://")):
+        tmpdir = tempfile.mkdtemp(prefix="upgrade-template-")
+        print(f"\n{c(BOLD, 'Cloning template ...')}")
+        print(f"  {raw_source}")
+        result = subprocess.run(
+            ["git", "clone", "--depth", "1", raw_source, tmpdir],
+            capture_output=True, text=True,
+        )
+        if result.returncode != 0:
+            shutil.rmtree(tmpdir, ignore_errors=True)
+            print(c(RED, f"ERROR: git clone failed:\n{result.stderr.strip()}"))
+            sys.exit(1)
+        source = Path(tmpdir)
+    else:
+        source = Path(raw_source).resolve()
+        if not source.exists():
+            print(c(RED, f"ERROR: source not found: {source}"))
+            sys.exit(1)
+
+    try:
+        _run_upgrade(args, source, target, raw_source, tmpdir)
+    finally:
+        if tmpdir:
+            shutil.rmtree(tmpdir, ignore_errors=True)
+
+
+def _run_upgrade(args, source: Path, target: Path, raw_source: str, tmpdir) -> None:
     print(f"\n{c(BOLD, 'Template Upgrade')}")
-    print(f"  Source : {source}")
+    print(f"  Source : {raw_source}")
     print(f"  Target : {target}")
     if args.dry_run:
         print(f"  Mode   : {c(YELLOW, 'DRY RUN — no files will be written')}")
@@ -226,7 +255,7 @@ def main() -> None:
     if skills_added and not args.dry_run and not counts["quit"]:
         sync_script = target / ".ai" / "scripts" / "sync-skills.py"
         if sync_script.exists():
-            print(f"\n{c(CYAN, 'Syncing skills → .claude/skills/ and .github/skills/ ...')}")
+            print(f"\n{c(CYAN, 'Syncing skills to Claude Code and GitHub Copilot targets ...')}")
             result = subprocess.run(
                 [sys.executable, str(sync_script)],
                 cwd=str(target),
@@ -240,7 +269,7 @@ def main() -> None:
                 if result.stderr:
                     print(f"    {result.stderr.strip()}")
         else:
-            print(f"\n{c(YELLOW, 'Note:')} run /update-skills in the target project to sync .claude/skills/ and .github/skills/")
+            print(f"\n{c(YELLOW, 'Note:')} run /update-skills in the target project to sync skills to Claude Code and GitHub Copilot")
 
     # ─── Summary ──────────────────────────────────────────────────────────────
     print(f"\n{c(BOLD, 'Summary')}")
