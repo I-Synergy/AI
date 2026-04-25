@@ -202,7 +202,6 @@ def _run_upgrade(args, source: Path, target: Path, raw_source: str, tmpdir) -> N
 
     counts = {"added": 0, "updated": 0, "skipped_unchanged": 0,
               "skipped_project": 0, "skipped_diff": 0, "quit": False}
-    skills_added: list[str] = []
 
     for rel in files:
         # Never touch project-owned paths
@@ -221,12 +220,6 @@ def _run_upgrade(args, source: Path, target: Path, raw_source: str, tmpdir) -> N
                 tgt_file.parent.mkdir(parents=True, exist_ok=True)
                 tgt_file.write_text(src_text, encoding="utf-8")
             counts["added"] += 1
-            # Track new skills for post-sync
-            parts = rel.parts
-            if len(parts) >= 3 and parts[0] == ".ai" and parts[1] == "skills":
-                skill_name = parts[2]
-                if skill_name not in skills_added:
-                    skills_added.append(skill_name)
         else:
             tgt_text = read_text(tgt_file)
             if src_text == tgt_text:
@@ -252,7 +245,7 @@ def _run_upgrade(args, source: Path, target: Path, raw_source: str, tmpdir) -> N
                 counts["skipped_diff"] += 1
 
     # ─── Post-sync: run sync-skills.py in target if skills were added ─────────
-    if skills_added and not args.dry_run and not counts["quit"]:
+    if not args.dry_run and not counts["quit"]:
         sync_script = target / ".ai" / "scripts" / "sync-skills.py"
         if sync_script.exists():
             print(f"\n{c(CYAN, 'Syncing skills to Claude Code and GitHub Copilot targets ...')}")
