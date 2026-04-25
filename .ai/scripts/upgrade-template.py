@@ -53,6 +53,7 @@ PROJECT_OWNED = [
     ".ai/plans",
     ".ai/analysis",
     ".github/copilot-instructions.md",
+    ".claude/settings.json",
     ".claude/settings.local.json",
 ]
 
