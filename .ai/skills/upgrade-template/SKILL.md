@@ -14,6 +14,7 @@ Applies template improvements to an existing project without overwriting project
 | `ADDED` | New file — does not exist in the project yet. Copied automatically. |
 | `CHANGED` | File exists in both. Shows a diff. You choose: accept (overwrite) or skip (keep yours). |
 | `UNCHANGED` | Identical in both. Silently skipped. |
+| `MERGED` | `.claude/settings.json` — new hooks/permissions added, project keys preserved. |
 | `SKIPPED (project-owned)` | Never touched — see list below. |
 
 ## Project-Owned Files (Never Touched)
@@ -24,7 +25,16 @@ Applies template improvements to an existing project without overwriting project
 - `.ai/progress/`, `.ai/completed/`, `.ai/plans/` — task tracking
 - `.ai/analysis/` — project analysis files
 - `.github/copilot-instructions.md` — project-specific Copilot instructions
-- `.claude/settings.local.json` — local settings
+- `.claude/settings.json` — merged (new hooks/permissions added, existing config preserved)
+- `.claude/settings.local.json` — never touched
+
+## Template Source
+
+The canonical template is always fetched from GitHub — no local clone needed:
+
+```
+https://github.com/I-Synergy/AI
+```
 
 ## Usage
 
@@ -32,7 +42,7 @@ Applies template improvements to an existing project without overwriting project
 
 ```bash
 python .ai/scripts/upgrade-template.py \
-  --source D:/Projects/Github/CLAUDE.MD \
+  --source https://github.com/I-Synergy/AI \
   --target D:/Projects/MyProject/my-repo
 ```
 
@@ -40,7 +50,7 @@ python .ai/scripts/upgrade-template.py \
 
 ```bash
 python .ai/scripts/upgrade-template.py \
-  --source D:/Projects/Github/CLAUDE.MD \
+  --source https://github.com/I-Synergy/AI \
   --target D:/Projects/MyProject/my-repo \
   --dry-run
 ```
@@ -49,7 +59,7 @@ python .ai/scripts/upgrade-template.py \
 
 ```bash
 python .ai/scripts/upgrade-template.py \
-  --source D:/Projects/Github/CLAUDE.MD \
+  --source https://github.com/I-Synergy/AI \
   --target D:/Projects/MyProject/my-repo \
   --skills-only
 ```
@@ -58,7 +68,7 @@ python .ai/scripts/upgrade-template.py \
 
 ```bash
 python .ai/scripts/upgrade-template.py \
-  --source D:/Projects/Github/CLAUDE.MD \
+  --source https://github.com/I-Synergy/AI \
   --target D:/Projects/MyProject/my-repo \
   --non-interactive
 ```
@@ -76,21 +86,32 @@ python .ai/scripts/upgrade-template.py \
 | `.ai/checklists/` | New checklists copied; changed diffed |
 | `.ai/tests/` | New test scripts copied; changed diffed |
 | `.ai/scripts/` | New scripts copied (including this one); changed diffed |
+| `.claude/settings.json` | Merged — new hooks and permissions added, `enabledPlugins` and project config preserved |
 
 ## After Upgrade
 
-The script automatically runs `sync-skills.py` in the target project if new skills were added,
-syncing them to `.claude/skills/` and `.github/skills/`.
-
-If `sync-skills.py` is not yet present in the target, run `/update-skills` manually.
+The script automatically runs `sync-skills.py` in the target project after every upgrade,
+syncing all skills to Claude Code and GitHub Copilot targets.
 
 ## Running This as Claude
 
-When the user asks to upgrade a project, run the script with Bash:
+**Source is always the GitHub template repo. Target is always the current working directory.**
+Do not ask the user for either — derive them automatically.
 
-```
-python .ai/scripts/upgrade-template.py --source <template> --target <project> --dry-run
+1. Run a dry-run first and show the output:
+
+```bash
+python .ai/scripts/upgrade-template.py \
+  --source https://github.com/I-Synergy/AI \
+  --target . \
+  --dry-run
 ```
 
-Show the dry-run output first. Confirm with the user before running without `--dry-run`.
-For projects where the user trusts the changes, use `--non-interactive` for a clean run.
+2. Ask the user to confirm before applying changes.
+3. Run without `--dry-run` (add `--non-interactive` if the user says to apply all changes):
+
+```bash
+python .ai/scripts/upgrade-template.py \
+  --source https://github.com/I-Synergy/AI \
+  --target .
+```
