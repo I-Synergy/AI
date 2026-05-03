@@ -16,7 +16,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "dotnet build --nologo --verbosity minimal",
+            "command": "if ls *.sln *.slnx 2>/dev/null | grep -q .; then dotnet build --nologo --verbosity minimal; fi",
             "statusMessage": "Building solution..."
           }
         ]
@@ -26,7 +26,9 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 .ai/scripts/sync-skills.py --from-hook"
+            "if": "Write(.ai/skills/**)|Edit(.ai/skills/**)",
+            "command": "python3 .ai/scripts/sync-skills.py --from-hook",
+            "statusMessage": "Syncing skill to .claude/ and .github/..."
           }
         ]
       },
