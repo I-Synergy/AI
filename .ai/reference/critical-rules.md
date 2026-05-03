@@ -261,6 +261,20 @@ WRONG:     ~/.ai/plans/2026-02-28-feature-name.md
 
 This is configured via `plansDirectory` in `.claude/settings.json` and must not be bypassed by skill defaults.
 
+## 15. New Types: Search Entire Solution First
+
+**Before creating any entity, model, class, or property — search the entire solution first.** If it already exists, reuse or extend it. Never create overlapping or redundant types.
+
+```
+// CORRECT — search first, reuse what exists
+// "Customer" already has Person, Address, PhoneNumber → reference those
+
+// WRONG — duplicating existing domain types
+public class Client { string Name; string Phone; string Street; }
+```
+
+This check is mandatory at **planning time**. Every plan must explicitly state which existing entities are reused before proposing new ones.
+
 ## Quick Violation Checklist
 
 Before submitting code, verify you haven't violated these:
