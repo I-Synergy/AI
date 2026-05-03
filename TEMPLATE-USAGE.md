@@ -23,7 +23,7 @@ A **generic, modular .NET project template** with:
 cp -r /path/to/Template/.ai /path/to/YourProject/.ai
 
 # Copy Claude Code config
-cp -r /path/to/Template/.claude /path/to/YourProject/.claude
+cp -r /path/to/Template/.claude /path/to/YourProject/.ai
 
 # Copy CLAUDE.md to your project root
 cp /path/to/Template/CLAUDE.md /path/to/YourProject/CLAUDE.md
