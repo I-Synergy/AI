@@ -76,7 +76,7 @@ See `.ai/reference/tokens.md` for complete definitions.
 cp -r ./.ai /path/to/YourProject/.ai
 
 # Copy Claude Code config
-cp -r ./.claude /path/to/YourProject/.claude
+cp -r ./.claude /path/to/YourProject/.ai
 
 # Copy CLAUDE.md orchestration file
 cp ./CLAUDE.md /path/to/YourProject/CLAUDE.md
