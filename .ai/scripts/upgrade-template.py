@@ -41,6 +41,13 @@ TEMPLATE_OWNED = [
     ".ai/reference/tokens.md",
     ".ai/reference/glossary.md",
     ".ai/reference/naming-conventions.md",
+    ".ai/reference/copilot-integration.md",
+    ".ai/reference/session-management.md",
+    ".ai/reference/task-execution.md",
+    ".ai/reference/work-type-mapping.md",
+    ".ai/reference/operational-rules.md",
+    ".ai/reference/readme-maintenance.md",
+    "CLAUDE.md",
     ".ai/checklists",
     ".ai/tests",
     ".ai/scripts",
@@ -48,7 +55,6 @@ TEMPLATE_OWNED = [
 
 # Project owns these — never read, never write.
 PROJECT_OWNED = [
-    "CLAUDE.md",
     ".ai/session-context.md",
     ".ai/project",
     ".ai/progress",
