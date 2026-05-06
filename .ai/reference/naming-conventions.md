@@ -219,21 +219,24 @@ public async Task<CreateBudgetResponse> HandleAsync(
 // Use named DbSet properties on DataContext directly — no repositories, no extension methods
 // Create
 dataContext.Budgets.Add(entity);
-await dataContext.SaveChangesAsync(ct);
+await dataContext.SaveChangesAsync(cancellationToken);
 
 // Read single
-var entity = await dataContext.Budgets.FirstOrDefaultAsync(e => e.BudgetId == id, ct);
+var entity = await dataContext.Budgets.FirstOrDefaultAsync(e => e.BudgetId == id, cancellationToken);
 
 // Read list
-var models = await dataContext.Budgets.OrderBy(e => e.Description).ToListAsync(ct);
+var entities = await dataContext.Budgets.OrderBy(e => e.Description).ToListAsync(cancellationToken);
 
 // Update — property mutation on tracked entity, no .Update() call needed
 entity.Description = command.Description;
-await dataContext.SaveChangesAsync(ct);
+await dataContext.SaveChangesAsync(cancellationToken);
 
-// Delete
-dataContext.Budgets.Remove(entity);
-await dataContext.SaveChangesAsync(ct);
+// Delete — lookup first, null-check, then remove; validate rowsAffected
+var entityToDelete = await dataContext.Budgets.FirstOrDefaultAsync(e => e.BudgetId == id, cancellationToken);
+if (entityToDelete is null) return NotFoundResponse();
+dataContext.Budgets.Remove(entityToDelete);
+var rowsAffected = await dataContext.SaveChangesAsync(cancellationToken);
+if (rowsAffected == 0) return FailureResponse();
 ```
 
 ## Variable Naming
