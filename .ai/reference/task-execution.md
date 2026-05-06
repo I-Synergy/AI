@@ -89,11 +89,13 @@ Which approach should I take?
 
 ## Subagent Template
 
+**Code changes must be delegated.** Never use Edit or Write directly in the main conversation. All code implementation, edits, and file creation must be done by the `programmer` sub-agent (Haiku model). Only use Edit/Write yourself for non-code files (progress files, session context, plans, documentation).
+
 **Valid `subagent_type` values** (skill names like `dotnet-engineer` are NOT valid agent types):
 
 | Use case | `subagent_type` |
 |-|-|
-| Code implementation, CQRS, tests | `general-purpose` |
+| Code implementation, CQRS, tests | `programmer` |
 | File/codebase exploration | `Explore` |
 | Implementation planning | `Plan` |
 | Shell commands, git, build | `Bash` |
