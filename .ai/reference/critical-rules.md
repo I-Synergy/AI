@@ -275,6 +275,19 @@ public class Client { string Name; string Phone; string Street; }
 
 This check is mandatory at **planning time**. Every plan must explicitly state which existing entities are reused before proposing new ones.
 
+## 16. Code Writing: Always Delegate to Programmer Subagent
+
+All code writing, editing, and modification MUST be delegated to the `programmer` subagent. The main conversation handles reasoning, analysis, planning, and user interaction only.
+
+| Task | Runs on |
+|------|---------|
+| Planning, architecture, design decisions | Main conversation (Pro model) |
+| Code implementation (Write, Edit, code changes) | `programmer` subagent (Flash model) |
+| Code exploration and search | `Explore` subagent (Flash model) |
+| Build, test, and verification | `programmer` subagent (Flash model) |
+
+The `programmer` subagent is defined in `.ai/agents/programmer.md` and hard-linked to `.claude/agents/programmer.md` for discovery.
+
 ## Quick Violation Checklist
 
 Before submitting code, verify you haven't violated these:
@@ -293,3 +306,4 @@ Before submitting code, verify you haven't violated these:
 - [ ] Session context read first and updated last
 - [ ] Enum names are plural (except *Status suffix enums)
 - [ ] EF Core entity properties use enum types, not raw int
+- [ ] Code writing delegated to `programmer` subagent (not done in main conversation)

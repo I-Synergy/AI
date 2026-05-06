@@ -32,6 +32,7 @@ from pathlib import Path
 # Template owns these — new files are copied, changed files are diffed.
 # Entries can be files or directories (directories are walked recursively).
 TEMPLATE_OWNED = [
+    ".ai/agents",
     ".ai/skills",
     ".ai/patterns",
     ".ai/reference/templates",
@@ -338,6 +339,24 @@ def _run_upgrade(args, source: Path, target: Path, raw_source: str, tmpdir) -> N
                     print(f"    {result.stderr.strip()}")
         else:
             print(f"\n{c(YELLOW, 'Note:')} run /update-skills in the target project to sync skills to Claude Code and GitHub Copilot")
+
+        sync_agents = target / ".ai" / "scripts" / "sync-agents.py"
+        if sync_agents.exists():
+            print(f"\n{c(CYAN, 'Syncing agents to Claude Code and GitHub Copilot targets ...')}")
+            result = subprocess.run(
+                [sys.executable, str(sync_agents)],
+                cwd=str(target),
+                capture_output=True,
+                text=True,
+                errors="replace",
+            )
+            if result.returncode == 0:
+                print(c(GREEN, "  ✓ Agents synced"))
+            else:
+                print(c(YELLOW, f"  ⚠ sync-agents.py exited {result.returncode}"))
+                if result.stderr:
+                    print(f"    {result.stderr.strip()}")
+        # no else: agents dir is new; older targets may not have sync-agents.py yet
 
     # ─── Summary ──────────────────────────────────────────────────────────────
     print(f"\n{c(BOLD, 'Summary')}")
