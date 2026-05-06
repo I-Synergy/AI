@@ -33,6 +33,17 @@
         ]
       },
       {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Write(.ai/agents/**)|Edit(.ai/agents/**)",
+            "command": "python3 .ai/scripts/sync-agents.py --from-hook",
+            "statusMessage": "Syncing agent to .claude/ and .github/..."
+          }
+        ]
+      },
+      {
         "matcher": "Write|Edit",
         "hooks": [
           {
@@ -70,6 +81,7 @@
       "./.ai/progress",
       "./.ai/project",
       "./.ai/reference",
+      "./.ai/agents",
       "./.ai/skills"
     ]
   }
