@@ -9,7 +9,7 @@
 | **Query** | `Get{Entity}{Criteria}Query` | `GetBudgetByIdQuery` |
 | **Handler** | `{Action}{Entity}CommandHandler` / `Get{Entity}{Criteria}QueryHandler` | `CreateBudgetCommandHandler` |
 | **Response** | `{Action}{Entity}Response` | `CreateBudgetResponse` |
-| **DTO** | `{Entity}Model` or `{Entity}Dto` | `BudgetModel` |
+| **DTO / Model** | `{Entity}` (no suffix) | `Budget` |
 | **Interface** | `I{Type}` | `ICommandHandler<T>` |
 | **Classes** | PascalCase | `BudgetEndpoints` |
 | **Methods** | PascalCase + `Async` suffix | `GetBudgetByIdAsync` |
@@ -75,12 +75,12 @@ GetBudgetsByUserIdQuery.cs
 ### Handlers
 
 ```
-{CommandName}Handler.cs
-{QueryName}Handler.cs
+{Action}{Entity}CommandHandler.cs
+Get{Entity}{Criteria}QueryHandler.cs
 
 Examples:
-CreateBudgetHandler.cs
-GetBudgetByIdHandler.cs
+CreateBudgetCommandHandler.cs
+GetBudgetByIdQueryHandler.cs
 ```
 
 ### Responses
@@ -213,35 +213,27 @@ public async Task<CreateBudgetResponse> HandleAsync(
     CancellationToken cancellationToken = default)
 ```
 
-### Data Access
+### Data Access (EF Core Primitives)
 
 ```csharp
-// Extension methods on DataContext
-AddItemAsync<TEntity, TModel>()
-GetItemByIdAsync<TEntity, TModel, TKey>()
-UpdateItemAsync<TEntity, TModel>()
-RemoveItemAsync<TEntity, TKey>()
+// Use named DbSet properties on DataContext directly — no repositories, no extension methods
+// Create
+dataContext.Budgets.Add(entity);
+await dataContext.SaveChangesAsync(ct);
 
-// Examples
-await dataContext.AddItemAsync<Budget, BudgetModel>(model, ct);
-await dataContext.GetItemByIdAsync<Budget, BudgetModel, Guid>(id, ct);
-```
+// Read single
+var entity = await dataContext.Budgets.FirstOrDefaultAsync(e => e.BudgetId == id, ct);
 
-### Repository Methods (if used)
+// Read list
+var models = await dataContext.Budgets.OrderBy(e => e.Description).ToListAsync(ct);
 
-```csharp
-// Async suffix + descriptive name
-GetByIdAsync()
-GetAllAsync()
-FindByAsync()
-CreateAsync()
-UpdateAsync()
-DeleteAsync()
+// Update — property mutation on tracked entity, no .Update() call needed
+entity.Description = command.Description;
+await dataContext.SaveChangesAsync(ct);
 
-// Examples
-Task<Budget> GetByIdAsync(Guid id, CancellationToken ct);
-Task<List<Budget>> GetAllAsync(CancellationToken ct);
-Task<List<Budget>> FindByUserIdAsync(Guid userId, CancellationToken ct);
+// Delete
+dataContext.Budgets.Remove(entity);
+await dataContext.SaveChangesAsync(ct);
 ```
 
 ## Variable Naming
