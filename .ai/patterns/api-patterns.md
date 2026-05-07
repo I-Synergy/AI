@@ -998,7 +998,7 @@ This pins the Kiota CLI version in `.config/dotnet-tools.json`:
 ├── Api/                        # Kiota-generated request builders
 ├── Models/                     # Kiota-generated models
 ├── Extensions/                 # DI registration (hand-written)
-└── kiota-lock.json             # Generation lock file (committed)
+└── kiota-lock.json             # Generation lock file
 ```
 
 ### Client Registration in DI
@@ -1089,7 +1089,7 @@ public sealed class Get{Entity}ListQueryHandler(
 - **Multi-app clients** — swap `App` for `Clients`: `{ApplicationName}.App.Business` → `{ApplicationName}.Clients.Business`
 - **Kiota version pinned in `dotnet-tools.json`** — `rollForward: false` ensures every developer and CI uses the exact same version
 - **Client generated via MSBuild target** — the API project's `.csproj` includes an `OpenAPI` target that runs `dotnet kiota generate` after every build
-- **Generated code is git-ignored** — add `Api/`, `Models/`, and `ApiClient.cs` in `{ApplicationName}.Clients.Api/` to `.gitignore`; `kiota-lock.json` is committed
+- **Client source is committed** — `Api/`, `Models/`, `ApiClient.cs`, and `kiota-lock.json` are all committed as the client project's source code
 - **`Microsoft.Kiota.Bundle`** — single metapackage covering Abstractions, HttpClientLibrary, and all serializers
 - **Client registration is a consuming concern** — the client project owns its own `ServiceCollectionExtensions`
 - **Don't share request/response types from the API project** — Kiota generates its own models from the OpenAPI spec
