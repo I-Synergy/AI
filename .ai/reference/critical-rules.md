@@ -249,7 +249,56 @@ public int SubscriptionStatus { get; set; }
 public int StatusId { get; set; }
 ```
 
-## 13. Plan Files: Always in `.ai/plans/`
+## 13. Common Project: Centralize Shared Types
+
+Every solution MUST include a `{ApplicationName}.Common` project. Shared types — especially enumerations — MUST live in Common, never scattered across domain/data projects where they create circular or cross-dependency issues.
+
+All projects MUST reference `{ApplicationName}.Common` either directly or transitively (e.g., Services → Domain → Common).
+
+```
+// CORRECT — Enum defined once in Common, consumed everywhere
+// {ApplicationName}.Common/Enums/PaymentStatus.cs
+public enum PaymentStatus { Pending, Succeeded, Failed }
+
+// {ApplicationName}.Domain.Payments references Common
+// {ApplicationName}.Data references Domain (transitively gets Common)
+// {ApplicationName}.Services references Domain (transitively gets Common)
+
+// WRONG — Enum defined in a domain project, forcing Data → Domain dependency for enums
+// {ApplicationName}.Domain.Payments/Enums/PaymentStatus.cs
+
+// WRONG — Duplicate enum definitions across projects
+// {ApplicationName}.Domain.Payments: PaymentStatus
+// {ApplicationName}.Models.Payments: PaymentStatus  (duplicate)
+```
+
+Other types that belong in Common: shared constants, common interfaces (e.g., `IEntity`, `IAuditable`), reusable value objects, and extension methods used across multiple projects.
+
+## 14. Entities and Models: Never Reference Each Other
+
+An entity MUST never reference a model, and a model MUST never reference an entity. If both projects need the same type, that type belongs in `{ApplicationName}.Common`.
+
+```
+// CORRECT — Shared type extracted to Common
+// {ApplicationName}.Common/Enums/PaymentStatus.cs
+public enum PaymentStatus { Pending, Succeeded, Failed }
+
+// {ApplicationName}.Entities.Payments/Payment.cs
+public class Payment { public PaymentStatus Status { get; set; } }
+
+// {ApplicationName}.Models.Payments/PaymentModel.cs
+public sealed record PaymentModel(PaymentStatus Status);
+
+// WRONG — Entity project references Models project for a shared enum
+// {ApplicationName}.Entities.Payments has a project reference to {ApplicationName}.Models.Payments
+
+// WRONG — Model project references Entities project for a shared enum
+// {ApplicationName}.Models.Payments has a project reference to {ApplicationName}.Entities.Payments
+```
+
+A cross-reference between Entities and Models is the canary — it signals a type that should have been extracted to Common.
+
+## 15. Plan Files: Always in `.ai/plans/`
 
 Plans and design docs MUST be saved in the project-local `.ai/plans/` folder. The `writing-plans` and `brainstorming` skills default to `docs/plans/` — always override that to `.ai/plans/`.
 
@@ -261,7 +310,7 @@ WRONG:     ~/.ai/plans/2026-02-28-feature-name.md
 
 This is configured via `plansDirectory` in `.claude/settings.json` and must not be bypassed by skill defaults.
 
-## 14. New Types: Search Entire Solution First
+## 16. New Types: Search Entire Solution First
 
 **Before creating any entity, model, class, or property — search the entire solution first.** If it already exists, reuse or extend it. Never create overlapping or redundant types.
 
@@ -275,7 +324,7 @@ public class Client { string Name; string Phone; string Street; }
 
 This check is mandatory at **planning time**. Every plan must explicitly state which existing entities are reused before proposing new ones.
 
-## 15. Code Writing: Always Delegate to Specialized Subagents
+## 17. Code Writing: Always Delegate to Specialized Subagents
 
 All code writing, editing, and modification MUST be delegated to a specialized subagent. The main conversation handles reasoning, analysis, planning, and user interaction only.
 
@@ -293,7 +342,7 @@ All code writing, editing, and modification MUST be delegated to a specialized s
 
 All agents are defined in `.ai/agents/` and hard-linked to `.claude/agents/` for discovery.
 
-## 16. Endpoint Produces Metadata: Always Explicit
+## 18. Endpoint Produces Metadata: Always Explicit
 
 Every API endpoint route MUST explicitly declare every status code it can return via `.Produces<T>()` or `.Produces(statusCode)`. Never rely on inference — OpenAPI/Swagger needs explicit metadata for accurate documentation.
 
@@ -335,7 +384,7 @@ group.MapPost("", AddEntityAsync)
 group.MapGet("{id}", GetEntityByIdAsync);
 ```
 
-## 17. API Projects: OpenAPI Document Generation in .csproj
+## 19. API Projects: OpenAPI Document Generation in .csproj
 
 Every API project `.csproj` MUST include the MSBuild properties and package reference to generate the OpenAPI spec at build time.
 
@@ -367,7 +416,7 @@ Every API project `.csproj` MUST include the MSBuild properties and package refe
 
 `OpenApiDocumentsDirectory` is relative to the project file — `../../openapi` puts the spec in a solution-level `openapi/` folder. The package reference uses `PrivateAssets=all` so it doesn't leak to downstream consumers.
 
-## 18. OpenAPI: Document Transformer (Servers) + Schema Transformer (Types)
+## 20. OpenAPI: Document Transformer (Servers) + Schema Transformer (Types)
 
 Every API project MUST register both a document transformer and a schema transformer in `AddOpenApi()`.
 
@@ -454,7 +503,7 @@ builder.Services.AddOpenApi(options =>
 builder.Services.AddOpenApi();
 ```
 
-## 19. API Clients: Kiota-Generated, Never Raw HttpClient
+## 21. API Clients: Kiota-Generated, Never Raw HttpClient
 
 Every API project MUST have a corresponding Kiota-generated client project. Never call an internal API with raw `HttpClient` — use the strongly-typed generated client instead.
 
@@ -500,7 +549,7 @@ The client project (`{ApplicationName}.Clients.Api` by default; `{ApplicationNam
 
 The API project `.csproj` must include an MSBuild `OpenAPI` target that runs `dotnet kiota generate` after every build, regenerating the client from the latest OpenAPI spec.
 
-## 20. Input Validation: Data Annotations + Validation Filter
+## 22. Input Validation: Data Annotations + Validation Filter
 
 Every POST/PUT route that accepts a body MUST include `.WithValidation<T>()` and `.ProducesValidationProblem()`. Request models MUST use Data Annotations.
 
@@ -521,7 +570,7 @@ group.MapPost("", AddEntityAsync)
     .ProducesValidationProblem(); // Declared but never executed
 ```
 
-## 21. Rate Limiting and HTTPS Enforcement
+## 23. Rate Limiting and HTTPS Enforcement
 
 Every API project MUST configure rate limiting and HTTPS redirection.
 
@@ -568,6 +617,8 @@ Before submitting code, verify you haven't violated these:
 - [ ] Progress files in current solution's `.ai/` folder
 - [ ] Plan files saved to `.ai/plans/` (not `docs/plans/`)
 - [ ] Session context read first and updated last
+- [ ] Solution includes `{ApplicationName}.Common` project with all enumerations centralized
+- [ ] Entities and models never reference each other (cross-reference = belongs in Common)
 - [ ] Enum names are plural (except *Status suffix enums)
 - [ ] EF Core entity properties use enum types, not raw int
 - [ ] Code and design work delegated to specialized subagents (`architect`, `developer`, `designer`, `ui-developer`, `tester`, `ui-tester`, `reviewer`, `writer`) — not done in main conversation
