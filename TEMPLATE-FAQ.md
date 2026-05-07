@@ -362,7 +362,8 @@ python .ai/scripts/upgrade-template.py /path/to/YourProject --non-interactive
 | Category | Examples | Behavior |
 |----------|---------|---------|
 | **Template-owned** | `.ai/skills/`, `.ai/patterns/`, `.ai/reference/templates/`, `.ai/tests/` | Safely updated |
-| **Project-owned** | `CLAUDE.md`, `.ai/session-context.md`, `.ai/project/`, `.ai/progress/` | Never touched |
+| **Project-owned** | `.ai/session-context.md`, `.ai/project/`, `.ai/progress/` | Never touched |
+| **Template-managed** | `CLAUDE.md` | Updated (diffed) — project-specific info goes in `.ai/project/` |
 
 Or invoke as a slash command:
 ```

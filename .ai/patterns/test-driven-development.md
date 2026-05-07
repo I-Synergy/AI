@@ -248,9 +248,7 @@ public async Task HandleAsync_ValidCommand_CreatesBudget()
     Assert.AreNotEqual(Guid.Empty, result.BudgetId);
 
     dataContextMock.Verify(
-        x => x.AddItemAsync<Budget, BudgetModel>(
-            It.IsAny<BudgetModel>(),
-            It.IsAny<CancellationToken>()),
+        x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
         Times.Once);
 }
 ```
@@ -317,18 +315,18 @@ public sealed class UpdateBudgetHandlerTests
     {
         // Arrange
         var budgetId = Guid.NewGuid();
-        var existingBudget = new BudgetModel
+        var existingBudget = new Budget
         {
             BudgetId = budgetId,
             Name = "Old Name",
-            Amount = 500m
+            Amount = 500m,
+            StartDate = DateTimeOffset.UtcNow
         };
 
+        var budgetsMock = new[] { existingBudget }.AsQueryable().BuildMockDbSet();
         _dataContextMock
-            .Setup(x => x.GetItemByIdAsync<Budget, BudgetModel, Guid>(
-                budgetId,
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(existingBudget);
+            .Setup(x => x.Budgets)
+            .Returns(budgetsMock.Object);
 
         var command = new UpdateBudgetCommand(budgetId, "New Name", 1000m);
 
@@ -339,9 +337,7 @@ public sealed class UpdateBudgetHandlerTests
         Assert.IsTrue(result.Success);
 
         _dataContextMock.Verify(
-            x => x.UpdateItemAsync<Budget, BudgetModel>(
-                It.Is<BudgetModel>(m => m.Name == "New Name" && m.Amount == 1000m),
-                It.IsAny<CancellationToken>()),
+            x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -362,11 +358,10 @@ public sealed class UpdateBudgetHandlerTests
         // Arrange
         var budgetId = Guid.NewGuid();
 
+        var budgetsMock = new List<Budget>().AsQueryable().BuildMockDbSet();
         _dataContextMock
-            .Setup(x => x.GetItemByIdAsync<Budget, BudgetModel, Guid>(
-                budgetId,
-                It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new NotFoundException($"Budget {budgetId} not found"));
+            .Setup(x => x.Budgets)
+            .Returns(budgetsMock.Object);
 
         var command = new UpdateBudgetCommand(budgetId, "Budget", 1000m);
 
@@ -854,54 +849,42 @@ public sealed class BudgetManagementSteps
 // Mock a dependency
 var dataContextMock = new Mock<DataContext>();
 
-// Setup a method to return a value
+// Setup a DbSet to return a value
+var budgetsMock = new[] { new Budget { BudgetId = Guid.NewGuid(), Name = "Test" } }
+    .AsQueryable().BuildMockDbSet();
 dataContextMock
-    .Setup(x => x.GetItemByIdAsync<Budget, BudgetModel, Guid>(
-        It.IsAny<Guid>(),
-        It.IsAny<CancellationToken>()))
-    .ReturnsAsync(new BudgetModel { BudgetId = Guid.NewGuid(), Name = "Test" });
+    .Setup(x => x.Budgets)
+    .Returns(budgetsMock.Object);
 
-// Verify a method was called
+// Verify SaveChangesAsync was called
 dataContextMock.Verify(
-    x => x.AddItemAsync<Budget, BudgetModel>(
-        It.IsAny<BudgetModel>(),
-        It.IsAny<CancellationToken>()),
+    x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
     Times.Once);
 ```
 
 ### Advanced Mocking
 
 ```csharp
-// Setup with specific argument matching
-dataContextMock
-    .Setup(x => x.GetItemByIdAsync<Budget, BudgetModel, Guid>(
-        It.Is<Guid>(id => id != Guid.Empty),
-        It.IsAny<CancellationToken>()))
-    .ReturnsAsync((Guid id, CancellationToken ct) => new BudgetModel
-    {
-        BudgetId = id,
-        Name = $"Budget-{id}"
-    });
+// Setup with specific argument matching — pre-populate DbSet with known entities
+var budgets = new List<Budget>
+{
+    new() { BudgetId = Guid.NewGuid(), Name = "Expected Name", Amount = 100m }
+};
+var budgetsMock = budgets.AsQueryable().BuildMockDbSet();
+dataContextMock.Setup(x => x.Budgets).Returns(budgetsMock.Object);
 
-// Setup to throw exception
-dataContextMock
-    .Setup(x => x.GetItemByIdAsync<Budget, BudgetModel, Guid>(
-        Guid.Empty,
-        It.IsAny<CancellationToken>()))
-    .ThrowsAsync(new ArgumentException("Invalid ID"));
+// Setup to throw exception when entity is not found
+var emptyBudgetsMock = new List<Budget>().AsQueryable().BuildMockDbSet();
+dataContextMock.Setup(x => x.Budgets).Returns(emptyBudgetsMock.Object);
 
-// Verify with argument matching
+// Verify SaveChangesAsync was called
 dataContextMock.Verify(
-    x => x.UpdateItemAsync<Budget, BudgetModel>(
-        It.Is<BudgetModel>(m => m.Name == "Expected Name"),
-        It.IsAny<CancellationToken>()),
+    x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
     Times.Once);
 
-// Verify method was never called
+// Verify SaveChangesAsync was never called
 dataContextMock.Verify(
-    x => x.RemoveItemAsync<Budget, Guid>(
-        It.IsAny<Guid>(),
-        It.IsAny<CancellationToken>()),
+    x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
     Times.Never);
 ```
 
@@ -963,11 +946,7 @@ public async Task HandleAsync_ValidCommand_CreatesBudgetWithCorrectProperties()
     Assert.AreNotEqual(Guid.Empty, result.BudgetId);
 
     dataContextMock.Verify(
-        x => x.AddItemAsync<Budget, BudgetModel>(
-            It.Is<BudgetModel>(m =>
-                m.Name == "Test Budget" &&
-                m.Amount == 1000m),
-            It.IsAny<CancellationToken>()),
+        x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
         Times.Once);
 }
 
@@ -1293,6 +1272,10 @@ public sealed class DeleteBudgetHandlerTests
 
         var command = new DeleteBudgetCommand(budgetId);
 
+        var budgetsMock = new[] { new Budget { BudgetId = budgetId, Name = "Test", Amount = 100m } }
+            .AsQueryable().BuildMockDbSet();
+        dataContextMock.Setup(x => x.Budgets).Returns(budgetsMock.Object);
+
         // Act
         var result = await handler.HandleAsync(command);
 
@@ -1300,9 +1283,7 @@ public sealed class DeleteBudgetHandlerTests
         Assert.IsTrue(result.Success);
 
         dataContextMock.Verify(
-            x => x.RemoveItemAsync<Budget, Guid>(
-                budgetId,
-                It.IsAny<CancellationToken>()),
+            x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -1321,11 +1302,10 @@ public sealed class DeleteBudgetHandlerTests
         var budgetId = Guid.NewGuid();
         var dataContextMock = new Mock<DataContext>();
 
+        var budgetsMock = new List<Budget>().AsQueryable().BuildMockDbSet();
         dataContextMock
-            .Setup(x => x.RemoveItemAsync<Budget, Guid>(
-                budgetId,
-                It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new NotFoundException($"Budget {budgetId} not found"));
+            .Setup(x => x.Budgets)
+            .Returns(budgetsMock.Object);
 
         var handler = new DeleteBudgetHandler(dataContextMock.Object, null!);
         var command = new DeleteBudgetCommand(budgetId);
@@ -1461,11 +1441,7 @@ public async Task HandleAsync_ValidCommand_PersistsBudgetWithCorrectData()
     await handler.HandleAsync(command);
 
     dataContextMock.Verify(
-        x => x.AddItemAsync<Budget, BudgetModel>(
-            It.Is<BudgetModel>(m =>
-                m.Name == "Test Budget" &&
-                m.Amount == 1000m),
-            It.IsAny<CancellationToken>()),
+        x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
         Times.Once);
 }
 ```
