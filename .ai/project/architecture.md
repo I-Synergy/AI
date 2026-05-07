@@ -53,6 +53,7 @@ Infrastructure Layer (Database, External Services)
 Example:
 solution/
 ├── src/
+│   ├── {ApplicationName}.Common/                  # Shared enums, constants, interfaces, value objects
 │   ├── {ApplicationName}.Contracts.{Domain}/      # Interfaces, service contracts
 │   ├── {ApplicationName}.Entities.{Domain}/       # EF Core entity classes
 │   ├── {ApplicationName}.Models.{Domain}/         # DTOs, view models
