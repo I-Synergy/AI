@@ -41,7 +41,7 @@ Expert for creating and configuring .NET Minimal API endpoints with full OpenAPI
 1. Follow the naming convention: `{ApplicationName}.Clients.Api` (single-app) or `{ApplicationName}.Clients.{AppName}` (multi-app)
 2. Create the client `.csproj` with `Microsoft.Kiota.Bundle` and `Microsoft.Extensions.Http` (see `references/kiota.md`)
 3. Create the `Extensions/ServiceCollectionExtensions.cs` for DI registration with `IAuthenticationProvider` + `HttpClientRequestAdapter` (see `references/kiota.md`)
-4. Git-ignore `Api/`, `Models/`, `ApiClient.cs` in the client project; commit `kiota-lock.json`
+4. Commit all client source files: `Api/`, `Models/`, `ApiClient.cs`, `kiota-lock.json`
 5. The API project's MSBuild `OpenAPI` target regenerates the client on every build
 
 ### Security Hardening
