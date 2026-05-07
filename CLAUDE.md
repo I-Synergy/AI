@@ -33,9 +33,11 @@ See `.ai/reference/task-execution.md` for the full protocol: plan mode, progress
 
 ## Coding Rules
 
-See `.ai/reference/critical-rules.md` for non-negotiable patterns (data access, naming, async, file organization, enum conventions). See `.ai/reference/forbidden-tech.md` for banned libraries and their replacements.
+See `.ai/reference/critical-rules.md` for non-negotiable patterns (data access, naming, async, file organization, enum conventions, API endpoint produces metadata, OpenAPI transformers, Kiota clients, validation, rate limiting). See `.ai/reference/forbidden-tech.md` for banned libraries and their replacements.
 
 See `.ai/patterns/cqrs-patterns.md` for complete CQRS patterns including commands, queries, handlers, models, responses, and service registration.
+
+See `.ai/patterns/api-patterns.md` for API endpoint patterns (Minimal APIs, TypedResults, OpenAPI, Kiota client generation, validation, security middleware).
 
 ## Reference Architecture
 
