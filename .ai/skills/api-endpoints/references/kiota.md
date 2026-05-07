@@ -34,16 +34,15 @@
 ```
 {ApplicationName}.Clients.Api/
 ├── {ApplicationName}.Clients.Api.csproj
-├── ApiClient.cs               # Kiota-generated entry point (git-ignored)
-├── Api/                        # Kiota-generated request builders (git-ignored)
-├── Models/                     # Kiota-generated models (git-ignored)
-├── Extensions/                 # DI registration (hand-written, committed)
+├── ApiClient.cs               # Kiota-generated entry point
+├── Api/                        # Kiota-generated request builders
+├── Models/                     # Kiota-generated models
+├── Extensions/                 # DI registration (hand-written)
 │   └── ServiceCollectionExtensions.cs
-└── kiota-lock.json             # Generation lock file (committed)
+└── kiota-lock.json             # Generation lock file
 ```
 
-Git-ignore: `Api/`, `Models/`, `ApiClient.cs` in the client project directory.
-Commit: `kiota-lock.json`, `Extensions/`, `.csproj`.
+All source files in the client project are committed: `Api/`, `Models/`, `ApiClient.cs`, `kiota-lock.json`, `Extensions/`, `.csproj`.
 
 ## Kiota Tool Version
 
@@ -146,6 +145,6 @@ public sealed class GetEntityListQueryHandler(
 - `Microsoft.Kiota.Bundle` — single metapackage, not individual packages
 - `dotnet-tools.json` — pinned version with `rollForward: false`
 - MSBuild `OpenAPI` target in the API project regenerates the client on every build
-- Generated code (`Api/`, `Models/`, `ApiClient.cs`) is git-ignored; `kiota-lock.json` is committed
+- Client source files (`Api/`, `Models/`, `ApiClient.cs`, `kiota-lock.json`) are committed
 - Use Aspire service discovery URL (`https+http://api`) for the client base address
 - Never use raw `HttpClient` to call an internal API
