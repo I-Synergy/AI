@@ -275,18 +275,23 @@ public class Client { string Name; string Phone; string Street; }
 
 This check is mandatory at **planning time**. Every plan must explicitly state which existing entities are reused before proposing new ones.
 
-## 15. Code Writing: Always Delegate to Programmer Subagent
+## 15. Code Writing: Always Delegate to Specialized Subagents
 
-All code writing, editing, and modification MUST be delegated to the `programmer` subagent. The main conversation handles reasoning, analysis, planning, and user interaction only.
+All code writing, editing, and modification MUST be delegated to a specialized subagent. The main conversation handles reasoning, analysis, planning, and user interaction only.
 
-| Task | Runs on |
-|------|---------|
-| Planning, architecture, design decisions | Main conversation (Pro model) |
-| Code implementation (Write, Edit, code changes) | `programmer` subagent (Flash model) |
-| Code exploration and search | `Explore` subagent (Flash model) |
-| Build, test, and verification | `programmer` subagent (Flash model) |
+| Task | Subagent |
+|------|----------|
+| Planning, architecture, design decisions | `architect` subagent (Sonnet) or main conversation (Pro) |
+| Code exploration and search | `Explore` subagent |
+| .NET implementation (CQRS, API, Blazor, data access, builds) | `developer` subagent |
+| Unit/integration tests (MSTest, Moq, Reqnroll) | `tester` subagent |
+| E2E/UI tests (Playwright, accessibility) | `ui-tester` subagent |
+| Visual design (color, typography, branding, tokens) | `designer` subagent |
+| UI components, layouts, styling | `ui-developer` subagent |
+| Code review (SOLID, CQRS, security, architecture) | `reviewer` subagent |
+| Documentation (XML docs, API docs, READMEs, ADRs) | `writer` subagent |
 
-The `programmer` subagent is defined in `.ai/agents/programmer.md` and hard-linked to `.claude/agents/programmer.md` for discovery.
+All agents are defined in `.ai/agents/` and hard-linked to `.claude/agents/` for discovery.
 
 ## 16. Endpoint Produces Metadata: Always Explicit
 
@@ -565,7 +570,7 @@ Before submitting code, verify you haven't violated these:
 - [ ] Session context read first and updated last
 - [ ] Enum names are plural (except *Status suffix enums)
 - [ ] EF Core entity properties use enum types, not raw int
-- [ ] Code writing delegated to `programmer` subagent (not done in main conversation)
+- [ ] Code and design work delegated to specialized subagents (`architect`, `developer`, `designer`, `ui-developer`, `tester`, `ui-tester`, `reviewer`, `writer`) — not done in main conversation
 - [ ] All endpoint routes declare both success and error `.Produces()` metadata
 - [ ] Every API project `.csproj` includes `OpenApiGenerateDocumentsOnBuild`, `OpenApiDocumentsDirectory`, and `Microsoft.Extensions.ApiDescription.Server` package reference
 - [ ] Every API project registers a document transformer (servers URL) and schema transformer (type mapping) in `AddOpenApi()`

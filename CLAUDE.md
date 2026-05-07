@@ -31,6 +31,23 @@ When searching for code references, frameworks, or dependencies, search the ENTI
 
 See `.ai/reference/task-execution.md` for the full protocol: plan mode, progress files, ReAct loop, subagent delegation, and the task definition template.
 
+### Subagent Delegation
+
+All code writing must be delegated to specialized subagents, never done in the main conversation:
+
+| Agent | Use For |
+|-------|---------|
+| `architect` | Feature design, pattern selection, component boundaries, implementation blueprints |
+| `developer` | .NET/C# code — CQRS handlers, API endpoints, Blazor components, EF Core, refactoring, builds |
+| `tester` | MSTest unit/integration tests, Moq mocks, Reqnroll BDD scenarios |
+| `ui-tester` | Playwright E2E tests, accessibility checks, visual regression |
+| `designer` | Visual design — color palettes, typography, spacing, branding, design tokens |
+| `ui-developer` | Blazor/MAUI components, layouts, CSS/styling, UX patterns |
+| `reviewer` | Code quality, SOLID, CQRS compliance, security issues, architecture |
+| `writer` | XML documentation, API docs, READMEs, ADRs, technical prose |
+
+Agents are defined in `.ai/agents/` and `.claude/agents/`.
+
 ## Coding Rules
 
 See `.ai/reference/critical-rules.md` for non-negotiable patterns (data access, naming, async, file organization, enum conventions, API endpoint produces metadata, OpenAPI transformers, Kiota clients, validation, rate limiting). See `.ai/reference/forbidden-tech.md` for banned libraries and their replacements.

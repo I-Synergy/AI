@@ -175,6 +175,7 @@ Edit `.ai/session-context.md` to establish your project's initial state.
     ├── scripts/                     # Automation scripts
     │   ├── sync-skills.py           # Sync .ai/skills/ to Claude Code and GitHub Copilot targets
     │   └── upgrade-template.py      # Safely upgrade an existing project from this template
+    ├── agents/                      # Specialized subagents (source of truth)
     ├── skills/                      # Specialized agent personas (source of truth)
     │   ├── dotnet-engineer/SKILL.md
     │   ├── unit-tester/SKILL.md
@@ -245,6 +246,23 @@ Skills live in `.ai/skills/` (single source of truth) and are synced to two targ
 | `.github/skills/<name>/SKILL.md` | Full content copy | GitHub Copilot reads directly |
 
 Run `/update-skills` (or `python .ai/scripts/sync-skills.py`) after adding or editing a skill. A PostToolUse hook auto-syncs on every `.ai/skills/` write.
+
+### Specialized Agents (8)
+
+All code and design work is delegated to specialized subagents — the main conversation handles only reasoning and user interaction.
+
+| Agent | Model | Role |
+|-------|-------|------|
+| `architect` | sonnet | Feature design, pattern selection, component boundaries, implementation blueprints |
+| `developer` | haiku | .NET/C# — CQRS handlers, API endpoints, Blazor components, EF Core, builds |
+| `designer` | sonnet | Visual design — color palettes, typography, branding, design tokens |
+| `ui-developer` | sonnet | Blazor/MAUI components, layouts, CSS/styling, UX patterns |
+| `tester` | sonnet | MSTest unit/integration tests, Moq mocks, Reqnroll BDD scenarios |
+| `ui-tester` | haiku | Playwright E2E tests, accessibility checks, visual regression |
+| `reviewer` | sonnet | Code quality, SOLID principles, CQRS compliance, security |
+| `writer` | haiku | XML documentation, API docs, READMEs, ADRs, technical prose |
+
+Agents are defined in `.ai/agents/` and discovered via `.claude/agents/` wrappers. Designers and UI developers self-test with Playwright before handoff.
 
 ## Testing
 
