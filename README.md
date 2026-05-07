@@ -10,10 +10,11 @@ AI context lives in `.ai/` (auto-loaded by Claude Code via `additionalDirectorie
 
 ## Features
 
-### Specialized Skills (27)
+### Specialized Skills (30)
 
 | Skill | Purpose |
 |-------|---------|
+| **api-endpoints** | API endpoint creation, OpenAPI, Kiota clients, security hardening |
 | **dotnet-engineer** | .NET development, CQRS implementation |
 | **unit-tester** | Unit testing with MSTest and Moq |
 | **code-reviewer** | Code quality and architecture compliance |
@@ -41,6 +42,8 @@ AI context lives in `.ai/` (auto-loaded by Claude Code via `additionalDirectorie
 | **upgrade-template** | Sync template improvements to existing projects without losing context |
 | **verify-config** | Audit CLAUDE.md against codebase (run `/verify-config`) |
 | **update-skills** | Sync `.ai/skills/` to all targets (Claude Code wrappers + GitHub Copilot) (run `/update-skills`) |
+| **book-to-skill** | Convert a technical book (PDF/EPUB) into a structured Claude Code skill |
+| **keycloak-theme-colors** | Update Keycloak login theme accent colors from a base hex color |
 
 ### Pattern Guides (8)
 
@@ -95,7 +98,7 @@ python .ai/scripts/upgrade-template.py /path/to/YourProject --dry-run
 python .ai/scripts/upgrade-template.py /path/to/YourProject --skills-only
 ```
 
-The script classifies every file as **template-owned** (safe to update) or **project-owned** (never overwritten), so your `CLAUDE.md`, session context, and project files are always preserved.
+The script classifies every file as **template-owned** (safe to update, including `CLAUDE.md`) or **project-owned** (never overwritten — `.ai/project/`, `.ai/session-context.md`, `.ai/progress/`, `.ai/plans/`, `.ai/completed/`).
 
 ### Customize Project Files
 
@@ -123,7 +126,7 @@ Edit `.ai/session-context.md` to establish your project's initial state.
 ### Start Developing
 
 ```
-"Read .ai/session-context.md and implement CRUD for Budget entity following .ai/patterns/cqrs-patterns.md"
+/api-endpoints "Create CRUD endpoints for Budget entity"
 ```
 
 ## File Structure
@@ -172,6 +175,7 @@ Edit `.ai/session-context.md` to establish your project's initial state.
     ├── scripts/                     # Automation scripts
     │   ├── sync-skills.py           # Sync .ai/skills/ to Claude Code and GitHub Copilot targets
     │   └── upgrade-template.py      # Safely upgrade an existing project from this template
+    ├── agents/                      # Specialized subagents (source of truth)
     ├── skills/                      # Specialized agent personas (source of truth)
     │   ├── dotnet-engineer/SKILL.md
     │   ├── unit-tester/SKILL.md
@@ -199,7 +203,10 @@ Edit `.ai/session-context.md` to establish your project's initial state.
     │   ├── gap-review/SKILL.md
     │   ├── upgrade-template/SKILL.md
     │   ├── verify-config/SKILL.md
-    │   └── update-skills/SKILL.md
+    │   ├── update-skills/SKILL.md
+    │   ├── api-endpoints/SKILL.md
+    │   ├── book-to-skill/SKILL.md
+    │   └── keycloak-theme-colors/SKILL.md
     ├── checklists/
     │   └── pre-submission.md        # Quality gate — run before completing any task
     ├── project/                     # CUSTOMIZE THESE FOR YOUR PROJECT
@@ -239,6 +246,23 @@ Skills live in `.ai/skills/` (single source of truth) and are synced to two targ
 | `.github/skills/<name>/SKILL.md` | Full content copy | GitHub Copilot reads directly |
 
 Run `/update-skills` (or `python .ai/scripts/sync-skills.py`) after adding or editing a skill. A PostToolUse hook auto-syncs on every `.ai/skills/` write.
+
+### Specialized Agents (8)
+
+All code and design work is delegated to specialized subagents — the main conversation handles only reasoning and user interaction.
+
+| Agent | Model | Role |
+|-------|-------|------|
+| `architect` | sonnet | Feature design, pattern selection, component boundaries, implementation blueprints |
+| `developer` | haiku | .NET/C# — CQRS handlers, API endpoints, Blazor components, EF Core, builds |
+| `designer` | sonnet | Visual design — color palettes, typography, branding, design tokens |
+| `ui-developer` | sonnet | Blazor/MAUI components, layouts, CSS/styling, UX patterns |
+| `tester` | sonnet | MSTest unit/integration tests, Moq mocks, Reqnroll BDD scenarios |
+| `ui-tester` | haiku | Playwright E2E tests, accessibility checks, visual regression |
+| `reviewer` | sonnet | Code quality, SOLID principles, CQRS compliance, security |
+| `writer` | haiku | XML documentation, API docs, READMEs, ADRs, technical prose |
+
+Agents are defined in `.ai/agents/` and discovered via `.claude/agents/` wrappers. Designers and UI developers self-test with Playwright before handoff.
 
 ## Testing
 
@@ -315,7 +339,7 @@ Claude will:
 
 ```
 /upgrade-template        # Interactive: review each changed file before accepting
-                         # Project-owned files (CLAUDE.md, session context) are never touched
+                         # CLAUDE.md is updated (diffed), project-owned files are never touched
 ```
 
 ## Work-Type Context Mapping
@@ -326,7 +350,8 @@ Claude loads these files automatically based on your task type:
 |-----------|-------------|
 | .NET Development | `.ai/skills/dotnet-engineer/SKILL.md`, `.ai/patterns/object-oriented-programming.md` |
 | CQRS | `.ai/skills/dotnet-engineer/SKILL.md`, `.ai/patterns/cqrs-patterns.md`, `.ai/reference/critical-rules.md`, templates |
-| API Endpoints | `.ai/patterns/api-patterns.md`, `.ai/reference/templates/endpoint.cs.txt` |
+| API Endpoints | `.ai/skills/api-endpoints/SKILL.md`, `.ai/patterns/api-patterns.md`, `.ai/reference/templates/endpoint.cs.txt`, `.ai/reference/critical-rules.md` |
+| OpenAPI & Kiota | `.ai/skills/api-endpoints/SKILL.md`, `.ai/patterns/api-patterns.md`, `.ai/reference/critical-rules.md` |
 | Unit Tests | `.ai/skills/unit-tester/SKILL.md`, `.ai/patterns/testing-patterns.md`, test templates |
 | Blazor UI | `.ai/skills/blazor-specialist/SKILL.md`, `.ai/patterns/mvvm.md` |
 | MAUI | `.ai/skills/maui-specialist/SKILL.md`, `.ai/patterns/mvvm.md` |
@@ -374,7 +399,7 @@ Every session:
 - **CQRS:** I-Synergy.Framework.CQRS (NOT MediatR)
 - **Mapping:** Manual (`new T(...)` / LINQ `.Select`) — no mapping library
 - **Testing:** MSTest + Moq + Reqnroll (NOT xUnit, NOT NUnit)
-- **API:** ASP.NET Core Minimal APIs + `Microsoft.AspNetCore.OpenApi`
+- **API:** ASP.NET Core Minimal APIs + `Microsoft.AspNetCore.OpenApi` + Kiota client generation
 - **UI:** Blazor, MAUI
 - **Validation:** Data Annotations (NOT FluentValidation)
 
@@ -394,9 +419,8 @@ Every session:
 | `TEMPLATE-USAGE.md` | Detailed usage and customization guide |
 | `TEMPLATE-FAQ.md` | Frequently asked questions |
 | `.ai/reference/critical-rules.md` | Non-negotiable coding patterns |
+| `.ai/patterns/api-patterns.md` | API endpoints, OpenAPI, Kiota, security hardening |
 | `.ai/reference/forbidden-tech.md` | Banned libraries and approaches |
 | `.ai/project/` | Project-specific context files |
 
-## License
-
-[Your License Here]
+## [License](LICENSE)

@@ -93,14 +93,33 @@ public sealed class Create{Entity}Handler(DataContext dataContext)
 
 ## Data Access Pattern
 
-**NO explicit Repository interfaces** - Use EF Core extension methods:
+**NO explicit Repository interfaces** — use EF Core primitives directly on named DbSet properties:
 
 ```csharp
-// From I-Synergy.Framework.EntityFramework (or your ORM extensions)
-await dataContext.AddItemAsync<TEntity, TModel>(model, cancellationToken);
-await dataContext.GetItemByIdAsync<TEntity, TModel, TKey>(id, cancellationToken);
-await dataContext.UpdateItemAsync<TEntity, TModel>(model, cancellationToken);
-await dataContext.RemoveItemAsync<TEntity, TKey>(id, cancellationToken);
+// Create
+var entity = new Budget { BudgetId = Guid.NewGuid(), Description = command.Description };
+dataContext.Budgets.Add(entity);
+await dataContext.SaveChangesAsync(cancellationToken);
+
+// Read single
+var entity = await dataContext.Budgets.FirstOrDefaultAsync(e => e.BudgetId == id, cancellationToken);
+var model = /* map entity to Budget model */;
+
+// Read list
+var models = await dataContext.Budgets
+    .OrderBy(b => b.Description)
+    .Select(b => /* map to model */)
+    .ToListAsync(cancellationToken);
+
+// Update — change tracker detects mutations on tracked entities
+var entity = await dataContext.Budgets.FirstOrDefaultAsync(e => e.BudgetId == command.BudgetId, cancellationToken);
+entity.Description = command.Description;
+await dataContext.SaveChangesAsync(cancellationToken);
+
+// Delete
+var entity = await dataContext.Budgets.FirstOrDefaultAsync(e => e.BudgetId == command.BudgetId, cancellationToken);
+dataContext.Budgets.Remove(entity);
+await dataContext.SaveChangesAsync(cancellationToken);
 ```
 
 ## Vertical Slice Organization

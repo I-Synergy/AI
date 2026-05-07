@@ -44,7 +44,7 @@ python .ai/scripts/upgrade-template.py /path/to/YourProject --dry-run
 python .ai/scripts/upgrade-template.py /path/to/YourProject --skills-only
 ```
 
-The script never overwrites project-owned files (`CLAUDE.md`, `.ai/session-context.md`, `.ai/project/`, `.ai/progress/`, `.ai/plans/`, `.ai/completed/`).
+The script never overwrites project-owned files (`.ai/session-context.md`, `.ai/project/`, `.ai/progress/`, `.ai/plans/`, `.ai/completed/`). `CLAUDE.md` is template-managed — it is updated (diffed, not silently overwritten).
 
 ### Customize Project-Specific Files
 
