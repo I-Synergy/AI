@@ -10,10 +10,11 @@ AI context lives in `.ai/` (auto-loaded by Claude Code via `additionalDirectorie
 
 ## Features
 
-### Specialized Skills (27)
+### Specialized Skills (28)
 
 | Skill | Purpose |
 |-------|---------|
+| **api-endpoints** | API endpoint creation, OpenAPI, Kiota clients, security hardening |
 | **dotnet-engineer** | .NET development, CQRS implementation |
 | **unit-tester** | Unit testing with MSTest and Moq |
 | **code-reviewer** | Code quality and architecture compliance |
