@@ -25,7 +25,7 @@ public sealed class BudgetRepository
 
     public async Task<Budget> GetByIdAsync(Guid id, CancellationToken ct)
     {
-        return await _dataContext.GetItemByIdAsync<Budget, BudgetModel, Guid>(id, ct);
+        return await _dataContext.Budgets.FirstOrDefaultAsync(e => e.BudgetId == id, ct);
     }
 }
 
@@ -215,7 +215,7 @@ public sealed class ReadOnlyBudgetRepository : IReadable<Budget>
 
     public async Task<Budget> GetByIdAsync(Guid id, CancellationToken ct)
     {
-        return await _dataContext.GetItemByIdAsync<Budget, BudgetModel, Guid>(id, ct);
+        return await _dataContext.Budgets.FirstOrDefaultAsync(e => e.BudgetId == id, ct);
     }
 
     public async Task<List<Budget>> GetAllAsync(CancellationToken ct)
@@ -236,7 +236,7 @@ public sealed class BudgetRepository : IReadable<Budget>, IWritable<Budget>, IDe
 
     public async Task<Budget> GetByIdAsync(Guid id, CancellationToken ct)
     {
-        return await _dataContext.GetItemByIdAsync<Budget, BudgetModel, Guid>(id, ct);
+        return await _dataContext.Budgets.FirstOrDefaultAsync(e => e.BudgetId == id, ct);
     }
 
     public async Task<List<Budget>> GetAllAsync(CancellationToken ct)
@@ -262,7 +262,10 @@ public sealed class BudgetRepository : IReadable<Budget>, IWritable<Budget>, IDe
 
     public async Task DeleteAsync(Guid id, CancellationToken ct)
     {
-        await _dataContext.RemoveItemAsync<Budget, Guid>(id, ct);
+        var entity = await _dataContext.Budgets.FirstOrDefaultAsync(e => e.BudgetId == id, ct);
+        if (entity is null) throw new InvalidOperationException($"Budget {id} not found");
+        _dataContext.Budgets.Remove(entity);
+        await _dataContext.SaveChangesAsync(ct);
     }
 }
 
@@ -1114,7 +1117,7 @@ public sealed class BudgetService : IBudgetService
 
     public async Task<Budget> GetBudgetAsync(Guid budgetId, CancellationToken ct)
     {
-        return await _dataContext.GetItemByIdAsync<Budget, BudgetModel, Guid>(budgetId, ct);
+        return await _dataContext.Budgets.FirstOrDefaultAsync(e => e.BudgetId == budgetId, ct);
     }
 }
 
@@ -1411,7 +1414,7 @@ public sealed class PdfReportGenerator : ReportGenerator
 
     protected override async Task<BudgetData> FetchDataAsync(Guid budgetId, CancellationToken ct)
     {
-        var budget = await _dataContext.GetItemByIdAsync<Budget, BudgetModel, Guid>(budgetId, ct);
+        var budget = await _dataContext.Budgets.FirstOrDefaultAsync(e => e.BudgetId == budgetId, ct);
         return new BudgetData(budget.Name, budget.Amount);
     }
 
