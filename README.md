@@ -423,6 +423,4 @@ Every session:
 | `.ai/reference/forbidden-tech.md` | Banned libraries and approaches |
 | `.ai/project/` | Project-specific context files |
 
-## License
-
-[Your License Here]
+## [License](LICENSE)
