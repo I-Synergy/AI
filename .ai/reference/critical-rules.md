@@ -545,7 +545,7 @@ public sealed class GetEntityListQueryHandler(
 The client project (`{ApplicationName}.Clients.Api` by default; `{ApplicationName}.Clients.{AppName}` for multi-app) must include:
 - `Microsoft.Kiota.Bundle` and `Microsoft.Extensions.Http` NuGet packages
 - A `ServiceCollectionExtensions` that registers the client in DI with auth provider and base URL
-- `Api/`, `Models/`, and `ApiClient.cs` in `.gitignore` — generated code is never committed; `kiota-lock.json` is committed
+- Kiota-generated source files (`Api/`, `Models/`, `ApiClient.cs`) are committed — they are the source code of the client project
 
 The API project `.csproj` must include an MSBuild `OpenAPI` target that runs `dotnet kiota generate` after every build, regenerating the client from the latest OpenAPI spec.
 
@@ -629,6 +629,6 @@ Before submitting code, verify you haven't violated these:
 - [ ] Kiota version pinned in `dotnet-tools.json` with `rollForward: false`
 - [ ] API project `.csproj` includes `OpenAPI` MSBuild target that runs `dotnet kiota generate` after every build
 - [ ] Client project uses `Microsoft.Kiota.Bundle` and `Microsoft.Extensions.Http`
-- [ ] Generated code (`Api/`, `Models/`, `ApiClient.cs`) is git-ignored; `kiota-lock.json` is committed
+- [ ] Generated client source (`Api/`, `Models/`, `ApiClient.cs`, `kiota-lock.json`) is committed
 - [ ] POST/PUT routes use `.WithValidation<T>()` with Data Annotations on request models
 - [ ] Rate limiting configured (`AddRateLimiter` + `UseRateLimiter`) and `UseHttpsRedirection` called
