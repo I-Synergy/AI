@@ -83,6 +83,8 @@ All substantive work goes to a subagent with the correct model for the task:
 **deepseek-v4-pro agents** do deep reasoning (architecture, review, test design, visual design).
 **deepseek-v4-flash agents** do execution (code, UI, tests, docs).
 
+**Model name mapping:** `deepseek-v4-pro` ↔ Claude `sonnet` tier · `deepseek-v4-flash` ↔ Claude `haiku` tier
+
 Agents are defined in `.ai/agents/` and `.claude/agents/`.
 
 ## Coding Rules
