@@ -87,6 +87,8 @@ All substantive work goes to a subagent with the correct model for the task:
 **deepseek-v4-pro agents** do deep reasoning (architecture, review, test design, visual design).
 **deepseek-v4-flash agents** do execution (code, UI, tests, docs).
 
+**Model name mapping:** `deepseek-v4-pro` ↔ Claude `sonnet` tier · `deepseek-v4-flash` ↔ Claude `haiku` tier
+
 Invoke via `run_skill({ name: "<agent-name>", arguments: "<task>" })`. Agents are defined in `.ai/agents/` and synced to `.reasonix/skills/`.
 
 ## Coding Rules
