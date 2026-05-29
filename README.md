@@ -6,7 +6,7 @@ Professional .NET development template with AI-powered agent orchestration and m
 
 A **production-ready .NET project template** that provides comprehensive development patterns, specialized agent skills, and quality assurance tools for building enterprise applications with Clean Architecture, CQRS, and Domain-Driven Design.
 
-AI context lives in `.ai/` (auto-loaded by Claude Code via `additionalDirectories`). Claude Code config stays in `.claude/settings.json`.
+AI context lives in `.ai/` (the single source of truth shared by Claude Code, GitHub Copilot, and Reasonix Code). Claude Code config stays in `.claude/settings.json`. Reasonix Code reads `REASONIX.md` at root.
 
 ## Features
 
@@ -79,10 +79,14 @@ See `.ai/reference/tokens.md` for complete definitions.
 cp -r ./.ai /path/to/YourProject/.ai
 
 # Copy Claude Code config
-cp -r ./.claude /path/to/YourProject/.ai
+cp -r ./.claude /path/to/YourProject/
 
-# Copy CLAUDE.md orchestration file
+# Copy Reasonix Code config
+cp -r ./.reasonix /path/to/YourProject/
+
+# Copy orchestration files
 cp ./CLAUDE.md /path/to/YourProject/CLAUDE.md
+cp ./REASONIX.md /path/to/YourProject/REASONIX.md
 ```
 
 ### Existing Project — Upgrade with Script
@@ -134,6 +138,7 @@ Edit `.ai/session-context.md` to establish your project's initial state.
 ```
 /
 ├── CLAUDE.md                        # AI orchestration (auto-loaded by Claude Code)
+├── REASONIX.md                      # AI orchestration (auto-loaded by Reasonix Code)
 ├── CLAUDE-v1.md                     # Previous version (reference)
 ├── TEMPLATE-USAGE.md                # Detailed usage guide
 ├── TEMPLATE-FAQ.md                  # Frequently asked questions
@@ -147,7 +152,10 @@ Edit `.ai/session-context.md` to establish your project's initial state.
 ├── .claude/settings.json            # Claude Code configuration (hooks, permissions, additionalDirectories)
 ├── .claude/settings.local.json      # Local overrides (not committed)
 │                                    # Note: skills/ wrappers are auto-generated — do not edit
-└── .ai/                             # All AI context (vendor-neutral)
+├── .reasonix/                       # Reasonix Code skills (auto-synced from .ai/ — do not edit directly)
+│   └── skills/                      # Thin wrappers referencing .ai/skills/ + subagent skills from .ai/agents/
+├── REASONIX.md                      # Reasonix Code orchestration
+└── .ai/                             # All AI context (vendor-neutral, shared by all assistants)
     ├── session-context.md           # Working session memory
     ├── reference/
     │   ├── critical-rules.md        # Non-negotiable patterns (read first)
@@ -219,10 +227,10 @@ Edit `.ai/session-context.md` to establish your project's initial state.
     ├── progress/                    # Active task tracking
     ├── completed/                   # Archived completed tasks
     ├── analysis/                    # Analysis files
-    └── tests/                       # Template validation suite (10 suites)
-        ├── run-all-tests.sh         # Run all 10 suites (bash)
+    └── tests/                       # Template validation suite (11 suites)
+        ├── run-all-tests.sh         # Run all 11 suites (bash)
         ├── conftest.py              # Pytest shared fixtures
-        ├── test_suite.py            # Pytest wrappers for VS Code Test Explorer
+        ├── test_suite.py            # Pytest wrappers for VS Code Test Explorer (11 tests)
         ├── validate-structure.sh
         ├── validate-skills.py
         ├── validate-references.sh
@@ -231,19 +239,23 @@ Edit `.ai/session-context.md` to establish your project's initial state.
         ├── validate-claude-md.py
         ├── validate-settings.py
         ├── validate-copilot.py
+        ├── validate-reasonix.py
         ├── validate-upgrade-script.py
         └── smoke-test.py
 ```
 
-### Skills Architecture (Three-Tier)
+### Skills Architecture (Four-Tier)
 
-Skills live in `.ai/skills/` (single source of truth) and are synced to two targets:
+Skills live in `.ai/skills/` (single source of truth) and are synced to three targets:
 
 | Target | Format | Purpose |
 |--------|--------|---------|
 | `.ai/skills/<name>/SKILL.md` | Full content | Source of truth — edit here |
-| Claude Code (auto-managed) | Thin wrappers (do not edit) | Claude Code dynamic injection |
-| `.github/skills/<name>/SKILL.md` | Full content copy | GitHub Copilot reads directly |
+| `.claude/skills/` (auto-managed) | Thin wrappers `!`cat .ai/...`` | Claude Code dynamic injection |
+| `.github/skills/` (auto-managed) | Full content copies | GitHub Copilot reads directly |
+| `.reasonix/skills/` (auto-managed) | Thin wrappers → `.ai/skills/` | Reasonix `run_skill` |
+
+Agent definitions from `.ai/agents/` are also synced to `.reasonix/skills/` as `runAs: subagent` skills.
 
 Run `/update-skills` (or `python .ai/scripts/sync-skills.py`) after adding or editing a skill. A PostToolUse hook auto-syncs on every `.ai/skills/` write.
 
@@ -253,20 +265,22 @@ All code and design work is delegated to specialized subagents — the main conv
 
 | Agent | Model | Role |
 |-------|-------|------|
-| `architect` | sonnet | Feature design, pattern selection, component boundaries, implementation blueprints |
-| `developer` | haiku | .NET/C# — CQRS handlers, API endpoints, Blazor components, EF Core, builds |
-| `designer` | sonnet | Visual design — color palettes, typography, branding, design tokens |
-| `ui-developer` | sonnet | Blazor/MAUI components, layouts, CSS/styling, UX patterns |
-| `tester` | sonnet | MSTest unit/integration tests, Moq mocks, Reqnroll BDD scenarios |
-| `ui-tester` | haiku | Playwright E2E tests, accessibility checks, visual regression |
-| `reviewer` | sonnet | Code quality, SOLID principles, CQRS compliance, security |
-| `writer` | haiku | XML documentation, API docs, READMEs, ADRs, technical prose |
+| `architect` | **deepseek-v4-pro** | Feature design, pattern selection, component boundaries, architecture analysis |
+| `reviewer` | **deepseek-v4-pro** | Code quality, SOLID, CQRS compliance, security review, architecture audit |
+| `tester` | **deepseek-v4-pro** | MSTest/Reqnroll test design, BDD scenarios, integration test strategy |
+| `designer` | **deepseek-v4-pro** | Visual design — color palettes, typography, branding, design tokens |
+| `developer` | **deepseek-v4-flash** | .NET/C# — CQRS handlers, API endpoints, Blazor, EF Core, refactoring |
+| `ui-developer` | **deepseek-v4-flash** | Blazor/MAUI components, layouts, CSS/styling, UX patterns |
+| `ui-tester` | **deepseek-v4-flash** | Playwright E2E tests, accessibility checks, visual regression |
+| `writer` | **deepseek-v4-flash** | XML docs, READMEs, ADRs, technical prose |
 
-Agents are defined in `.ai/agents/` and discovered via `.claude/agents/` wrappers. Designers and UI developers self-test with Playwright before handoff.
+**Model mapping:** `deepseek-v4-pro` ↔ Claude `sonnet` tier · `deepseek-v4-flash` ↔ Claude `haiku` tier
+
+Agents are defined in `.ai/agents/` and discovered via `.claude/agents/` wrappers or `.reasonix/skills/` subagent skills. Designers and UI developers self-test with Playwright before handoff.
 
 ## Testing
 
-The template ships with a 10-suite validation suite. Run via bash or pytest:
+The template ships with an 11-suite validation suite. Run via bash or pytest:
 
 ```bash
 # All suites via bash
@@ -297,6 +311,7 @@ The `.vscode/settings.json` sets `PIP_CONFIG_FILE` automatically in VS Code term
 | 8 | `validate-copilot.py` | Three-tier skill sync (`.ai/` source → Claude Code + `.github/`) |
 | 9 | `smoke-test.py` | Skills loadable, names/descriptions unique |
 | 10 | `validate-upgrade-script.py` | Upgrade script classification and integration |
+| 11 | `validate-reasonix.py` | Reasonix integration: REASONIX.md, `.reasonix/skills/` wrappers, agent skills, sync integrity |
 
 ## Usage Examples
 
@@ -383,11 +398,11 @@ Claude loads these files automatically based on your task type:
 
 ## Session Management
 
-Every session:
+Every session (Claude Code, GitHub Copilot, and Reasonix Code):
 1. **Start** — Read `.ai/session-context.md`
 2. **Review** — Check `.ai/completed/` for relevant prior work
-3. **Track** — Write progress to `.ai/progress/{task-slug}.md` in real time
-4. **End** — Write handoff to `.ai/session-context.md`
+3. **Track** — Write progress to `.ai/progress/{task-slug}.md` in real time (MANDATORY — `todo_write` is ephemeral and does NOT replace `.ai/progress/` files)
+4. **End** — Write handoff to `.ai/session-context.md` using `.ai/reference/templates/session-handoff.md.txt`
 
 ## Supported Technologies
 
