@@ -28,7 +28,7 @@
             "type": "command",
             "if": "Write(.ai/skills/**)|Edit(.ai/skills/**)",
             "command": "python3 .ai/scripts/sync-skills.py --from-hook",
-            "statusMessage": "Syncing skill to .claude/ and .github/..."
+            "statusMessage": "Syncing skill to .claude/, .github/, and .reasonix/..."
           }
         ]
       },
@@ -39,7 +39,7 @@
             "type": "command",
             "if": "Write(.ai/agents/**)|Edit(.ai/agents/**)",
             "command": "python3 .ai/scripts/sync-agents.py --from-hook",
-            "statusMessage": "Syncing agent to .claude/ and .github/..."
+            "statusMessage": "Syncing agent to .claude/, .github/, and .reasonix/skills/..."
           }
         ]
       },
@@ -82,7 +82,8 @@
       "./.ai/project",
       "./.ai/reference",
       "./.ai/agents",
-      "./.ai/skills"
+      "./.ai/skills",
+      "./.reasonix"
     ]
   }
 }
