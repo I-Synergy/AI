@@ -71,17 +71,17 @@ All substantive work goes to a subagent with the correct model for the task:
 
 | Agent | Model | Use For |
 |-------|-------|---------|
-| `architect` | **sonnet** | Feature design, pattern selection, component boundaries, architecture analysis |
-| `reviewer` | **sonnet** | Code quality, SOLID, CQRS compliance, security review, architecture audit |
-| `tester` | **sonnet** | MSTest/Reqnroll test design, BDD scenarios, integration test strategy |
-| `designer` | **sonnet** | Visual design — color palettes, typography, branding, design tokens |
-| `developer` | **haiku** | .NET/C# code — CQRS handlers, API endpoints, Blazor, EF Core, refactoring |
-| `ui-developer` | **haiku** | Blazor/MAUI components, layouts, CSS/styling, UX patterns |
-| `ui-tester` | **haiku** | Playwright E2E tests, accessibility checks, visual regression |
-| `writer` | **haiku** | XML docs, READMEs, ADRs, technical prose |
+| `architect` | **deepseek-v4-pro** | Feature design, pattern selection, component boundaries, architecture analysis |
+| `reviewer` | **deepseek-v4-pro** | Code quality, SOLID, CQRS compliance, security review, architecture audit |
+| `tester` | **deepseek-v4-pro** | MSTest/Reqnroll test design, BDD scenarios, integration test strategy |
+| `designer` | **deepseek-v4-pro** | Visual design — color palettes, typography, branding, design tokens |
+| `developer` | **deepseek-v4-flash** | .NET/C# code — CQRS handlers, API endpoints, Blazor, EF Core, refactoring |
+| `ui-developer` | **deepseek-v4-flash** | Blazor/MAUI components, layouts, CSS/styling, UX patterns |
+| `ui-tester` | **deepseek-v4-flash** | Playwright E2E tests, accessibility checks, visual regression |
+| `writer` | **deepseek-v4-flash** | XML docs, READMEs, ADRs, technical prose |
 
-**Sonnet agents** do deep reasoning (architecture, review, test design, visual design).
-**Haiku agents** do execution (code, UI, tests, docs).
+**deepseek-v4-pro agents** do deep reasoning (architecture, review, test design, visual design).
+**deepseek-v4-flash agents** do execution (code, UI, tests, docs).
 
 Agents are defined in `.ai/agents/` and `.claude/agents/`.
 
