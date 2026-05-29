@@ -41,7 +41,7 @@ AI context lives in `.ai/` (auto-loaded by Claude Code via `additionalDirectorie
 | **gap-review** | Validate generated solution against original design decisions |
 | **upgrade-template** | Sync template improvements to existing projects without losing context |
 | **verify-config** | Audit CLAUDE.md against codebase (run `/verify-config`) |
-| **update-skills** | Sync `.ai/skills/` to all targets (Claude Code wrappers + GitHub Copilot) (run `/update-skills`) |
+| **update-skills** | Sync `.ai/skills/` to all targets (Claude Code, GitHub Copilot, Reasonix) (run `/update-skills`) |
 | **book-to-skill** | Convert a technical book (PDF/EPUB) into a structured Claude Code skill |
 | **keycloak-theme-colors** | Update Keycloak login theme accent colors from a base hex color |
 
@@ -173,7 +173,7 @@ Edit `.ai/session-context.md` to establish your project's initial state.
     │   ├── object-oriented-programming.md
     │   └── test-driven-development.md
     ├── scripts/                     # Automation scripts
-    │   ├── sync-skills.py           # Sync .ai/skills/ to Claude Code and GitHub Copilot targets
+    │   ├── sync-skills.py           # Sync .ai/skills/ to Claude Code, GitHub Copilot, and Reasonix targets
     │   └── upgrade-template.py      # Safely upgrade an existing project from this template
     ├── agents/                      # Specialized subagents (source of truth)
     ├── skills/                      # Specialized agent personas (source of truth)

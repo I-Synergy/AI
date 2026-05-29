@@ -5,7 +5,7 @@
 # {ApplicationName} Session Context
 
 **Last Updated:** [DateTime]
-**Updated By:** [Claude Code | GitHub Copilot | User]
+**Updated By:** [Claude Code | Copilot | Reasonix Code | User]
 **Project Version:** [Version]
 
 ---
@@ -282,13 +282,13 @@ Copy Budgets.Budget structure exactly - proven and working in production.
 
 ## Next Session Checklist
 
-**For the next session (Claude Code or GitHub Copilot) to read:**
+**For the next session (Claude Code, GitHub Copilot, or Reasonix Code) to read:**
 
 1. **Current Focus:** [What to focus on next]
 2. **Blockers:** [Any blockers to be aware of]
 3. **Recent Decisions:** [Key decisions from this session]
 4. **Patterns Changed:** [Any pattern changes to note]
-5. **Written By:** [Claude Code | GitHub Copilot] on [DateTime]
+5. **Written By:** [Claude Code | Copilot | Reasonix Code] on [DateTime]
 
 **Example:**
 
@@ -300,4 +300,4 @@ Copy Budgets.Budget structure exactly - proven and working in production.
 
 ---
 
-**Remember:** Update this file at the end of every session with new learnings, decisions, and context. This is the shared AI context — readable and writable by both Claude Code and GitHub Copilot.
+**Remember:** Update this file at the end of every session with new learnings, decisions, and context. This is the shared AI context — readable and writable by Claude Code, GitHub Copilot, and Reasonix Code.

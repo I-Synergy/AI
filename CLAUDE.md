@@ -18,6 +18,7 @@ When searching for code references, frameworks, or dependencies, search the ENTI
 
 - Use local `.ai/` folder (project-level) for documentation, patterns, skills, progress, and plan files.
 - Claude Code config stays in `.claude/settings.json` — do NOT move or duplicate it.
+- This project also supports **Reasonix Code** (`REASONIX.md`). Its root instruction file mirrors this one and points to `.ai/` as canonical.
 - Do NOT place project-specific config in the global `~/.claude/` directory unless explicitly instructed.
 - When modifying CLAUDE.md or any configuration files, always read the existing file first and preserve existing conventions before making changes.
 
@@ -29,7 +30,30 @@ When searching for code references, frameworks, or dependencies, search the ENTI
 
 ## Task Execution
 
-See `.ai/reference/task-execution.md` for the full protocol: plan mode, progress files, ReAct loop, subagent delegation, and the task definition template.
+**Progress files are MANDATORY for every non-trivial task (3+ steps or multi-file).** They persist across sessions and are shared between all assistants. Do not skip them.
+
+1. **Plan first:** Use plan mode (`/plan` or `EnterPlanMode`) for multi-file work. Wait for approval.
+2. **Create progress file:** Write `.ai/progress/{task-slug}.md` with this structure:
+   ```
+   # {Task Name}
+   Status: IN PROGRESS
+   Started: {date}
+
+   ## Steps
+   - [ ] Step 1
+   - [ ] Step 2
+
+   ## Notes
+   ```
+3. **Update after each step:** Edit the progress file to check off `- [ ]` → `- [x]`.
+4. **On completion (not optional):**
+   - Add `**Status:** DONE` near the top
+   - Move to `.ai/completed/{task-slug}.md`
+   - **Never end a session without completing this step**
+
+**Trivial tasks** (single file, obvious fix): skip plan mode and progress file.
+
+See also `.ai/reference/task-execution.md` for the full ReAct loop and subagent delegation protocol.
 
 ### Subagent Delegation
 
