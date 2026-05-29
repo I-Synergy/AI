@@ -22,6 +22,7 @@ AI context lives in `.ai/` (the single source of truth shared by Claude Code, Gi
 | **playwright-tester** | UI testing and automation |
 | **blazor-specialist** | Blazor web development |
 | **maui-specialist** | MAUI mobile/desktop development |
+| **winui-specialist** | WinUI 3 desktop development |
 | **architect** | Architecture decisions and patterns |
 | **api-security** | API security and authentication |
 | **security** | Application security |
@@ -192,6 +193,7 @@ Edit `.ai/session-context.md` to establish your project's initial state.
     │   ├── playwright-tester/SKILL.md
     │   ├── blazor-specialist/SKILL.md
     │   ├── maui-specialist/SKILL.md
+    │   ├── winui-specialist/SKILL.md
     │   ├── architect/SKILL.md
     │   ├── api-security/SKILL.md
     │   ├── security/SKILL.md
@@ -370,6 +372,7 @@ Claude loads these files automatically based on your task type:
 | Unit Tests | `.ai/skills/unit-tester/SKILL.md`, `.ai/patterns/testing-patterns.md`, test templates |
 | Blazor UI | `.ai/skills/blazor-specialist/SKILL.md`, `.ai/patterns/mvvm.md` |
 | MAUI | `.ai/skills/maui-specialist/SKILL.md`, `.ai/patterns/mvvm.md` |
+| WinUI 3 | `.ai/skills/winui-specialist/SKILL.md`, `.ai/patterns/mvvm.md` |
 | Architecture | `.ai/skills/architect/SKILL.md`, `.ai/project/architecture.md` |
 | Code Review | `.ai/skills/code-reviewer/SKILL.md`, `.ai/checklists/pre-submission.md` |
 | Security | `.ai/skills/security/SKILL.md`, `.ai/skills/api-security/SKILL.md` |
