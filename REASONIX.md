@@ -59,22 +59,35 @@ When searching for code references, frameworks, or dependencies, search the ENTI
 
 See also `.ai/reference/task-execution.md` for the full ReAct loop and subagent delegation protocol.
 
-### Subagent Delegation
+### Subagent Delegation — HARD RULE
 
-All code writing must be delegated to specialized subagents (via `run_skill` or `explore`/`research`/`review` tools), never done in the main conversation:
+The main conversation is **orchestration only**. It does:
+- Reading instructions, planning, creating progress files
+- Delegating work to subagents, reviewing their output
+- Running sync scripts, git operations, final verification
 
-| Agent | Use For |
-|-------|---------|
-| `architect` | Feature design, pattern selection, component boundaries, implementation blueprints |
-| `developer` | .NET/C# code — CQRS handlers, API endpoints, Blazor components, EF Core, refactoring, builds |
-| `tester` | MSTest unit/integration tests, Moq mocks, Reqnroll BDD scenarios |
-| `ui-tester` | Playwright E2E tests, accessibility checks, visual regression |
-| `designer` | Visual design — color palettes, typography, spacing, branding, design tokens |
-| `ui-developer` | Blazor/MAUI components, layouts, CSS/styling, UX patterns |
-| `reviewer` | Code quality, SOLID, CQRS compliance, security issues, architecture |
-| `writer` | XML documentation, API docs, READMEs, ADRs, technical prose |
+**It does NOT:**
+- Write or edit any code files directly
+- Perform deep analysis, architecture reasoning, or code review
+- Write or modify tests, documentation, or configuration
 
-Agents are defined in `.ai/agents/`. Invoke via `run_skill({ name: "<agent-name>", arguments: "<task>" })` or `.reasonix/skills/<name>/SKILL.md`.
+All substantive work goes to a subagent with the correct model for the task:
+
+| Agent | Model | Use For |
+|-------|-------|---------|
+| `architect` | **sonnet** | Feature design, pattern selection, component boundaries, architecture analysis |
+| `reviewer` | **sonnet** | Code quality, SOLID, CQRS compliance, security review, architecture audit |
+| `tester` | **sonnet** | MSTest/Reqnroll test design, BDD scenarios, integration test strategy |
+| `designer` | **sonnet** | Visual design — color palettes, typography, branding, design tokens |
+| `developer` | **haiku** | .NET/C# code — CQRS handlers, API endpoints, Blazor, EF Core, refactoring |
+| `ui-developer` | **haiku** | Blazor/MAUI components, layouts, CSS/styling, UX patterns |
+| `ui-tester` | **haiku** | Playwright E2E tests, accessibility checks, visual regression |
+| `writer` | **haiku** | XML docs, READMEs, ADRs, technical prose |
+
+**Sonnet agents** do deep reasoning (architecture, review, test design, visual design).
+**Haiku agents** do execution (code, UI, tests, docs).
+
+Invoke via `run_skill({ name: "<agent-name>", arguments: "<task>" })`. Agents are defined in `.ai/agents/` and synced to `.reasonix/skills/`.
 
 ## Coding Rules
 
