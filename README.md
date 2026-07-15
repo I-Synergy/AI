@@ -10,7 +10,7 @@ AI context lives in `.ai/` (the single source of truth shared by Claude Code, Gi
 
 ## Features
 
-### Specialized Skills (30)
+### Specialized Skills (35)
 
 | Skill | Purpose |
 |-------|---------|
@@ -140,7 +140,7 @@ Edit `.ai/session-context.md` to establish your project's initial state.
 /
 ├── CLAUDE.md                        # AI orchestration (auto-loaded by Claude Code)
 ├── REASONIX.md                      # AI orchestration (auto-loaded by Reasonix Code)
-├── CLAUDE-v1.md                     # Previous version (reference)
+
 ├── TEMPLATE-USAGE.md                # Detailed usage guide
 ├── TEMPLATE-FAQ.md                  # Frequently asked questions
 ├── README.md                        # This file
