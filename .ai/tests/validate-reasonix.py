@@ -24,6 +24,10 @@ if sys.platform == "win32":
 SCRIPT_DIR = Path(__file__).parent
 TEMPLATE_ROOT = SCRIPT_DIR.parent.parent
 
+# Bootstrap folder-level junctions before running tests
+_script = str(SCRIPT_DIR.parent / "scripts" / "sync-skills.py")
+subprocess.run([sys.executable, _script], capture_output=True)
+
 AI_SKILLS       = TEMPLATE_ROOT / ".ai"       / "skills"
 AI_AGENTS       = TEMPLATE_ROOT / ".ai"       / "agents"
 REASONIX_SKILLS = TEMPLATE_ROOT / ".reasonix" / "skills"
