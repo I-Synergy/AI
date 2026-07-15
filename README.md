@@ -21,14 +21,17 @@ AI context lives in `.ai/` (the single source of truth shared by Claude Code, Gi
 | **technical-writer** | Documentation and API specs |
 | **playwright-tester** | UI testing and automation |
 | **blazor-specialist** | Blazor web development |
+| **blazor-theme-generator** | Generate Blazor UI themes from design tokens |
 | **maui-specialist** | MAUI mobile/desktop development |
 | **winui-specialist** | WinUI 3 desktop development |
+| **xaml-theme-generator** | Generate XAML theme resources from a base color palette |
 | **architect** | Architecture decisions and patterns |
 | **api-security** | API security and authentication |
 | **security** | Application security |
 | **software-security** | Security best practices |
 | **performance-engineer** | Performance optimization |
 | **devops-engineer** | CI/CD and deployment |
+| **css-theme-generator** | Generate CSS theme variables from a base color palette |
 | **database-migration** | Database migrations and schema |
 | **integration-specialist** | Third-party integrations |
 | **refactor** | Bulk find-and-replace and pattern migrations across the solution |
@@ -40,6 +43,7 @@ AI context lives in `.ai/` (the single source of truth shared by Claude Code, Gi
 | **solution-generator** | Scaffold a .NET solution from an architecture document |
 | **vertical-slices** | Translate use cases/stories to vertical slice blueprint JSON |
 | **gap-review** | Validate generated solution against original design decisions |
+| **hugo** | Hugo static site generation — blog, docs, and landing page templates |
 | **upgrade-template** | Sync template improvements to existing projects without losing context |
 | **verify-config** | Audit CLAUDE.md against codebase (run `/verify-config`) |
 | **update-skills** | Sync `.ai/skills/` to all targets (Claude Code, GitHub Copilot, Reasonix) (run `/update-skills`) |
