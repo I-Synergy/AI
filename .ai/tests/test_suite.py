@@ -138,3 +138,19 @@ def test_smoke():
 def test_upgrade_script():
     code, output = _run_python("validate-upgrade-script.py")
     assert code == 0, f"\n{output}"
+
+
+# ---------------------------------------------------------------------------
+# Suite 11 — Reasonix Integration
+# ---------------------------------------------------------------------------
+def test_reasonix_integration():
+    code, output = _run_python("validate-reasonix.py")
+    assert code == 0, f"\n{output}"
+
+# ---------------------------------------------------------------------------
+# Suite 12 — Pi Integration
+# ---------------------------------------------------------------------------
+def test_pi_integration():
+    code, output = _run_python("validate-pi.py")
+    assert code == 0, f"
+{output}"

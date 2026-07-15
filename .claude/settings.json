@@ -22,24 +22,24 @@
         ]
       },
       {
-        "matcher": "Edit|Write",
+        "matcher": "Write|Edit",
         "hooks": [
           {
             "type": "command",
-            "if": "Write(.ai/skills/**)|Edit(.ai/skills/**)",
-            "command": "python3 .ai/scripts/sync-skills.py --from-hook",
-            "statusMessage": "Syncing skill to .claude/ and .github/..."
+            "if": "Write(.ai/skills/**/*)|Edit(.ai/skills/**/*)",
+            "command": "python .ai/scripts/sync-skills.py",
+            "statusMessage": "Syncing skills to Claude Code, GitHub Copilot, and Reasonix..."
           }
         ]
       },
       {
-        "matcher": "Edit|Write",
+        "matcher": "Write|Edit",
         "hooks": [
           {
             "type": "command",
-            "if": "Write(.ai/agents/**)|Edit(.ai/agents/**)",
-            "command": "python3 .ai/scripts/sync-agents.py --from-hook",
-            "statusMessage": "Syncing agent to .claude/ and .github/..."
+            "if": "Write(.ai/agents/**/*)|Edit(.ai/agents/**/*)",
+            "command": "python .ai/scripts/sync-agents.py",
+            "statusMessage": "Syncing agents to Claude Code, GitHub Copilot, and Reasonix..."
           }
         ]
       },
@@ -72,6 +72,7 @@
     ],
     "additionalDirectories": [
       "./.claude",
+      "./.reasonix",
       "./.ai",
       "./.ai/analysis",
       "./.ai/checklists",

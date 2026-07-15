@@ -10,9 +10,9 @@ A **generic, modular .NET project template** with:
 - Clean Architecture + CQRS + DDD patterns
 - Comprehensive development guidelines
 - Code templates for rapid development
-- Specialized agent skills for Claude AI assistance
+- Specialized agent skills for Claude Code, GitHub Copilot, Pi, and Reasonix Code
 - Quality checklists and best practices
-- GitHub Copilot integration via `.github/skills/`
+- All platforms read `.ai/skills/` and `.ai/agents/` through directory junctions — zero duplication
 
 ## Quick Start
 
@@ -22,29 +22,34 @@ A **generic, modular .NET project template** with:
 # Copy the AI context directory to your project root
 cp -r /path/to/Template/.ai /path/to/YourProject/.ai
 
-# Copy Claude Code config
-cp -r /path/to/Template/.claude /path/to/YourProject/.ai
+# Copy root config files
+cp /path/to/Template/CLAUDE.md /path/to/YourProject/
+cp /path/to/Template/REASONIX.md /path/to/YourProject/
+cp /path/to/Template/AGENTS.md /path/to/YourProject/
 
-# Copy CLAUDE.md to your project root
-cp /path/to/Template/CLAUDE.md /path/to/YourProject/CLAUDE.md
+# Copy tool settings (minimal — junctions handle the rest)
+mkdir -p /path/to/YourProject/.claude /path/to/YourProject/.pi /path/to/YourProject/.github
+cp /path/to/Template/.claude/settings.json /path/to/YourProject/.claude/
+cp /path/to/Template/.pi/settings.json /path/to/YourProject/.pi/
+cp /path/to/Template/.github/copilot-instructions.md /path/to/YourProject/.github/
 ```
 
-### Existing Project — Use the Upgrade Script
-
-If you already have a project based on an older version of this template:
+### Create Junctions
 
 ```bash
-# Interactive: review each changed file before accepting
-python .ai/scripts/upgrade-template.py /path/to/YourProject
-
-# Preview only — nothing written
-python .ai/scripts/upgrade-template.py /path/to/YourProject --dry-run
-
-# Skills only — copy new/updated skills, leave config untouched
-python .ai/scripts/upgrade-template.py /path/to/YourProject --skills-only
+cd /path/to/YourProject
+python .ai/scripts/sync-skills.py
 ```
 
-The script never overwrites project-owned files (`.ai/session-context.md`, `.ai/project/`, `.ai/progress/`, `.ai/plans/`, `.ai/completed/`). `CLAUDE.md` is template-managed — it is updated (diffed, not silently overwritten).
+This creates 9 directory junctions so all tools read from the same `.ai/skills/` and `.ai/agents/` source. Junction targets are gitignored.
+
+### Verify Installation
+
+```bash
+bash .ai/tests/run-all-tests.sh
+```
+
+All 11 suites should pass.
 
 ### Customize Project-Specific Files
 
@@ -92,11 +97,32 @@ Edit `.ai/session-context.md` to establish your project's initial context:
 ## Directory Structure Explained
 
 ```
-.claude/settings.json           # Claude Code configuration (plansDirectory, hooks, permissions)
-.claude/settings.local.json     # Local overrides (not committed)
-                                # Note: skills/ wrappers are auto-generated — do not edit
+AGENTS.md                        # Pi runtime instructions
+CLAUDE.md                        # Claude Code orchestration
+REASONIX.md                      # Reasonix Code orchestration
 
-.ai/                            # All AI context (vendor-neutral)
+.claude/
+├── settings.json                # Claude Code configuration (hooks, permissions)
+├── settings.local.json          # Local overrides (not committed)
+├── skills/  → .ai/skills/       # Junction — reads source directly
+└── agents/  → .ai/agents/       # Junction — reads source directly
+
+.github/
+├── copilot-instructions.md      # GitHub Copilot instructions
+├── skills/  → .ai/skills/       # Junction — reads source directly
+└── agents/  → .ai/agents/       # Junction — reads source directly
+
+.reasonix/
+├── skills/  → .ai/skills/       # Junction — reads source directly
+└── agents/  → .ai/agents/       # Junction — reads source directly (agents have runAs: subagent)
+
+.pi/
+├── settings.json                # Empty — all config via junctions
+├── skills/  → .ai/skills/       # Junction — reads source directly
+├── agents/  → .ai/agents/       # Junction — reads source directly
+└── chains/  → .ai/chains/       # Junction — reads source directly
+
+.ai/                            # All AI context (vendor-neutral, canonical source)
 ├── session-context.md          # Working session memory
 ├── reference/                  # Quick reference guides
 │   ├── tokens.md               # Template tokens definition
@@ -111,21 +137,11 @@ Edit `.ai/session-context.md` to establish your project's initial context:
 │   ├── testing-patterns.md     # Testing patterns
 │   └── ...                     # 8 patterns total
 ├── scripts/                    # Automation scripts
-│   ├── sync-skills.py          # Sync .ai/skills/ to Claude Code and GitHub Copilot targets
+│   ├── sync-skills.py          # Create folder-level junctions for all platforms
 │   └── upgrade-template.py     # Safely upgrade existing projects
-├── skills/                     # Specialized agent personas (source of truth)
-│   ├── dotnet-engineer/SKILL.md
-│   ├── unit-tester/SKILL.md
-│   ├── refactor/SKILL.md
-│   ├── design-interrogation/SKILL.md
-│   ├── solution-generator/SKILL.md
-│   ├── vertical-slices/SKILL.md
-│   ├── gap-review/SKILL.md
-│   ├── ubiquitous-language/SKILL.md
-│   ├── usecase-specification/SKILL.md
-│   ├── user-story/SKILL.md
-│   ├── skill-creator/SKILL.md
-│   └── ...                     # 27 skills total
+├── skills/                     # Specialized agent personas (source of truth, 35 skills)
+├── agents/                     # Specialized subagents (8 agents with runAs: subagent)
+├── chains/                     # Chain definitions (2 chains)
 ├── checklists/
 │   └── pre-submission.md       # Comprehensive quality checklist
 ├── project/                    # CUSTOMIZE THESE FOR YOUR PROJECT
@@ -136,7 +152,7 @@ Edit `.ai/session-context.md` to establish your project's initial context:
 ├── plans/                      # Plan files (written by Claude Code, local only)
 ├── progress/                   # Active task progress files
 ├── completed/                  # Completed task archives
-└── tests/                      # 10-suite validation suite
+└── tests/                      # 11-suite validation suite
     ├── run-all-tests.sh        # Run all suites via bash
     ├── conftest.py             # Pytest shared fixtures
     ├── test_suite.py           # Pytest wrappers (VS Code Test Explorer)
@@ -409,14 +425,22 @@ python .ai/scripts/upgrade-template.py /path/to/YourProject --non-interactive
 ### Adding a New Skill
 
 1. Create `.ai/skills/<skill-name>/SKILL.md` with correct YAML frontmatter
-2. A PostToolUse hook auto-syncs to Claude Code and `.github/skills/`
-3. If the hook isn't running: `python .ai/scripts/sync-skills.py`
+2. Skills are immediately available to all platforms via junctions — no sync needed
+3. A PostToolUse hook ensures junctions stay intact when `.ai/skills/` files change
 4. Add to the Work-Type Context Mapping table in `CLAUDE.md`
 5. Add to `README.md` skills table
 
 ### Updating an Existing Skill
 
-Edit `.ai/skills/<skill-name>/SKILL.md` — the PostToolUse hook syncs the other tiers automatically.
+Edit `.ai/skills/<skill-name>/SKILL.md` — changes are instantly visible to all platforms via junctions.
+
+### After Cloning
+
+```bash
+python .ai/scripts/sync-skills.py
+```
+
+This creates the 9 folder-level junctions. On Windows this requires no special permissions (directory junctions are user-level). On macOS/Linux, standard symlinks are used.
 
 ### Contributing Improvements
 
