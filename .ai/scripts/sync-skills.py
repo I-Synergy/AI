@@ -44,10 +44,16 @@ def _is_junction(path: Path) -> bool:
 
 
 def _rmdir(path: Path):
-    """Remove a directory, symlink, or junction safely."""
-    if sys.platform == "win32" and _is_junction(path):
+    """Remove a directory, symlink, or junction safely.
+
+    Avoids shutil.rmtree() for symlinks — rtree follows symlinks and would
+    delete the target directory instead of just the symlink.
+    """
+    if path.is_symlink():
+        path.unlink()
+    elif sys.platform == "win32" and _is_junction(path):
         subprocess.run(["cmd", "/c", "rmdir", str(path)], capture_output=True)
-    elif path.is_symlink() or path.is_dir():
+    elif path.is_dir():
         import shutil
         shutil.rmtree(str(path), ignore_errors=True)
     elif path.exists():
@@ -81,9 +87,13 @@ def sync_junction(source_rel: str, target_rel: str, dry_run: bool) -> str:
 
     if target.exists():
         if _is_junction(target):
-            # Junction/symlink exists — verify it points correctly by checking a known file
-            test_file = target / (".gitkeep" if "skills" in source_rel else "architect.md")
-            if test_file.exists():
+            # Junction/symlink exists — verify it points correctly by checking
+            # that the first file/subdir of the source is reachable through it
+            first_entry = None
+            for entry in source.iterdir():
+                first_entry = entry.name
+                break
+            if first_entry and (target / first_entry).exists():
                 return "OK"
             # Wrong target or broken — remove and recreate
             action = "RECREATE"
