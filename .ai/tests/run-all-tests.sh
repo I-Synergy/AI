@@ -12,6 +12,14 @@ echo ""
 echo "Running comprehensive validation tests..."
 echo ""
 
+# Pre-step: ensure folder-level junctions/symlinks exist
+# (CI checkouts have real directories; this converts them)
+echo "--- Pre-step: Syncing platform junctions ---"
+python3 "$SCRIPT_DIR/../scripts/sync-skills.py" 2>&1
+echo ""
+echo "--- Validation tests follow ---"
+echo ""
+
 # Function to run a test and track results
 run_test() {
     local test_name="$1"
