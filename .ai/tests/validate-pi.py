@@ -8,6 +8,7 @@ Validates Pi (claude-pi) integration:
   - .pi/settings.json exists
 """
 
+import subprocess
 import sys
 from pathlib import Path
 
@@ -17,6 +18,10 @@ if sys.platform == "win32":
 
 
 ROOT = Path(__file__).parent.parent.parent
+
+# Bootstrap folder-level junctions before running tests
+_script = str(ROOT / ".ai" / "scripts" / "sync-skills.py")
+subprocess.run([sys.executable, _script], capture_output=True)
 PI_SKILLS = ROOT / ".pi" / "skills"
 PI_AGENTS = ROOT / ".pi" / "agents"
 PI_CHAINS = ROOT / ".pi" / "chains"
