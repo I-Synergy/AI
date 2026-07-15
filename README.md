@@ -6,7 +6,7 @@ Professional .NET development template with AI-powered agent orchestration and m
 
 A **production-ready .NET project template** that provides comprehensive development patterns, specialized agent skills, and quality assurance tools for building enterprise applications with Clean Architecture, CQRS, and Domain-Driven Design.
 
-AI context lives in `.ai/` (the single source of truth shared by Claude Code, GitHub Copilot, and Reasonix Code). Claude Code config stays in `.claude/settings.json`. Reasonix Code reads `REASONIX.md` at root.
+AI context lives in `.ai/` (the single source of truth shared by Claude Code, GitHub Copilot, Pi, and Reasonix Code). Each tool reads the same files through directory junctions — no duplication, no sync lag.
 
 ## Features
 
@@ -73,37 +73,83 @@ See `.ai/reference/tokens.md` for complete definitions.
 
 ## Quick Start
 
-### New Project — Copy Template
+### 1. Copy the Template
 
 ```bash
-# Copy AI context directory to your project root
+# Copy AI context to your project root
 cp -r ./.ai /path/to/YourProject/.ai
 
-# Copy Claude Code config
-cp -r ./.claude /path/to/YourProject/
+# Copy root config files
+cp ./CLAUDE.md /path/to/YourProject/
+cp ./REASONIX.md /path/to/YourProject/
+cp ./AGENTS.md /path/to/YourProject/
 
-# Copy Reasonix Code config
-cp -r ./.reasonix /path/to/YourProject/
-
-# Copy orchestration files
-cp ./CLAUDE.md /path/to/YourProject/CLAUDE.md
-cp ./REASONIX.md /path/to/YourProject/REASONIX.md
+# Copy tool configs (minimal — junctions do the rest)
+cp -r ./.claude/settings.json /path/to/YourProject/.claude/
+cp -r ./.pi/settings.json /path/to/YourProject/.pi/
+cp -r ./.github/copilot-instructions.md /path/to/YourProject/.github/
 ```
 
-### Existing Project — Upgrade with Script
+### 2. Create Junctions (One Command)
+
+All platforms read `.ai/skills/` and `.ai/agents/` through directory junctions — no file copies.
 
 ```bash
-# Interactive upgrade — review each changed file before accepting
-python .ai/scripts/upgrade-template.py /path/to/YourProject
-
-# Preview only — no files written
-python .ai/scripts/upgrade-template.py /path/to/YourProject --dry-run
-
-# Skills only — copy new/updated skills without touching config
-python .ai/scripts/upgrade-template.py /path/to/YourProject --skills-only
+cd /path/to/YourProject
+python .ai/scripts/sync-skills.py
 ```
 
-The script classifies every file as **template-owned** (safe to update, including `CLAUDE.md`) or **project-owned** (never overwritten — `.ai/project/`, `.ai/session-context.md`, `.ai/progress/`, `.ai/plans/`, `.ai/completed/`).
+This creates:
+
+| Junction | → Source | Used By |
+|----------|----------|---------|
+| `.claude/skills` | `.ai/skills` | Claude Code |
+| `.claude/agents` | `.ai/agents` | Claude Code |
+| `.github/skills` | `.ai/skills` | GitHub Copilot |
+| `.github/agents` | `.ai/agents` | GitHub Copilot |
+| `.reasonix/skills` | `.ai/skills` | Reasonix Code |
+| `.reasonix/agents` | `.ai/agents` | Reasonix Code |
+| `.pi/skills` | `.ai/skills` | Pi |
+| `.pi/agents` | `.ai/agents` | Pi |
+| `.pi/chains` | `.ai/chains` | Pi |
+
+All junction targets are in `.gitignore` — zero git bloat.
+
+### 3. Per-Tool Setup
+
+#### Claude Code
+
+Claude Code auto-loads `CLAUDE.md` at the project root and discovers skills/agents from `.claude/` junctions. No additional setup needed.
+
+```bash
+claude  # start in project root
+```
+
+#### GitHub Copilot
+
+GitHub Copilot reads `.github/copilot-instructions.md` and discovers skills from `.github/skills/` junction. Works automatically in VS Code / GitHub Codespaces.
+
+#### Pi
+
+Pi loads `AGENTS.md` for runtime instructions. Skills and agents are discovered from `.pi/` junctions.
+
+```bash
+pi  # start in project root
+```
+
+`.pi/settings.json` is empty — all configuration comes from `.ai/` via junctions.
+
+#### Reasonix Code
+
+Reasonix Code auto-loads `REASONIX.md` at the project root. Skills are loaded from `.reasonix/skills/` junction; agents from `.reasonix/agents/` (each has `runAs: subagent` for subagent discovery).
+
+### 4. Verify
+
+```bash
+bash .ai/tests/run-all-tests.sh
+```
+
+All 11 suites should pass.
 
 ### Customize Project Files
 
@@ -138,24 +184,35 @@ Edit `.ai/session-context.md` to establish your project's initial state.
 
 ```
 /
-├── CLAUDE.md                        # AI orchestration (auto-loaded by Claude Code)
-├── REASONIX.md                      # AI orchestration (auto-loaded by Reasonix Code)
-
+├── AGENTS.md                        # Pi runtime instructions (auto-loaded)
+├── CLAUDE.md                        # Claude Code orchestration (auto-loaded)
+├── REASONIX.md                      # Reasonix Code orchestration (auto-loaded)
 ├── TEMPLATE-USAGE.md                # Detailed usage guide
 ├── TEMPLATE-FAQ.md                  # Frequently asked questions
 ├── README.md                        # This file
 ├── pytest.ini                       # Pytest configuration (testpaths = .ai/tests)
-├── pip.ini                          # Project-scoped pip config (overrides corporate registry)
+├── pip.ini                          # Project-scoped pip config
 ├── .gitattributes                   # LF line endings enforced for *.sh
-├── .gitignore                       # Excludes __pycache__, .pytest_cache
+├── .gitignore                       # Excludes junction targets + pycache
 ├── .vscode/
-│   └── settings.json                # Pytest discovery + PIP_CONFIG_FILE terminal env
-├── .claude/settings.json            # Claude Code configuration (hooks, permissions, additionalDirectories)
-├── .claude/settings.local.json      # Local overrides (not committed)
-│                                    # Note: skills/ wrappers are auto-generated — do not edit
-├── .reasonix/                       # Reasonix Code skills (auto-synced from .ai/ — do not edit directly)
-│   └── skills/                      # Thin wrappers referencing .ai/skills/ + subagent skills from .ai/agents/
-├── REASONIX.md                      # Reasonix Code orchestration
+│   └── settings.json                # Pytest discovery + PIP_CONFIG_FILE
+├── .claude/
+│   ├── settings.json                # Claude Code config (hooks, permissions)
+│   ├── settings.local.json          # Local overrides (not committed)
+│   ├── skills/  → .ai/skills/       # Junction — do not edit
+│   └── agents/  → .ai/agents/       # Junction — do not edit
+├── .github/
+│   ├── copilot-instructions.md      # GitHub Copilot instructions
+│   ├── skills/  → .ai/skills/       # Junction — do not edit
+│   └── agents/  → .ai/agents/       # Junction — do not edit
+├── .reasonix/
+│   ├── skills/  → .ai/skills/       # Junction — do not edit
+│   └── agents/  → .ai/agents/       # Junction — do not edit
+├── .pi/
+│   ├── settings.json                # Empty — config via junctions
+│   ├── skills/  → .ai/skills/       # Junction — do not edit
+│   ├── agents/  → .ai/agents/       # Junction — do not edit
+│   └── chains/  → .ai/chains/       # Junction — do not edit
 └── .ai/                             # All AI context (vendor-neutral, shared by all assistants)
     ├── session-context.md           # Working session memory
     ├── reference/
@@ -246,20 +303,32 @@ Edit `.ai/session-context.md` to establish your project's initial state.
         └── smoke-test.py
 ```
 
-### Skills Architecture (Four-Tier)
+### Skills Architecture — Directory Junctions
 
-Skills live in `.ai/skills/` (single source of truth) and are synced to three targets:
+Skills and agents live in `.ai/skills/` and `.ai/agents/` (single source of truth). All platforms read the exact same files through directory junctions — no wrappers, no copies, no sync.
 
-| Target | Format | Purpose |
-|--------|--------|---------|
-| `.ai/skills/<name>/SKILL.md` | Full content | Source of truth — edit here |
-| `.claude/skills/` (auto-managed) | Thin wrappers `!`cat .ai/...`` | Claude Code dynamic injection |
-| `.github/skills/` (auto-managed) | Full content copies | GitHub Copilot reads directly |
-| `.reasonix/skills/` (auto-managed) | Thin wrappers → `.ai/skills/` | Reasonix `run_skill` |
+```
+.ai/skills/              ← Edit here (canonical source)
+.ai/agents/              ← Agent definitions with runAs: subagent
 
-Agent definitions from `.ai/agents/` are also synced to `.reasonix/skills/` as `runAs: subagent` skills.
+.claude/skills/   → junction → .ai/skills/
+.claude/agents/   → junction → .ai/agents/
+.github/skills/   → junction → .ai/skills/
+.github/agents/   → junction → .ai/agents/
+.reasonix/skills/ → junction → .ai/skills/
+.reasonix/agents/ → junction → .ai/agents/
+.pi/skills/       → junction → .ai/skills/
+.pi/agents/       → junction → .ai/agents/
+.pi/chains/       → junction → .ai/chains/
+```
 
-Run `/update-skills` (or `python .ai/scripts/sync-skills.py`) after adding or editing a skill. A PostToolUse hook auto-syncs on every `.ai/skills/` write.
+After cloning, run once:
+
+```bash
+python .ai/scripts/sync-skills.py
+```
+
+This creates all 9 junctions. A PostToolUse hook in `.claude/settings.json` auto-runs the sync when `.ai/skills/` or `.ai/agents/` files change.
 
 ### Specialized Agents (8)
 
