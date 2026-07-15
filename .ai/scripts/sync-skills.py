@@ -15,6 +15,7 @@ Usage:
 """
 
 import argparse
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -43,23 +44,44 @@ def _is_junction(path: Path) -> bool:
 
 
 def _rmdir(path: Path):
-    """Remove a directory or junction safely."""
-    if _is_junction(path):
+    """Remove a directory, symlink, or junction safely."""
+    if sys.platform == "win32" and _is_junction(path):
         subprocess.run(["cmd", "/c", "rmdir", str(path)], capture_output=True)
-    elif path.is_dir():
+    elif path.is_symlink() or path.is_dir():
         import shutil
         shutil.rmtree(str(path), ignore_errors=True)
+    elif path.exists():
+        path.unlink()
+
+
+def _create_link(target: Path, source: Path) -> bool:
+    """Create a junction (Windows) or symlink (Unix). Returns True on success."""
+    target.parent.mkdir(parents=True, exist_ok=True)
+    if sys.platform == "win32":
+        result = subprocess.run(
+            ["cmd", "/c", "mklink", "/J", str(target), str(source)],
+            capture_output=True, text=True
+        )
+        return result.returncode == 0
+    else:
+        # Use relative symlink for portability
+        try:
+            rel_source = os.path.relpath(str(source), str(target.parent))
+        except ValueError:
+            rel_source = str(source)
+        target.symlink_to(rel_source, target_is_directory=True)
+        return True
 
 
 def sync_junction(source_rel: str, target_rel: str, dry_run: bool) -> str:
-    """Ensure target_rel is a junction pointing to source_rel. Returns status."""
+    """Ensure target_rel is a junction/symlink pointing to source_rel. Returns status."""
     root = SCRIPT_DIR
     target = root / target_rel
     source = (root / source_rel).resolve()
 
     if target.exists():
         if _is_junction(target):
-            # Junction exists — verify it points correctly by checking a known file
+            # Junction/symlink exists — verify it points correctly by checking a known file
             test_file = target / (".gitkeep" if "skills" in source_rel else "architect.md")
             if test_file.exists():
                 return "OK"
@@ -73,13 +95,9 @@ def sync_junction(source_rel: str, target_rel: str, dry_run: bool) -> str:
     if not dry_run:
         if target.exists():
             _rmdir(target)
-        target.parent.mkdir(parents=True, exist_ok=True)
-        result = subprocess.run(
-            ["cmd", "/c", "mklink", "/J", str(target), str(source)],
-            capture_output=True, text=True
-        )
-        if result.returncode != 0:
-            return f"FAIL — {result.stderr.strip()}"
+        ok = _create_link(target, source)
+        if not ok:
+            return f"FAIL — could not create junction/symlink"
 
     return action
 
