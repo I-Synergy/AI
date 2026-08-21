@@ -36,5 +36,5 @@ Then run `deepseek` or `claude` in any project directory.
 - The `deepseek` function maps the model tiers via `ANTHROPIC_DEFAULT_*_MODEL`:
   - Opus / Sonnet tier → `deepseek-v4-pro[1m]`
   - Haiku tier → `deepseek-v4-flash`
-- The vision-capable model `deepseek-v4-flash-vision-exp` is documented in `DEEPSEEK.md` and is the Haiku-tier vision mapping; if you want it as the Haiku default in this profile, change the `ANTHROPIC_DEFAULT_HAIKU_MODEL` line to `deepseek-v4-flash-vision-exp`.
+- The vision-capable model `deepseek-v4-flash-vision-exp` is documented in `DEEPSEEK.md` as a manual-only override — it has no tier of its own, so don't repoint `ANTHROPIC_DEFAULT_HAIKU_MODEL` at it (that would also switch `developer`/`writer`, which don't need vision). Instead, edit the specific agent's `model:` frontmatter directly (e.g. `.ai/agents/designer.md`) before the session and revert it after.
 - `CLAUDE_CODE_SUBAGENT_MODEL = "inherit"` makes subagents inherit the main model; the older `Use-DeepSeek`/`Use-Claude` functions (which pinned subagents to `deepseek-v4-flash`) are retained below as commented reference.
