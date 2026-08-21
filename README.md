@@ -507,11 +507,26 @@ Every session (Claude Code, GitHub Copilot, and Reasonix Code):
 |------|---------|
 | `README.md` | This file — overview and quick reference |
 | `CLAUDE.md` | AI orchestration (auto-loaded by Claude Code) |
+| `DEEPSEEK.md` | DeepSeek-variant orchestration (swapped in by the PowerShell profile) |
+| `powershell/` | PowerShell profile for switching between Anthropic and DeepSeek backends |
 | `TEMPLATE-USAGE.md` | Detailed usage and customization guide |
 | `TEMPLATE-FAQ.md` | Frequently asked questions |
 | `.ai/reference/critical-rules.md` | Non-negotiable coding patterns |
 | `.ai/patterns/api-patterns.md` | API endpoints, OpenAPI, Kiota, security hardening |
 | `.ai/reference/forbidden-tech.md` | Banned libraries and approaches |
 | `.ai/project/` | Project-specific context files |
+
+## Repository Mirroring
+
+This repository lives in two places: **GitHub** (`I-Synergy/AI`, source of truth) and **Azure DevOps**. A GitHub Action keeps them aligned automatically.
+
+**Mechanism:** `.github/workflows/mirror-to-azure.yml` runs on every push to `main` and `development/main` (and on manual dispatch), force-pushing the full history to Azure DevOps via `git push --mirror`. GitHub is authoritative; any manual change made directly on Azure DevOps is overwritten on the next mirror.
+
+**One-time setup:**
+
+1. Create an Azure DevOps Personal Access Token with `Code (Read & Write)` scope for the target repo/org.
+2. Add it as a GitHub Actions secret named `AZURE_DEVOPS_PAT` (Settings → Secrets and variables → Actions → New repository secret).
+
+The PAT is injected via `env` and never logged; `--mirror` also propagates branch/tag deletions, so treat Azure DevOps as a read-only copy.
 
 ## [License](LICENSE)
