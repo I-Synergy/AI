@@ -1,0 +1,59 @@
+# Mirror this repository to Azure DevOps.
+#
+# GitHub is the source of truth. On every push to the primary branches this
+# workflow force-pushes the full history to the Azure DevOps repo so the two
+# stay aligned automatically.
+#
+# One-time setup (see README.md → "Repository Mirroring"):
+#   1. Create an Azure DevOps Personal Access Token with `Code (Read & Write)`
+#      scope for the target repo/org.
+#   2. Add it as a GitHub Actions secret named `AZURE_DEVOPS_PAT`.
+#   3. Optionally override `azureMirrorUrl` with an SSH/deploy-key URL.
+
+name: Mirror to Azure DevOps
+
+on:
+  push:
+    branches:
+      - main
+      - development/main
+  workflow_dispatch:
+
+jobs:
+  mirror:
+    name: Mirror to Azure DevOps
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push mirror to Azure DevOps
+        env:
+          AZURE_DEVOPS_PAT: ${{ secrets.AZURE_DEVOPS_PAT }}
+        run: |
+          set -euo pipefail
+
+          git config --global user.name  "GitHub Mirror"
+          git config --global user.email "noreply@github.invalid"
+
+          # Build the authenticated URL on the fly so the PAT never appears in
+          # a command-line argument that could be captured by verbose logging.
+          mirror_url="https://any:${AZURE_DEVOPS_PAT}@dev.azure.com/intelligence-online/_git/AI"
+
+          git remote remove mirror 2>/dev/null || true
+          git remote add mirror "$mirror_url"
+
+          # --mirror keeps the two repos identical, including deletions.
+          for attempt in 1 2 3; do
+            if git push --mirror mirror; then
+              echo "::notice::Mirror to Azure DevOps succeeded (attempt ${attempt})"
+              exit 0
+            fi
+            echo "::warning::Mirror push attempt ${attempt} failed; retrying…"
+            sleep 5
+          done
+
+          echo "::error::Mirror to Azure DevOps failed after 3 attempts"
+          exit 1
