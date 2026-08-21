@@ -60,13 +60,15 @@ All substantive work goes to a subagent:
 | `architect` | `deepseek-v4-pro` | Feature design, pattern selection, component boundaries, architecture analysis |
 | `reviewer` | `deepseek-v4-pro` | Code quality, SOLID, CQRS compliance, security review, architecture audit |
 | `tester` | `deepseek-v4-pro` | MSTest/Reqnroll test design, BDD scenarios, integration test strategy |
-| `designer` | `deepseek-v4-flash-vision-exp` | Visual design — color palettes, typography, branding, design tokens |
+| `designer` | `deepseek-v4-flash` | Visual design — color palettes, typography, branding, design tokens |
 | `developer` | `deepseek-v4-flash` | .NET/C# code — CQRS handlers, API endpoints, Blazor, EF Core, refactoring, builds |
-| `ui-developer` | `deepseek-v4-flash-vision-exp` | Blazor/MAUI components, layouts, CSS/styling, UX patterns |
-| `ui-tester` | `deepseek-v4-flash-vision-exp` | Playwright E2E tests, accessibility checks, visual regression |
+| `ui-developer` | `deepseek-v4-flash` | Blazor/MAUI components, layouts, CSS/styling, UX patterns |
+| `ui-tester` | `deepseek-v4-flash` | Playwright E2E tests, accessibility checks, visual regression |
 | `writer` | `deepseek-v4-flash` | XML docs, READMEs, ADRs, technical prose |
 
-**Model tiers:** `deepseek-v4-pro` = deep reasoning (architecture, review, test design). `deepseek-v4-flash` = execution (code, UI, tests, docs). `deepseek-v4-flash-vision-exp` = vision — for agents that must SEE rendered output (visual design, visual regression, accessibility contrast). The vision tier is experimental and not for production; routing a sonnet-tier agent (`designer`) to it trades reasoning depth for sight.
+**Model tiers:** `deepseek-v4-pro` = deep reasoning (architecture, review, test design). `deepseek-v4-flash` = execution (code, UI, tests, docs, visual work). This table drives `ANTHROPIC_DEFAULT_SONNET_MODEL`/`ANTHROPIC_DEFAULT_HAIKU_MODEL` via each agent's `model: sonnet`/`model: haiku` frontmatter in `.ai/agents/` — those are the only two tiers Claude Code's subagent routing can express, so all agents resolve to one or the other.
+
+**Vision tier (manual override only):** `deepseek-v4-flash-vision-exp` exists for agents that must SEE rendered output (visual design, visual regression, accessibility contrast) but there is no automatic routing for it — `.ai/agents/` is shared verbatim across Claude Code, GitHub Copilot, Reasonix Code, and DeepSeek via junctions (see `.ai/scripts/sync-skills.py`), and only two tier env vars exist, so a third tier can't be swapped in per-backend. To use it for `designer`, `ui-developer`, or `ui-tester`, manually set that agent's frontmatter to `model: deepseek-v4-flash-vision-exp` before the session (and revert it afterward — a literal DeepSeek model name in `model:` is invalid on Claude/Copilot/Reasonix).
 
 Agent definitions live in `.ai/agents/` (canonical source). When delegating, always include in the prompt:
 ```

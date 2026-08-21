@@ -326,13 +326,15 @@ Skills and agents live in `.ai/skills/` and `.ai/agents/` (single source of trut
 .pi/chains/       → junction → .ai/chains/
 ```
 
-After cloning, run once:
+Git cannot track Windows junctions (or symlinks, with the common `core.symlinks=false` default), so a fresh clone has **none** of these 9 paths until they're created locally. A `SessionStart` hook in `.claude/settings.json` runs the sync automatically the moment a Claude Code session opens in the repo, and a `PostToolUse` hook re-runs it whenever `.ai/skills/` or `.ai/agents/` files change — so Claude Code sessions self-heal with no manual step.
+
+Other tools (GitHub Copilot, Reasonix Code, pi) don't have an equivalent session-start hook, so after cloning — or before using one of those tools for the first time — run once manually:
 
 ```bash
 python .ai/scripts/sync-skills.py
 ```
 
-This creates all 9 junctions. A PostToolUse hook in `.claude/settings.json` auto-runs the sync when `.ai/skills/` or `.ai/agents/` files change.
+This creates (or repairs) all 9 junctions; it's idempotent and safe to re-run at any time.
 
 ### Specialized Agents (8)
 
@@ -343,13 +345,13 @@ All code and design work is delegated to specialized subagents — the main conv
 | `architect` | **deepseek-v4-pro** | Feature design, pattern selection, component boundaries, architecture analysis |
 | `reviewer` | **deepseek-v4-pro** | Code quality, SOLID, CQRS compliance, security review, architecture audit |
 | `tester` | **deepseek-v4-pro** | MSTest/Reqnroll test design, BDD scenarios, integration test strategy |
-| `designer` | **deepseek-v4-pro** | Visual design — color palettes, typography, branding, design tokens |
+| `designer` | **deepseek-v4-flash** | Visual design — color palettes, typography, branding, design tokens |
 | `developer` | **deepseek-v4-flash** | .NET/C# — CQRS handlers, API endpoints, Blazor, EF Core, refactoring |
 | `ui-developer` | **deepseek-v4-flash** | Blazor/MAUI components, layouts, CSS/styling, UX patterns |
 | `ui-tester` | **deepseek-v4-flash** | Playwright E2E tests, accessibility checks, visual regression |
 | `writer` | **deepseek-v4-flash** | XML docs, READMEs, ADRs, technical prose |
 
-**Model mapping:** `deepseek-v4-pro` ↔ Claude `sonnet` tier · `deepseek-v4-flash` ↔ Claude `haiku` tier
+**Model mapping:** `deepseek-v4-pro` ↔ Claude `sonnet` tier · `deepseek-v4-flash` ↔ Claude `haiku` tier. Each agent's `model:` frontmatter in `.ai/agents/` uses the tier alias (`sonnet`/`haiku`), which the `deepseek` PowerShell function remaps via `ANTHROPIC_DEFAULT_SONNET_MODEL`/`ANTHROPIC_DEFAULT_HAIKU_MODEL` — see `DEEPSEEK.md` for the experimental vision-tier manual override for `designer`/`ui-developer`/`ui-tester`.
 
 Agents are defined in `.ai/agents/` and discovered via `.claude/agents/` wrappers or `.reasonix/skills/` subagent skills. Designers and UI developers self-test with Playwright before handoff.
 
