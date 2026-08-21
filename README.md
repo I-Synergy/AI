@@ -507,6 +507,8 @@ Every session (Claude Code, GitHub Copilot, and Reasonix Code):
 |------|---------|
 | `README.md` | This file — overview and quick reference |
 | `CLAUDE.md` | AI orchestration (auto-loaded by Claude Code) |
+| `DEEPSEEK.md` | DeepSeek-variant orchestration (swapped in by the PowerShell profile) |
+| `powershell/` | PowerShell profile for switching between Anthropic and DeepSeek backends |
 | `TEMPLATE-USAGE.md` | Detailed usage and customization guide |
 | `TEMPLATE-FAQ.md` | Frequently asked questions |
 | `.ai/reference/critical-rules.md` | Non-negotiable coding patterns |
