@@ -2,9 +2,9 @@ name: Validate Claude Template
 
 on:
   push:
-    branches: [ main, master, develop ]
+    branches: [ main, development/main, master, develop ]
   pull_request:
-    branches: [ main, master, develop ]
+    branches: [ main, development/main, master, develop ]
   workflow_dispatch:  # Allow manual triggering
 
 jobs:
