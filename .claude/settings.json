@@ -10,6 +10,17 @@
   },
   "plansDirectory": "./.ai/plans",
   "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python .ai/scripts/sync-skills.py",
+            "statusMessage": "Ensuring skill/agent junctions exist..."
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "Edit|Write",
