@@ -1,0 +1,65 @@
+# Mirror this repository to GitHub.
+#
+# Azure DevOps is the source of truth. On every push to the primary branches
+# this pipeline force-pushes the full history to the GitHub mirror so the two
+# stay aligned automatically.
+#
+# One-time setup (see README.md → "Repository Mirroring"):
+#   1. Create a GitHub Personal Access Token with `contents: write` on the
+#      I-Synergy/AI repo (classic scope: `repo`).
+#   2. In Azure DevOps, create a secret pipeline variable `GITHUB_MIRROR_PAT`
+#      (Pipeline → Edit → Variables → +, or a variable group linked here).
+#   3. Optionally override `githubMirrorUrl` with the SSH/deploy-key URL.
+#
+# NOTE: GITHUB_MIRROR_PAT is a secret defined in the Azure DevOps UI (not in
+# this file), injected via env so it is never logged or exposed in output.
+
+trigger:
+  branches:
+    include:
+      - main
+      - development/main
+
+pr: none
+
+variables:
+  githubMirrorUrl: 'https://github.com/I-Synergy/AI.git'
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+  - checkout: self
+    clean: true
+    fetchDepth: 0 # full history is required for a faithful mirror
+
+  - bash: |
+      set -euo pipefail
+
+      git config --global user.name  "Azure DevOps Mirror"
+      git config --global user.email "noreply@azuredevops.invalid"
+
+      # Build the authenticated URL on the fly so the PAT never appears in a
+      # command-line argument that could be captured by verbose logging.
+      mirror_url="https://x-access-token:${GITHUB_MIRROR_PAT}@github.com/I-Synergy/AI.git"
+
+      # Point the mirror remote at GitHub (create/replace without echoing the URL).
+      git remote remove mirror 2>/dev/null || true
+      git remote add mirror "$mirror_url"
+
+      # Push all branches and tags. --mirror keeps the two repos identical,
+      # including deletions. Retry a few times for transient network failures.
+      for attempt in 1 2 3; do
+        if git push --mirror mirror; then
+          echo "##[section] Mirror to GitHub succeeded (attempt ${attempt})"
+          exit 0
+        fi
+        echo "##[warning] Mirror push attempt ${attempt} failed; retrying…"
+        sleep 5
+      done
+
+      echo "##[error] Mirror to GitHub failed after 3 attempts"
+      exit 1
+    env:
+      GITHUB_MIRROR_PAT: $(GITHUB_MIRROR_PAT)
+    displayName: 'Mirror to GitHub'

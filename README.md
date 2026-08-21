@@ -516,4 +516,18 @@ Every session (Claude Code, GitHub Copilot, and Reasonix Code):
 | `.ai/reference/forbidden-tech.md` | Banned libraries and approaches |
 | `.ai/project/` | Project-specific context files |
 
+## Repository Mirroring
+
+This repository lives in two places: **Azure DevOps** (source of truth) and **GitHub** (`I-Synergy/AI`). A pipeline keeps them aligned automatically.
+
+**Mechanism:** `.azuredevops/pipelines/mirror-to-github.yml` runs on every push to `main` and `development/main`, force-pushing the full history to GitHub via `git push --mirror`. Azure DevOps is authoritative; any manual change made directly on GitHub is overwritten on the next mirror.
+
+**One-time setup:**
+
+1. Create a GitHub Personal Access Token scoped to the `I-Synergy/AI` repo with `contents: write` (classic scope: `repo`).
+2. In Azure DevOps, add a **secret** pipeline variable named `GITHUB_MIRROR_PAT` (Pipeline → Edit → Variables → +, or a variable group).
+3. Create the pipeline in Azure DevOps pointing at `.azuredevops/pipelines/mirror-to-github.yml`.
+
+The PAT is injected via `env` and never logged; `--mirror` also propagates branch/tag deletions, so treat GitHub as a read-only copy.
+
 ## [License](LICENSE)
