@@ -10,7 +10,7 @@ AI context lives in `.ai/` (the single source of truth shared by Claude Code, Gi
 
 ## Features
 
-### Specialized Skills (35)
+### Specialized Skills
 
 | Skill | Purpose |
 |-------|---------|
@@ -23,6 +23,7 @@ AI context lives in `.ai/` (the single source of truth shared by Claude Code, Gi
 | **blazor-specialist** | Blazor web development |
 | **blazor-theme-generator** | Generate Blazor UI themes from design tokens |
 | **maui-specialist** | MAUI mobile/desktop development |
+| **mobile-release** | Publish MAUI apps to the App Store and Google Play |
 | **winui-specialist** | WinUI 3 desktop development |
 | **xaml-theme-generator** | Generate XAML theme resources from a base color palette |
 | **architect** | Architecture decisions and patterns |
@@ -49,6 +50,7 @@ AI context lives in `.ai/` (the single source of truth shared by Claude Code, Gi
 | **update-skills** | Sync `.ai/skills/` to all targets (Claude Code, GitHub Copilot, Reasonix) (run `/update-skills`) |
 | **book-to-skill** | Convert a technical book (PDF/EPUB) into a structured Claude Code skill |
 | **keycloak-theme-colors** | Update Keycloak login theme accent colors from a base hex color |
+| **council** | High-stakes decision process — independent seat positions, chair synthesis, dissent recorded verbatim |
 
 ### Pattern Guides (8)
 
@@ -70,6 +72,7 @@ AI context lives in `.ai/` (the single source of truth shared by Claude Code, Gi
 | `{ApplicationName}` | Your application name | `BudgetTracker` |
 | `{Domain}` | Domain/bounded context | `Budgets`, `Goals`, `Debts` |
 | `{Entity}` | Entity name (PascalCase) | `Budget`, `Goal`, `Debt` |
+| `{Entities}` | Entity plural (PascalCase) — used for DbSet names | `Budgets`, `Goals`, `Debts` |
 | `{entity}` | Entity name (lowercase) | `budget`, `goal`, `debt` |
 | `{entities}` | Entity plural (lowercase) | `budgets`, `goals`, `debts` |
 
@@ -153,7 +156,7 @@ Reasonix Code auto-loads `REASONIX.md` at the project root. Skills are loaded fr
 bash .ai/tests/run-all-tests.sh
 ```
 
-All 11 suites should pass.
+Every suite should pass.
 
 ### Customize Project Files
 
@@ -172,6 +175,9 @@ Edit files in `.ai/project/` to customize for your project:
 find /path/to/YourProject/.ai -type f -exec sed -i 's/{ApplicationName}/BudgetTracker/g' {} +
 find /path/to/YourProject/.ai -type f -exec sed -i 's/{Domain}/Budgets/g' {} +
 find /path/to/YourProject/.ai -type f -exec sed -i 's/{Entity}/Budget/g' {} +
+find /path/to/YourProject/.ai -type f -exec sed -i 's/{Entities}/Budgets/g' {} +
+find /path/to/YourProject/.ai -type f -exec sed -i 's/{entity}/budget/g' {} +
+find /path/to/YourProject/.ai -type f -exec sed -i 's/{entities}/budgets/g' {} +
 ```
 
 ### Initialize Session Context
@@ -191,9 +197,11 @@ Edit `.ai/session-context.md` to establish your project's initial state.
 ├── AGENTS.md                        # Pi runtime instructions (auto-loaded)
 ├── CLAUDE.md                        # Claude Code orchestration (auto-loaded)
 ├── REASONIX.md                      # Reasonix Code orchestration (auto-loaded)
+├── DEEPSEEK.md                      # DeepSeek backend orchestration (swapped over CLAUDE.md)
 ├── TEMPLATE-USAGE.md                # Detailed usage guide
 ├── TEMPLATE-FAQ.md                  # Frequently asked questions
 ├── README.md                        # This file
+├── LICENSE                          # MIT license
 ├── pytest.ini                       # Pytest configuration (testpaths = .ai/tests)
 ├── pip.ini                          # Project-scoped pip config
 ├── .gitattributes                   # LF line endings enforced for *.sh
@@ -202,11 +210,14 @@ Edit `.ai/session-context.md` to establish your project's initial state.
 │   └── settings.json                # Pytest discovery + PIP_CONFIG_FILE
 ├── .claude/
 │   ├── settings.json                # Claude Code config (hooks, permissions)
-│   ├── settings.local.json          # Local overrides (not committed)
+│   ├── settings.local.json          # Local permission overrides
 │   ├── skills/  → .ai/skills/       # Junction — do not edit
 │   └── agents/  → .ai/agents/       # Junction — do not edit
 ├── .github/
 │   ├── copilot-instructions.md      # GitHub Copilot instructions
+│   ├── workflows/
+│   │   ├── validate-template.yml    # Runs the validation suite in CI
+│   │   └── mirror-to-azure.yml      # Mirrors GitHub → Azure DevOps (see below)
 │   ├── skills/  → .ai/skills/       # Junction — do not edit
 │   └── agents/  → .ai/agents/       # Junction — do not edit
 ├── .reasonix/
@@ -217,6 +228,9 @@ Edit `.ai/session-context.md` to establish your project's initial state.
 │   ├── skills/  → .ai/skills/       # Junction — do not edit
 │   ├── agents/  → .ai/agents/       # Junction — do not edit
 │   └── chains/  → .ai/chains/       # Junction — do not edit
+├── powershell/                      # Anthropic ↔ DeepSeek backend switcher
+│   ├── Microsoft.PowerShell_profile.ps1
+│   └── README.md                    # Setup and usage
 └── .ai/                             # All AI context (vendor-neutral, shared by all assistants)
     ├── session-context.md           # Working session memory
     ├── reference/
@@ -226,6 +240,13 @@ Edit `.ai/session-context.md` to establish your project's initial state.
     │   ├── glossary.md              # Terminology
     │   ├── naming-conventions.md
     │   ├── copilot-integration.md
+    │   ├── task-execution.md        # ReAct loop, escalation, subagent templates
+    │   ├── work-type-mapping.md     # Which files to load per task type
+    │   ├── operational-rules.md     # Refactoring and file-management conventions
+    │   ├── session-management.md    # Session lifecycle
+    │   ├── aot-and-trimming.md      # Native AOT and trimming lessons
+    │   ├── readme-maintenance.md    # README update requirements
+    │   ├── council.md               # Council principle — high-stakes decisions
     │   └── templates/               # Code templates (.cs.txt, .feature.txt)
     │       ├── command-handler.cs.txt
     │       ├── query-handler.cs.txt
@@ -244,6 +265,9 @@ Edit `.ai/session-context.md` to establish your project's initial state.
     │   └── test-driven-development.md
     ├── scripts/                     # Automation scripts
     │   ├── sync-skills.py           # Sync .ai/skills/ to Claude Code, GitHub Copilot, and Reasonix targets
+    │   ├── sync-agents.py           # Agent-side entry point (delegates to sync-skills.py)
+    │   ├── hygiene-lint.py          # Read-only hygiene lint — stale progress, committed secrets
+    │   ├── migrate-to-ai.py         # Migrate a repo from the old .claude/ layout to .ai/
     │   └── upgrade-template.py      # Safely upgrade an existing project from this template
     ├── agents/                      # Specialized subagents (source of truth)
     ├── skills/                      # Specialized agent personas (source of truth)
@@ -253,8 +277,12 @@ Edit `.ai/session-context.md` to establish your project's initial state.
     │   ├── technical-writer/SKILL.md
     │   ├── playwright-tester/SKILL.md
     │   ├── blazor-specialist/SKILL.md
+    │   ├── blazor-theme-generator/SKILL.md
+    │   ├── css-theme-generator/SKILL.md
     │   ├── maui-specialist/SKILL.md
+    │   ├── mobile-release/SKILL.md
     │   ├── winui-specialist/SKILL.md
+    │   ├── xaml-theme-generator/SKILL.md
     │   ├── architect/SKILL.md
     │   ├── api-security/SKILL.md
     │   ├── security/SKILL.md
@@ -272,12 +300,18 @@ Edit `.ai/session-context.md` to establish your project's initial state.
     │   ├── solution-generator/SKILL.md
     │   ├── vertical-slices/SKILL.md
     │   ├── gap-review/SKILL.md
+    │   ├── hugo/SKILL.md
     │   ├── upgrade-template/SKILL.md
     │   ├── verify-config/SKILL.md
     │   ├── update-skills/SKILL.md
     │   ├── api-endpoints/SKILL.md
     │   ├── book-to-skill/SKILL.md
-    │   └── keycloak-theme-colors/SKILL.md
+    │   ├── keycloak-theme-colors/SKILL.md
+    │   └── council/SKILL.md
+    ├── chains/                      # Chain definitions (pi runner)
+    │   ├── council.chain.md         # Council protocol (see .ai/reference/council.md)
+    │   ├── implement-and-review.chain.md
+    │   └── scout-plan-implement.chain.md
     ├── checklists/
     │   └── pre-submission.md        # Quality gate — run before completing any task
     ├── project/                     # CUSTOMIZE THESE FOR YOUR PROJECT
@@ -290,10 +324,10 @@ Edit `.ai/session-context.md` to establish your project's initial state.
     ├── progress/                    # Active task tracking
     ├── completed/                   # Archived completed tasks
     ├── analysis/                    # Analysis files
-    └── tests/                       # Template validation suite (11 suites)
-        ├── run-all-tests.sh         # Run all 11 suites (bash)
+    └── tests/                       # Template validation suite
+        ├── run-all-tests.sh         # Run every suite via bash
         ├── conftest.py              # Pytest shared fixtures
-        ├── test_suite.py            # Pytest wrappers for VS Code Test Explorer (11 tests)
+        ├── test_suite.py            # Pytest wrappers for VS Code Test Explorer
         ├── validate-structure.sh
         ├── validate-skills.py
         ├── validate-references.sh
@@ -302,9 +336,10 @@ Edit `.ai/session-context.md` to establish your project's initial state.
         ├── validate-claude-md.py
         ├── validate-settings.py
         ├── validate-copilot.py
+        ├── smoke-test.py
         ├── validate-reasonix.py
-        ├── validate-upgrade-script.py
-        └── smoke-test.py
+        ├── validate-pi.py
+        └── validate-upgrade-script.py
 ```
 
 ### Skills Architecture — Directory Junctions
@@ -336,38 +371,41 @@ python .ai/scripts/sync-skills.py
 
 This creates (or repairs) all 9 junctions; it's idempotent and safe to re-run at any time.
 
-### Specialized Agents (8)
+### Specialized Agents
 
 All code and design work is delegated to specialized subagents — the main conversation handles only reasoning and user interaction.
 
-| Agent | Model | Role |
-|-------|-------|------|
-| `architect` | **deepseek-v4-pro** | Feature design, pattern selection, component boundaries, architecture analysis |
-| `reviewer` | **deepseek-v4-pro** | Code quality, SOLID, CQRS compliance, security review, architecture audit |
-| `tester` | **deepseek-v4-pro** | MSTest/Reqnroll test design, BDD scenarios, integration test strategy |
-| `designer` | **deepseek-v4-flash** | Visual design — color palettes, typography, branding, design tokens |
-| `developer` | **deepseek-v4-flash** | .NET/C# — CQRS handlers, API endpoints, Blazor, EF Core, refactoring |
-| `ui-developer` | **deepseek-v4-flash** | Blazor/MAUI components, layouts, CSS/styling, UX patterns |
-| `ui-tester` | **deepseek-v4-flash** | Playwright E2E tests, accessibility checks, visual regression |
-| `writer` | **deepseek-v4-flash** | XML docs, READMEs, ADRs, technical prose |
+| Agent | Role |
+|-------|------|
+| `architect` | Feature design, pattern selection, component boundaries, architecture analysis |
+| `reviewer` | Code quality, SOLID, CQRS compliance, security review, architecture audit |
+| `security` | Blast-radius and exposure analysis, threat modelling, OWASP review, dependency and secret audits |
+| `tester` | MSTest/Reqnroll test design, BDD scenarios, integration test strategy |
+| `designer` | Visual design — color palettes, typography, branding, design tokens |
+| `developer` | .NET/C# — CQRS handlers, API endpoints, Blazor, EF Core, refactoring |
+| `ui-developer` | Blazor/MAUI components, layouts, CSS/styling, UX patterns |
+| `ui-tester` | Playwright E2E tests, accessibility checks, visual regression |
+| `writer` | XML docs, READMEs, ADRs, technical prose |
 
-**Model mapping:** `deepseek-v4-pro` ↔ Claude `sonnet` tier · `deepseek-v4-flash` ↔ Claude `haiku` tier. Each agent's `model:` frontmatter in `.ai/agents/` uses the tier alias (`sonnet`/`haiku`), which the `deepseek` PowerShell function remaps via `ANTHROPIC_DEFAULT_SONNET_MODEL`/`ANTHROPIC_DEFAULT_HAIKU_MODEL` — see `DEEPSEEK.md` for the experimental vision-tier manual override for `designer`/`ui-developer`/`ui-tester`.
+Each agent's `model:` frontmatter in `.ai/agents/` carries the tier alias (`sonnet` or `haiku`); the concrete model behind each slot is defined by the backend profile in `powershell/Microsoft.PowerShell_profile.ps1`.
 
-Agents are defined in `.ai/agents/` and discovered via `.claude/agents/` wrappers or `.reasonix/skills/` subagent skills. Designers and UI developers self-test with Playwright before handoff.
+Agents are defined in `.ai/agents/` — each carries `runAs: subagent` — and every tool reads them through a folder-level junction (`.claude/agents/`, `.github/agents/`, `.reasonix/agents/`, `.pi/agents/`). Designers and UI developers self-test with Playwright before handoff.
 
 ## Testing
 
-The template ships with an 11-suite validation suite. Run via bash or pytest:
+The template ships with a validation suite that runs the same checks under bash or pytest:
 
 ```bash
-# All suites via bash
+# Every suite via bash
 bash .ai/tests/run-all-tests.sh
 
-# All suites via pytest (requires: pip install pytest)
+# Every suite via pytest (requires: pip install pytest)
 python -m pytest .ai/tests/test_suite.py -v
 
 # VS Code Test Explorer: install pytest, then open Testing panel
 ```
+
+`run-all-tests.sh` skips `validate-upgrade-script.py`; the pytest wrapper includes it, so pytest is the fuller run.
 
 On Windows with a corporate pip registry, use the project-scoped override:
 ```bash
@@ -376,19 +414,20 @@ pip install --config-file pip.ini pytest
 
 The `.vscode/settings.json` sets `PIP_CONFIG_FILE` automatically in VS Code terminals.
 
-| Suite | Script | What it checks |
-|-------|--------|----------------|
-| 1 | `validate-structure.sh` | Required directories, files, skill SKILL.md presence |
-| 2 | `validate-skills.py` | YAML frontmatter in every SKILL.md |
-| 3 | `validate-references.sh` | File references in CLAUDE.md and templates |
-| 4 | `validate-content.py` | Content quality in skills and patterns |
-| 5 | `validate-tokens.sh` | Token consistency across templates and skills |
-| 6 | `validate-claude-md.py` | All `.ai/` paths in CLAUDE.md resolve to real files |
-| 7 | `validate-settings.py` | `.claude/settings.json` structure and no stale refs |
-| 8 | `validate-copilot.py` | Three-tier skill sync (`.ai/` source → Claude Code + `.github/`) |
-| 9 | `smoke-test.py` | Skills loadable, names/descriptions unique |
-| 10 | `validate-upgrade-script.py` | Upgrade script classification and integration |
-| 11 | `validate-reasonix.py` | Reasonix integration: REASONIX.md, `.reasonix/skills/` wrappers, agent skills, sync integrity |
+| Script | What it checks |
+|--------|----------------|
+| `validate-structure.sh` | Required directories, files, skill SKILL.md presence |
+| `validate-skills.py` | YAML frontmatter in every SKILL.md |
+| `validate-references.sh` | File references in CLAUDE.md, README.md links, and templates |
+| `validate-content.py` | Content quality in skills and patterns |
+| `validate-tokens.sh` | Token consistency across templates and skills |
+| `validate-claude-md.py` | All `.ai/` paths in CLAUDE.md resolve to real files |
+| `validate-settings.py` | `.claude/settings.json` structure and no stale refs |
+| `validate-copilot.py` | Three-tier skill sync (`.ai/` source → Claude Code + `.github/`) |
+| `smoke-test.py` | Skills loadable, names/descriptions unique |
+| `validate-reasonix.py` | Reasonix integration: REASONIX.md, `.reasonix/` junctions, agent skills, sync integrity |
+| `validate-pi.py` | Pi integration: `.pi/` junctions (`skills`, `agents`, `chains`) and `settings.json` |
+| `validate-upgrade-script.py` | Upgrade script classification and integration — pytest only |
 
 ## Usage Examples
 
@@ -434,6 +473,14 @@ Claude will:
                          # CLAUDE.md is updated (diffed), project-owned files are never touched
 ```
 
+### High-Stakes Decisions (Council)
+
+```
+/council                 # For decisions that are expensive to reverse — seats briefed with
+                         # conflicting mandates: Design, Rules, Security, Verifiability, Feasibility
+                         # Advisory verdict, chair synthesis, dissent recorded verbatim — never a vote
+```
+
 ## Work-Type Context Mapping
 
 Claude loads these files automatically based on your task type:
@@ -457,6 +504,7 @@ Claude loads these files automatically based on your task type:
 | Gap Validation | `.ai/skills/gap-review/SKILL.md` |
 | Domain Modeling | `.ai/skills/ubiquitous-language/SKILL.md`, `.ai/skills/usecase-specification/SKILL.md`, `.ai/skills/user-story/SKILL.md` |
 | Skill Creation | `.ai/skills/skill-creator/SKILL.md` |
+| Council | `.ai/reference/council.md`, `.ai/skills/council/SKILL.md` |
 
 ## Customization
 

@@ -26,3 +26,4 @@ Load these files based on task type:
 | Gap Validation | `.ai/skills/gap-review/SKILL.md` |
 | Domain Modeling | `.ai/skills/ubiquitous-language/SKILL.md`, `.ai/skills/usecase-specification/SKILL.md`, `.ai/skills/user-story/SKILL.md` |
 | Skill Creation | `.ai/skills/skill-creator/SKILL.md` |
+| Council | `.ai/reference/council.md`, `.ai/skills/council/SKILL.md` |

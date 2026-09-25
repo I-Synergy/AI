@@ -139,9 +139,9 @@ REASONIX.md                      # Reasonix Code orchestration
 ├── scripts/                    # Automation scripts
 │   ├── sync-skills.py          # Create folder-level junctions for all platforms
 │   └── upgrade-template.py     # Safely upgrade existing projects
-├── skills/                     # Specialized agent personas (source of truth, 35 skills)
-├── agents/                     # Specialized subagents (8 agents with runAs: subagent)
-├── chains/                     # Chain definitions (2 chains)
+├── skills/                     # Specialized agent personas (source of truth)
+├── agents/                     # Specialized subagents (each has runAs: subagent)
+├── chains/                     # Chain definitions (pi runner)
 ├── checklists/
 │   └── pre-submission.md       # Comprehensive quality checklist
 ├── project/                    # CUSTOMIZE THESE FOR YOUR PROJECT
