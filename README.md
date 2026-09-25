@@ -10,7 +10,7 @@ AI context lives in `.ai/` (the single source of truth shared by Claude Code, Gi
 
 ## Features
 
-### Specialized Skills (35)
+### Specialized Skills
 
 | Skill | Purpose |
 |-------|---------|
@@ -49,6 +49,7 @@ AI context lives in `.ai/` (the single source of truth shared by Claude Code, Gi
 | **update-skills** | Sync `.ai/skills/` to all targets (Claude Code, GitHub Copilot, Reasonix) (run `/update-skills`) |
 | **book-to-skill** | Convert a technical book (PDF/EPUB) into a structured Claude Code skill |
 | **keycloak-theme-colors** | Update Keycloak login theme accent colors from a base hex color |
+| **council** | High-stakes decision process — independent seat positions, chair synthesis, dissent recorded verbatim |
 
 ### Pattern Guides (8)
 
@@ -226,6 +227,7 @@ Edit `.ai/session-context.md` to establish your project's initial state.
     │   ├── glossary.md              # Terminology
     │   ├── naming-conventions.md
     │   ├── copilot-integration.md
+    │   ├── council.md               # Council principle — high-stakes decisions
     │   └── templates/               # Code templates (.cs.txt, .feature.txt)
     │       ├── command-handler.cs.txt
     │       ├── query-handler.cs.txt
@@ -277,7 +279,12 @@ Edit `.ai/session-context.md` to establish your project's initial state.
     │   ├── update-skills/SKILL.md
     │   ├── api-endpoints/SKILL.md
     │   ├── book-to-skill/SKILL.md
-    │   └── keycloak-theme-colors/SKILL.md
+    │   ├── keycloak-theme-colors/SKILL.md
+    │   └── council/SKILL.md
+    ├── chains/                      # Chain definitions (pi runner)
+    │   ├── council.chain.md         # Council protocol (see .ai/reference/council.md)
+    │   ├── implement-and-review.chain.md
+    │   └── scout-plan-implement.chain.md
     ├── checklists/
     │   └── pre-submission.md        # Quality gate — run before completing any task
     ├── project/                     # CUSTOMIZE THESE FOR YOUR PROJECT
@@ -336,22 +343,23 @@ python .ai/scripts/sync-skills.py
 
 This creates (or repairs) all 9 junctions; it's idempotent and safe to re-run at any time.
 
-### Specialized Agents (8)
+### Specialized Agents
 
 All code and design work is delegated to specialized subagents — the main conversation handles only reasoning and user interaction.
 
-| Agent | Model | Role |
-|-------|-------|------|
-| `architect` | **deepseek-v4-pro** | Feature design, pattern selection, component boundaries, architecture analysis |
-| `reviewer` | **deepseek-v4-pro** | Code quality, SOLID, CQRS compliance, security review, architecture audit |
-| `tester` | **deepseek-v4-pro** | MSTest/Reqnroll test design, BDD scenarios, integration test strategy |
-| `designer` | **deepseek-v4-flash** | Visual design — color palettes, typography, branding, design tokens |
-| `developer` | **deepseek-v4-flash** | .NET/C# — CQRS handlers, API endpoints, Blazor, EF Core, refactoring |
-| `ui-developer` | **deepseek-v4-flash** | Blazor/MAUI components, layouts, CSS/styling, UX patterns |
-| `ui-tester` | **deepseek-v4-flash** | Playwright E2E tests, accessibility checks, visual regression |
-| `writer` | **deepseek-v4-flash** | XML docs, READMEs, ADRs, technical prose |
+| Agent | Role |
+|-------|------|
+| `architect` | Feature design, pattern selection, component boundaries, architecture analysis |
+| `reviewer` | Code quality, SOLID, CQRS compliance, security review, architecture audit |
+| `security` | Blast-radius and exposure analysis, threat modelling, OWASP review, dependency and secret audits |
+| `tester` | MSTest/Reqnroll test design, BDD scenarios, integration test strategy |
+| `designer` | Visual design — color palettes, typography, branding, design tokens |
+| `developer` | .NET/C# — CQRS handlers, API endpoints, Blazor, EF Core, refactoring |
+| `ui-developer` | Blazor/MAUI components, layouts, CSS/styling, UX patterns |
+| `ui-tester` | Playwright E2E tests, accessibility checks, visual regression |
+| `writer` | XML docs, READMEs, ADRs, technical prose |
 
-**Model mapping:** `deepseek-v4-pro` ↔ Claude `sonnet` tier · `deepseek-v4-flash` ↔ Claude `haiku` tier. Each agent's `model:` frontmatter in `.ai/agents/` uses the tier alias (`sonnet`/`haiku`), which the `deepseek` PowerShell function remaps via `ANTHROPIC_DEFAULT_SONNET_MODEL`/`ANTHROPIC_DEFAULT_HAIKU_MODEL` — see `DEEPSEEK.md` for the experimental vision-tier manual override for `designer`/`ui-developer`/`ui-tester`.
+Each agent's `model:` frontmatter in `.ai/agents/` carries the tier alias (`sonnet` or `haiku`); the concrete model behind each slot is defined by the backend profile in `powershell/Microsoft.PowerShell_profile.ps1`.
 
 Agents are defined in `.ai/agents/` and discovered via `.claude/agents/` wrappers or `.reasonix/skills/` subagent skills. Designers and UI developers self-test with Playwright before handoff.
 
@@ -457,6 +465,7 @@ Claude loads these files automatically based on your task type:
 | Gap Validation | `.ai/skills/gap-review/SKILL.md` |
 | Domain Modeling | `.ai/skills/ubiquitous-language/SKILL.md`, `.ai/skills/usecase-specification/SKILL.md`, `.ai/skills/user-story/SKILL.md` |
 | Skill Creation | `.ai/skills/skill-creator/SKILL.md` |
+| Council | `.ai/reference/council.md`, `.ai/skills/council/SKILL.md` |
 
 ## Customization
 

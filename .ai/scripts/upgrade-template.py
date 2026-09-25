@@ -52,6 +52,7 @@ TEMPLATE_OWNED = [
     ".ai/reference/work-type-mapping.md",
     ".ai/reference/operational-rules.md",
     ".ai/reference/readme-maintenance.md",
+    ".ai/reference/council.md",
     "CLAUDE.md",
     ".ai/checklists",
     ".ai/tests",

@@ -33,8 +33,7 @@ Then run `deepseek` or `claude` in any project directory.
 
 ## Notes
 
-- The `deepseek` function maps the model tiers via `ANTHROPIC_DEFAULT_*_MODEL`:
-  - Opus / Sonnet tier → `deepseek-v4-pro[1m]`
-  - Haiku tier → `deepseek-v4-flash`
-- The vision-capable model `deepseek-v4-flash-vision-exp` is documented in `DEEPSEEK.md` as a manual-only override — it has no tier of its own, so don't repoint `ANTHROPIC_DEFAULT_HAIKU_MODEL` at it (that would also switch `developer`/`writer`, which don't need vision). Instead, edit the specific agent's `model:` frontmatter directly (e.g. `.ai/agents/designer.md`) before the session and revert it after.
-- `CLAUDE_CODE_SUBAGENT_MODEL = "inherit"` makes subagents inherit the main model; the older `Use-DeepSeek`/`Use-Claude` functions (which pinned subagents to `deepseek-v4-flash`) are retained below as commented reference.
+- All model slots resolve to the same unified model, `deepseek-flash`. The heavy slots (`ANTHROPIC_MODEL`, `ANTHROPIC_DEFAULT_OPUS_MODEL`, `ANTHROPIC_DEFAULT_SONNET_MODEL`) append the `[1m]` suffix to request the 1M context window; `ANTHROPIC_DEFAULT_HAIKU_MODEL` uses the plain model name.
+- That one model handles both vision and text tasks, so there is no separate vision tier and no per-agent `model:` frontmatter override to apply.
+- `CLAUDE_CODE_SUBAGENT_MODEL = "inherit"` makes subagents inherit the main model instead of pinning them to a separate subagent model.
+- `CLAUDE_CODE_EFFORT_LEVEL = "max"` requests maximum effort for heavy coding and agent tasks.

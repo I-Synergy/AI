@@ -18,6 +18,7 @@ Delegation uses the `subagent` tool from pi-subagents. Available agents live in 
 |---|---|
 | `/run developer "task"` | Code implementation |
 | `/run reviewer "task"` | Code review (read-only) |
+| `/run security "task"` | Security audit and threat modelling (read-only) |
 | `/run architect "task"` | Architecture design |
 | `/run tester "task"` | Write/run tests |
 | `/run designer "task"` | Visual design |
@@ -30,6 +31,7 @@ Available chains:
 |---|---|
 | `/run-chain implement-and-review -- task` | Implement → review → fix |
 | `/run-chain scout-plan-implement -- task` | Scout → plan → implement → review |
+| `/run-chain council -- task` | Independent seat positions → chair synthesis for a high-stakes decision |
 
 ## Skills
 
