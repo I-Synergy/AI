@@ -49,7 +49,7 @@ This creates 9 directory junctions so all tools read from the same `.ai/skills/`
 bash .ai/tests/run-all-tests.sh
 ```
 
-All 11 suites should pass.
+Every suite should pass.
 
 ### Customize Project-Specific Files
 
@@ -103,7 +103,7 @@ REASONIX.md                      # Reasonix Code orchestration
 
 .claude/
 ├── settings.json                # Claude Code configuration (hooks, permissions)
-├── settings.local.json          # Local overrides (not committed)
+├── settings.local.json          # Local permission overrides
 ├── skills/  → .ai/skills/       # Junction — reads source directly
 └── agents/  → .ai/agents/       # Junction — reads source directly
 
@@ -152,7 +152,7 @@ REASONIX.md                      # Reasonix Code orchestration
 ├── plans/                      # Plan files (written by Claude Code, local only)
 ├── progress/                   # Active task progress files
 ├── completed/                  # Completed task archives
-└── tests/                      # 11-suite validation suite
+└── tests/                      # Template validation suite
     ├── run-all-tests.sh        # Run all suites via bash
     ├── conftest.py             # Pytest shared fixtures
     ├── test_suite.py           # Pytest wrappers (VS Code Test Explorer)
@@ -243,6 +243,8 @@ bash .ai/tests/run-all-tests.sh
 python -m pytest .ai/tests/test_suite.py -v
 ```
 
+`run-all-tests.sh` skips `validate-upgrade-script.py`; the pytest wrapper includes it, so pytest is the fuller run.
+
 ### Installing pytest on a Corporate Network
 
 If pip is configured to use a private registry that requires authentication, use the project-scoped override:
@@ -258,7 +260,7 @@ The `pip.ini` at the project root routes `pip install` to public PyPI. The `.vsc
 Once pytest is installed:
 1. Open the Testing panel in VS Code
 2. Click **Configure Python Tests → pytest**
-3. All 10 suites appear as clickable tests
+3. Every suite appears as a clickable test
 4. Failed tests show the full script output inline
 
 ## Customizing for Your Stack
