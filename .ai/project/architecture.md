@@ -80,7 +80,7 @@ public sealed record Get{Entity}ByIdQuery(Guid {Entity}Id)
     : IQuery<{Entity}Response>;
 
 // Handlers inject DataContext directly
-public sealed class Create{Entity}Handler(DataContext dataContext)
+public sealed class Create{Entity}CommandHandler(DataContext dataContext)
     : ICommandHandler<Create{Entity}Command, Create{Entity}Response>
 {
     public async Task<Create{Entity}Response> HandleAsync(
@@ -129,16 +129,16 @@ await dataContext.SaveChangesAsync(cancellationToken);
 Domain/Features/{Entity}/
   Commands/
     Create{Entity}Command.cs
-    Create{Entity}Handler.cs
+    Create{Entity}CommandHandler.cs
     Update{Entity}Command.cs
-    Update{Entity}Handler.cs
+    Update{Entity}CommandHandler.cs
     Delete{Entity}Command.cs
-    Delete{Entity}Handler.cs
+    Delete{Entity}CommandHandler.cs
   Queries/
     Get{Entity}ByIdQuery.cs
-    Get{Entity}ByIdHandler.cs
-    Get{Entity}ListQuery.cs
-    Get{Entity}ListHandler.cs
+    Get{Entity}ByIdQueryHandler.cs
+    Get{Entities}ListQuery.cs
+    Get{Entities}ListQueryHandler.cs
   Events/
     {Entity}CreatedEvent.cs
     {Entity}UpdatedEvent.cs

@@ -16,10 +16,10 @@ AI context lives in `.ai/` (the single source of truth shared by Claude Code, Gi
 |-------|---------|
 | **api-endpoints** | API endpoint creation, OpenAPI, Kiota clients, security hardening |
 | **dotnet-engineer** | .NET development, CQRS implementation |
-| **unit-tester** | Unit testing with MSTest and Moq |
-| **code-reviewer** | Code quality and architecture compliance |
+| **unit-tester** | Unit testing with MSTest and Moq — per-slice test plans and incident reports |
+| **code-reviewer** | Code quality, architecture compliance, ISO/IEC 25010 finding attribution |
 | **technical-writer** | Documentation and API specs |
-| **playwright-tester** | UI testing and automation |
+| **playwright-tester** | UI testing and automation, traced to acceptance criteria |
 | **blazor-specialist** | Blazor web development |
 | **blazor-theme-generator** | Generate Blazor UI themes from design tokens |
 | **maui-specialist** | MAUI mobile/desktop development |
@@ -36,17 +36,17 @@ AI context lives in `.ai/` (the single source of truth shared by Claude Code, Gi
 | **database-migration** | Database migrations and schema |
 | **integration-specialist** | Third-party integrations |
 | **refactor** | Bulk find-and-replace and pattern migrations across the solution |
-| **design-interrogation** | Structured design interviews — stress-test plans, resolve decision trees |
+| **design-interrogation** | Structured design interviews — stress-test plans, resolve decision trees, capture quality attributes |
 | **skill-creator** | Create, test, and improve Claude skills iteratively |
 | **ubiquitous-language** | Capture and maintain domain vocabulary glossary |
-| **usecase-specification** | Draft and finalize use case specs with Gherkin |
-| **user-story** | Draft and finalize INVEST-validated user stories with Gherkin |
-| **solution-generator** | Scaffold a .NET solution from an architecture document |
-| **vertical-slices** | Translate use cases/stories to vertical slice blueprint JSON |
+| **usecase-specification** | Draft and finalize use case specs with `UC-`/`AF-` IDs and Gherkin |
+| **user-story** | Draft and finalize INVEST-validated user stories with `AC-`-identified criteria and Gherkin |
+| **solution-generator** | Scaffold a .NET solution from an architecture document, with tests traced to `AC-` IDs |
+| **vertical-slices** | Translate use cases/stories to `AC-`-traced vertical slice blueprint JSON |
 | **gap-review** | Validate generated solution against original design decisions |
 | **hugo** | Hugo static site generation — blog, docs, and landing page templates |
 | **upgrade-template** | Sync template improvements to existing projects without losing context |
-| **verify-config** | Audit CLAUDE.md against codebase (run `/verify-config`) |
+| **verify-config** | Audit config drift and generate the standards-compatibility view (run `/verify-config`) |
 | **update-skills** | Sync `.ai/skills/` to all targets (Claude Code, GitHub Copilot, Reasonix) (run `/update-skills`) |
 | **book-to-skill** | Convert a technical book (PDF/EPUB) into a structured Claude Code skill |
 | **keycloak-theme-colors** | Update Keycloak login theme accent colors from a base hex color |
@@ -58,7 +58,7 @@ AI context lives in `.ai/` (the single source of truth shared by Claude Code, Gi
 |---------|-------------|
 | **cqrs-patterns** | Complete Command/Query separation guide |
 | **api-patterns** | RESTful API and Minimal API patterns |
-| **testing-patterns** | Unit, integration, and BDD testing |
+| **testing-patterns** | Unit, integration, and BDD testing with acceptance-criterion tags |
 | **mvvm** | Model-View-ViewModel for UI |
 | **microservices** | Microservices architecture patterns |
 | **service-oriented-architecture** | SOA patterns and practices |
@@ -247,13 +247,22 @@ Edit `.ai/session-context.md` to establish your project's initial state.
     │   ├── aot-and-trimming.md      # Native AOT and trimming lessons
     │   ├── readme-maintenance.md    # README update requirements
     │   ├── council.md               # Council principle — high-stakes decisions
-    │   └── templates/               # Code templates (.cs.txt, .feature.txt)
+    │   ├── traceability.md          # Story → criterion → scenario → test identifiers
+    │   ├── quality-model.md         # ISO/IEC 25010 review vocabulary and severity
+    │   ├── test-documentation.md    # ISO/IEC/IEEE 29119-3 test documents — adopted and omitted
+    │   ├── standards.md             # Standards-compatibility manifest (read by verify-config)
+    │   └── templates/               # Code and document templates (.cs.txt, .feature.txt, .md.txt)
     │       ├── command-handler.cs.txt
     │       ├── query-handler.cs.txt
     │       ├── endpoint.cs.txt
     │       ├── test-class.cs.txt
     │       ├── feature-file.feature.txt
-    │       └── session-handoff.md.txt
+    │       ├── session-handoff.md.txt
+    │       ├── test-plan.md.txt
+    │       ├── test-completion-report.md.txt
+    │       ├── test-incident-report.md.txt
+    │       ├── compliance.md.txt
+    │       └── standards-section.md.txt
     ├── patterns/                    # Implementation guides
     │   ├── cqrs-patterns.md
     │   ├── api-patterns.md
@@ -339,6 +348,8 @@ Edit `.ai/session-context.md` to establish your project's initial state.
         ├── smoke-test.py
         ├── validate-reasonix.py
         ├── validate-pi.py
+        ├── validate-traceability.py
+        ├── validate-standards.py
         └── validate-upgrade-script.py
 ```
 
@@ -378,7 +389,7 @@ All code and design work is delegated to specialized subagents — the main conv
 | Agent | Role |
 |-------|------|
 | `architect` | Feature design, pattern selection, component boundaries, architecture analysis |
-| `reviewer` | Code quality, SOLID, CQRS compliance, security review, architecture audit |
+| `reviewer` | Code quality, SOLID, CQRS compliance, security review, architecture audit, ISO/IEC 25010 finding attribution |
 | `security` | Blast-radius and exposure analysis, threat modelling, OWASP review, dependency and secret audits |
 | `tester` | MSTest/Reqnroll test design, BDD scenarios, integration test strategy |
 | `designer` | Visual design — color palettes, typography, branding, design tokens |
@@ -427,6 +438,8 @@ The `.vscode/settings.json` sets `PIP_CONFIG_FILE` automatically in VS Code term
 | `smoke-test.py` | Skills loadable, names/descriptions unique |
 | `validate-reasonix.py` | Reasonix integration: REASONIX.md, `.reasonix/` junctions, agent skills, sync integrity |
 | `validate-pi.py` | Pi integration: `.pi/` junctions (`skills`, `agents`, `chains`) and `settings.json` |
+| `validate-traceability.py` | Identifier integrity across stories, criteria, `@AC-` scenario tags and `[TestCategory]` attributes |
+| `validate-standards.py` | Standards-compatibility surfaces agree with `.ai/reference/standards.md` and its validator runs |
 | `validate-upgrade-script.py` | Upgrade script classification and integration — pytest only |
 
 ## Usage Examples
@@ -491,20 +504,21 @@ Claude loads these files automatically based on your task type:
 | CQRS | `.ai/skills/dotnet-engineer/SKILL.md`, `.ai/patterns/cqrs-patterns.md`, `.ai/reference/critical-rules.md`, `.ai/reference/templates/command-handler.cs.txt`, `.ai/reference/templates/query-handler.cs.txt` |
 | API Endpoints | `.ai/skills/api-endpoints/SKILL.md`, `.ai/patterns/api-patterns.md`, `.ai/reference/templates/endpoint.cs.txt`, `.ai/reference/critical-rules.md` |
 | OpenAPI & Kiota | `.ai/skills/api-endpoints/SKILL.md`, `.ai/patterns/api-patterns.md`, `.ai/reference/critical-rules.md` |
-| Unit Tests | `.ai/skills/unit-tester/SKILL.md`, `.ai/patterns/testing-patterns.md`, `.ai/patterns/test-driven-development.md`, `.ai/reference/templates/test-class.cs.txt`, `.ai/reference/templates/feature-file.feature.txt` |
+| Unit Tests | `.ai/skills/unit-tester/SKILL.md`, `.ai/patterns/testing-patterns.md`, `.ai/patterns/test-driven-development.md`, `.ai/reference/traceability.md`, `.ai/reference/test-documentation.md`, `.ai/reference/templates/test-class.cs.txt`, `.ai/reference/templates/feature-file.feature.txt` |
 | Blazor UI | `.ai/skills/blazor-specialist/SKILL.md`, `.ai/patterns/mvvm.md` |
 | MAUI | `.ai/skills/maui-specialist/SKILL.md`, `.ai/patterns/mvvm.md` |
 | WinUI 3 | `.ai/skills/winui-specialist/SKILL.md`, `.ai/patterns/mvvm.md` |
 | Architecture | `.ai/skills/architect/SKILL.md`, `.ai/project/architecture.md` |
-| Code Review | `.ai/skills/code-reviewer/SKILL.md`, `.ai/checklists/pre-submission.md` |
+| Code Review | `.ai/skills/code-reviewer/SKILL.md`, `.ai/reference/quality-model.md`, `.ai/checklists/pre-submission.md` |
 | Security | `.ai/skills/security/SKILL.md`, `.ai/skills/api-security/SKILL.md`, `.ai/skills/software-security/SKILL.md` |
 | Bulk Refactoring | `.ai/skills/refactor/SKILL.md` |
-| Design Interrogation | `.ai/skills/design-interrogation/SKILL.md` |
-| Solution Scaffolding | `.ai/skills/solution-generator/SKILL.md`, `.ai/skills/vertical-slices/SKILL.md` |
+| Design Interrogation | `.ai/skills/design-interrogation/SKILL.md`, `.ai/reference/quality-model.md` |
+| Solution Scaffolding | `.ai/skills/solution-generator/SKILL.md`, `.ai/skills/vertical-slices/SKILL.md`, `.ai/reference/traceability.md` |
 | Gap Validation | `.ai/skills/gap-review/SKILL.md` |
-| Domain Modeling | `.ai/skills/ubiquitous-language/SKILL.md`, `.ai/skills/usecase-specification/SKILL.md`, `.ai/skills/user-story/SKILL.md` |
+| Domain Modeling | `.ai/skills/ubiquitous-language/SKILL.md`, `.ai/skills/usecase-specification/SKILL.md`, `.ai/skills/user-story/SKILL.md`, `.ai/reference/traceability.md` |
 | Skill Creation | `.ai/skills/skill-creator/SKILL.md` |
 | Council | `.ai/reference/council.md`, `.ai/skills/council/SKILL.md` |
+| Standards Compatibility | `.ai/skills/verify-config/SKILL.md`, `.ai/reference/standards.md` |
 
 ## Customization
 
@@ -564,6 +578,10 @@ Every session (Claude Code, GitHub Copilot, and Reasonix Code):
 | `.ai/reference/critical-rules.md` | Non-negotiable coding patterns |
 | `.ai/patterns/api-patterns.md` | API endpoints, OpenAPI, Kiota, security hardening |
 | `.ai/reference/forbidden-tech.md` | Banned libraries and approaches |
+| `.ai/reference/traceability.md` | Identifier convention linking stories, criteria, scenarios and tests |
+| `.ai/reference/quality-model.md` | ISO/IEC 25010:2023 review vocabulary and severity taxonomy |
+| `.ai/reference/test-documentation.md` | Which ISO/IEC/IEEE 29119-3 test documents are produced — and which are deliberate omissions |
+| `.ai/reference/standards.md` | Standards-compatibility manifest read by `verify-config` |
 | `.ai/project/` | Project-specific context files |
 
 ## Repository Mirroring

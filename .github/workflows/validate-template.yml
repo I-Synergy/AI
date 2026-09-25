@@ -24,7 +24,7 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pyyaml
+          python -m pip install pyyaml pytest
 
       - name: Make test scripts executable
         run: |
@@ -49,8 +49,20 @@ jobs:
       - name: Run integration smoke tests
         run: python3 .ai/tests/smoke-test.py
 
+      - name: Run traceability validation
+        run: python3 .ai/tests/validate-traceability.py
+
+      - name: Run standards validation
+        run: python3 .ai/tests/validate-standards.py
+
+      - name: Run DeepSeek parity validation
+        run: python3 .ai/tests/validate-deepseek-parity.py
+
       - name: Run all tests together
         run: bash .ai/tests/run-all-tests.sh
+
+      - name: Run pytest suite
+        run: python3 -m pytest .ai/tests/test_suite.py -q
 
       - name: Upload test results
         if: always()
