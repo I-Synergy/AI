@@ -41,6 +41,7 @@ TEMPLATE_OWNED = [
     ".ai/skills",
     ".ai/patterns",
     ".ai/reference/templates",
+    ".ai/reference/aot-and-trimming.md",
     ".ai/reference/critical-rules.md",
     ".ai/reference/forbidden-tech.md",
     ".ai/reference/tokens.md",
