@@ -39,6 +39,16 @@ For any non-trivial task (3+ steps or multi-file), plan before writing code:
 
 Trivial tasks (single file, obvious fix): skip the plan and progress file.
 
+### When to Convene a Council
+
+A decision that is expensive to reverse is not made by one agent's judgment: a council's seats form positions **independently**, a chair reconciles them on the merits, and dissent is recorded verbatim rather than averaged away. Protocol: `.ai/reference/council.md`; invocable as `.ai/skills/council/SKILL.md`.
+
+Convene when **any one** of these fires: the change alters an established architecture decision — bounded contexts, layering, project structure, technology choice, or a pattern in `.ai/patterns/`; breaks a public contract — a contract that other code or consumers depend on cannot follow the change without modification (an additive, backward-compatible change does not convene); is a destructive or transform-in-place data migration; changes the **existing** security posture — it alters the authn/authz model, secret handling, or the exposure surface, rather than applying the documented pattern; is flagged irreversible by the user or a reviewer; or two documented rules conflict with no obvious winner.
+
+Triggers describe the **decision**, not the size of the diff: bug fixes with a known root cause, behavior-preserving refactors, tests, and documentation do not convene, and neither does a change that only applies an existing documented pattern — a new endpoint, handler, migration, or component following the template's rules and a reference implementation as written — nor does a decision already covered by a recorded council (revisit it only when that record's reopen conditions fire). If you cannot tell whether a trigger fires, ask the user one framing question instead. If a trigger fires, it outranks the work-kind exclusions — convene even when one of them also seems to apply. The one exception is a decision already covered by a recorded council: revisit it only when that record's reopen conditions fire.
+
+Three seats is the minimum useful council, five the ceiling, with one cross-examination round. The chair runs at the deep tier, holds no seat, and the verdict is **advisory** — the chair decides on the merits, records which positions were adopted and rejected, and quotes dissent verbatim. Unresolved dissent is never absorbed: it escalates to the user.
+
 ### ReAct Loop
 
 After every file edit, observe the result (build output, test results). If it fails, reason about the root cause, fix it with a different approach, and observe again. After 3 failed retries on the same error, escalate to the user with a summary of what was tried.
@@ -57,6 +67,7 @@ All substantive work goes to a subagent:
 |---|---|
 | `architect` | Feature design, pattern selection, component boundaries, architecture analysis |
 | `reviewer` | Code quality, SOLID, CQRS compliance, security review, architecture audit |
+| `security` | Blast-radius and exposure analysis, threat modelling, OWASP review, dependency and secret audits |
 | `tester` | MSTest/Reqnroll test design, BDD scenarios, integration test strategy |
 | `designer` | Visual design — color palettes, typography, branding, design tokens |
 | `developer` | .NET/C# code — CQRS handlers, API endpoints, Blazor, EF Core, refactoring, builds |
@@ -160,6 +171,7 @@ These files contain detailed guidance. Load them when the task type matches — 
 
 **Reference:**
 - `.ai/reference/critical-rules.md` — all non-negotiable rules with full code examples
+- `.ai/reference/council.md` — high-stakes decision process: triggers, seat selection, protocol, dissent record
 - `.ai/reference/forbidden-tech.md` — banned libraries and replacements
 - `.ai/reference/task-execution.md` — full ReAct loop, escalation format, subagent templates
 - `.ai/reference/work-type-mapping.md` — which files to load per task type
