@@ -52,7 +52,7 @@ Just describe what you want:
 ```
 "Implement CQRS commands and queries for the Budget entity"
 "Add API endpoints for Budget management"
-"Write unit tests for CreateBudgetHandler"
+"Write unit tests for CreateBudgetCommandHandler"
 "Review the current domain structure"
 "Optimize database queries in the Budgets domain"
 "Create E2E tests for the login flow"
@@ -107,7 +107,7 @@ It's automatically loaded and applied to every conversation.
 ```
 "Create a new Budget entity with CQRS handlers"
 "Add API endpoints for Commodity"
-"Write unit tests for CreateDebtHandler"
+"Write unit tests for CreateDebtCommandHandler"
 ```
 
 The AI will automatically follow all patterns, conventions, and rules defined in CLAUDE.md.
@@ -194,7 +194,7 @@ Three systems work together automatically:
 You: "Review this code for SOLID principles"
 AI: [Recognizes code review → invokes code-reviewer skill]
 
-You: "Write unit tests for CreateBudgetHandler"
+You: "Write unit tests for CreateBudgetCommandHandler"
 AI: [Recognizes testing → invokes unit-tester skill]
 
 You: "Implement CQRS handlers for Budget"
