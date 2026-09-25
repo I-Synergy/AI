@@ -15,8 +15,8 @@ The manifest is the specification for this file -- `.ai/reference/standards.md` 
     a missing path, or whose `Evidence a project produces` patterns match nothing the project
     produced, renders one step lower -- `Aligned` -- with a mandatory note. One step, never a
     fourth value. That last test asks about artifacts a *generated project* produces, so it is
-    applied only where a `*.sln` exists; in this template none does and the rows describe a
-    project that was never generated here (manifest rule 9).
+    applied only where a solution file (`*.sln` or `*.slnx`) exists; in this template none does
+    and the rows describe a project that was never generated here (manifest rule 9).
 
 There is no exemption list here. Contract rule 4 exempts one planned path "until it lands";
 the exempted path is this file, so the exemption ends in the change that creates it. A checker
@@ -409,14 +409,18 @@ _PATTERN_PLACEHOLDER = re.compile(r'\{[^}]*\}')
 def has_solution(root: Path) -> bool:
     """Rule 9's applicability condition: a generated solution, not the template.
 
-    The rows describe what a *generated solution* provides. Where no `*.sln` exists -- this
+    The rows describe what a *generated solution* provides. Where no solution file exists -- this
     template repository is the case -- the files an `Evidence` row names belong to a project
     that was never generated here, so the row is not downgraded for artifacts nobody was meant
     to produce. The condition is structural, exactly as the manifest states it.
+
+    A solution file is `*.sln` or its XML successor `*.slnx`; both describe a generated solution
+    and both make the rows describe a project that exists in this tree. `*.slnf` is deliberately
+    not matched: it is a solution *filter*, naming a subset of a solution rather than one.
     """
     for dirpath, dirnames, filenames in os.walk(root):
         dirnames[:] = sorted(d for d in dirnames if d not in _SKIP_DIRS)
-        if any(name.lower().endswith('.sln') for name in filenames):
+        if any(name.lower().endswith(('.sln', '.slnx')) for name in filenames):
             return True
     return False
 
@@ -910,12 +914,14 @@ def main() -> bool:
     downgraded = 0
     solution_present = has_solution(root)
     if solution_present:
-        print(f'✅ a `*.sln` is present -- the rows describe this project, so an `{EVIDENCE}` '
-              f'row is tested against the evidence it says the project produces')
+        print(f'✅ a solution file (`*.sln` or `*.slnx`) is present -- the rows describe this '
+              f'project, so an `{EVIDENCE}` row is tested against the evidence it says the '
+              f'project produces')
     else:
-        print(f'⚠️  SKIP: no `*.sln` in the tree. Manifest rule 9 applies -- the rows describe a '
-              f'generated solution, so `{EVIDENCE}` rows are not tested against artifacts nobody '
-              f'was to produce here; the other two causes still are.')
+        print(f'⚠️  SKIP: no solution file (`*.sln` or `*.slnx`) in the tree. Manifest rule 9 '
+              f'applies -- the rows describe a generated solution, so `{EVIDENCE}` rows are not '
+              f'tested against artifacts nobody was to produce here; the other two causes still '
+              f'are.')
     for row in rows:
         token, note = compute_status(row, root, results, solution_present)
         computed[row.standard] = (token, note)

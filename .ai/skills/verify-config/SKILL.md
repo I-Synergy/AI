@@ -103,8 +103,8 @@ Audits project documentation against actual codebase conventions and enforces ha
 
 ### 6. Standards-compatibility surfaces (generated from evidence)
    - **Applicability first:** generate only when the working tree holds a generated solution — at least
-     one `*.sln`. Where none exists (this template repository is one), report the step as a no-op and
-     write nothing.
+     one solution file (`*.sln` or `*.slnx`). Where none exists (this template repository is one),
+     report the step as a no-op and write nothing.
    - Read `.ai/reference/standards.md` and parse it by its own *How This File Is Parsed* contract: the
      status table is the one whose header row immediately follows `## Compatibility`, and `Standard` is
      the row key. Never select a table by its `Compatibility` column — the vocabulary table has one too.
