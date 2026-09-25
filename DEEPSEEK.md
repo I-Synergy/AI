@@ -66,7 +66,7 @@ All substantive work goes to a subagent:
 | Agent | Use For |
 |---|---|
 | `architect` | Feature design, pattern selection, component boundaries, architecture analysis |
-| `reviewer` | Code quality, SOLID, CQRS compliance, security review, architecture audit |
+| `reviewer` | Code quality, SOLID, CQRS compliance, security review, architecture audit, ISO/IEC 25010 finding attribution |
 | `security` | Blast-radius and exposure analysis, threat modelling, OWASP review, dependency and secret audits |
 | `tester` | MSTest/Reqnroll test design, BDD scenarios, integration test strategy |
 | `designer` | Visual design — color palettes, typography, branding, design tokens |
@@ -178,6 +178,10 @@ These files contain detailed guidance. Load them when the task type matches — 
 - `.ai/reference/task-execution.md` — full ReAct loop, escalation format, subagent templates
 - `.ai/reference/work-type-mapping.md` — which files to load per task type
 - `.ai/reference/operational-rules.md` — refactoring conventions, file management, workflow
+- `.ai/reference/traceability.md` — `US-` / `AC-` / `UC-` / `AF-` IDs that link stories, scenarios and tests
+- `.ai/reference/quality-model.md` — ISO/IEC 25010 review vocabulary and severity taxonomy
+- `.ai/reference/test-documentation.md` — which test documents to write, which to skip, and why
+- `.ai/reference/standards.md` — per-standard compatibility manifest; `verify-config` computes it from validator runs
 
 **Project:**
 - `.ai/project/architecture.md` — solution architecture

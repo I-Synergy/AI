@@ -123,7 +123,7 @@ Claude will automatically select and load the appropriate skill based on your re
 | Your Request | Skill Loaded |
 |--------------|--------------|
 | "Implement a CRUD handler for Budget entity" | `dotnet-engineer` |
-| "Write unit tests for BudgetHandler" | `unit-tester` |
+| "Write unit tests for CreateBudgetCommandHandler" | `unit-tester` |
 | "Create a database migration for Budget table" | `database-migration` |
 | "Review this code for security issues" | `code-reviewer` |
 | "Build a Blazor component for budget display" | `blazor-specialist` |
