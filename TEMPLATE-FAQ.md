@@ -2,7 +2,7 @@
 
 This document captures common questions about using the .NET Development Template with Claude Code.
 
-**Last Updated:** 2026-04-19
+**Last Updated:** 2026-09-25
 
 ---
 
@@ -361,9 +361,11 @@ python .ai/scripts/upgrade-template.py /path/to/YourProject --non-interactive
 
 | Category | Examples | Behavior |
 |----------|---------|---------|
-| **Template-owned** | `.ai/skills/`, `.ai/patterns/`, `.ai/reference/templates/`, `.ai/tests/` | Safely updated |
+| **Template-owned** | `.ai/skills/`, `.ai/agents/`, `.ai/chains/`, `.ai/patterns/`, `.ai/reference/`, `.ai/checklists/`, `.ai/tests/`, `.ai/scripts/` | Safely updated |
 | **Project-owned** | `.ai/session-context.md`, `.ai/project/`, `.ai/progress/` | Never touched |
 | **Template-managed** | `CLAUDE.md` | Updated (diffed) — project-specific info goes in `.ai/project/` |
+
+The authoritative lists are `TEMPLATE_OWNED` and `PROJECT_OWNED` in `.ai/scripts/upgrade-template.py`; the table above is a summary.
 
 Or invoke as a slash command:
 ```
@@ -376,7 +378,7 @@ Or invoke as a slash command:
 
 ### Answer
 
-The template includes a 10-suite validation suite that can be run via bash or pytest (VS Code Test Explorer).
+The template includes a validation suite that can be run via bash or pytest (VS Code Test Explorer).
 
 #### Bash (works everywhere)
 
@@ -397,22 +399,26 @@ python -m pytest .ai/tests/test_suite.py -v
 python -m pytest .ai/tests/test_suite.py::test_yaml_frontmatter -v
 ```
 
-Once pytest is installed, VS Code's Test Explorer panel shows all 10 suites as clickable tests with inline failure output.
+Once pytest is installed, VS Code's Test Explorer panel shows every suite as a clickable test with inline failure output. The pytest wrapper also includes `validate-upgrade-script.py`, which `run-all-tests.sh` skips — pytest is the fuller run.
 
 #### What each suite checks
 
-| # | Suite | Checks |
-|---|-------|--------|
-| 1 | Directory Structure | Required dirs, SKILL.md presence, templates |
-| 2 | YAML Frontmatter | name, description, allowed-tools in every SKILL.md |
-| 3 | File References | All paths referenced in CLAUDE.md and templates exist |
-| 4 | Content Quality | Skills and patterns have sufficient content |
-| 5 | Token Consistency | `{Entity}`, `{Domain}` etc. defined and used consistently |
-| 6 | CLAUDE.md References | No broken `.ai/` paths in CLAUDE.md |
-| 7 | Settings & Structure | `.claude/settings.json` structure, no stale paths |
-| 8 | Copilot Integration | Three-tier skill sync is correct and in sync |
-| 9 | Smoke Tests | All skills loadable, names and descriptions unique |
-| 10 | Upgrade Script | Script classification logic and integration tests |
+| Suite | Checks |
+|-------|--------|
+| Directory Structure | Required dirs, SKILL.md presence, templates |
+| YAML Frontmatter | name, description, allowed-tools in every SKILL.md |
+| File References | All paths referenced in CLAUDE.md and templates exist |
+| Content Quality | Skills and patterns have sufficient content |
+| Token Consistency | `{Entity}`, `{Domain}` etc. defined and used consistently |
+| CLAUDE.md References | No broken `.ai/` paths in CLAUDE.md |
+| Settings & Structure | `.claude/settings.json` structure, no stale paths |
+| Copilot Integration | Three-tier skill sync is correct and in sync |
+| Smoke Tests | All skills loadable, names and descriptions unique |
+| Reasonix Integration | `REASONIX.md` paths, `.reasonix/` junctions, settings and hooks |
+| Pi Integration | `.pi/` junctions for skills, agents, and chains; `.pi/settings.json` |
+| Upgrade Script | Script classification and integration tests — pytest only |
+
+The authoritative list of suites is in `.ai/tests/run-all-tests.sh` (bash) and `.ai/tests/test_suite.py` (pytest).
 
 ---
 

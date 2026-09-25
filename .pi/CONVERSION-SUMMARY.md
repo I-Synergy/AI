@@ -1,5 +1,10 @@
 # Skills Conversion Summary
 
+> **Historical record — superseded, not maintained.** This document records the 2026-02-16
+> conversion of the flat skill files to the directory-plus-`SKILL.md` format. Its skill list and
+> figures were accurate on that date. For the current skills, see the skills table in
+> [`README.md`](../README.md) — the live source is the `.ai/skills/` directory.
+
 **Date:** 2026-02-16
 **Converted By:** Claude Sonnet 4.5
 **Task:** Convert flat markdown skill files to proper Claude Skills format
