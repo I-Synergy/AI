@@ -246,7 +246,7 @@ Claude will now automatically load the appropriate skill based on the user's req
 - **User:** "Implement a CRUD handler for Budget entity"
   **Claude loads:** `dotnet-engineer` skill
 
-- **User:** "Write unit tests for the BudgetHandler"
+- **User:** "Write unit tests for the CreateBudgetCommandHandler"
   **Claude loads:** `unit-tester` skill
 
 - **User:** "Create a database migration for the new Budget table"
