@@ -227,7 +227,7 @@ Validates `.ai/reference/standards.md` under the parsing contract that file docu
 - Every `Compatibility` cell holds one of `Evidence` / `Aligned` / `Organizational`, and every `Standard` key is unique
 - Every path claim resolves; `{…}` patterns name a file a project will produce and are never existence-checked
 - Every `Evidence` row's proving validator exits `0`, and the status computed from that run is the token the manifest carries
-- An `Evidence` row whose `Evidence a project produces` patterns match nothing the project produced is downgraded to `Aligned`, with a note naming what was not found — the patterns are globbed with `*` in place of each `{…}`, and only a `*.sln`-bearing tree is asked the question (manifest rule 9)
+- An `Evidence` row whose `Evidence a project produces` patterns match nothing the project produced is downgraded to `Aligned`, with a note naming what was not found — the patterns are globbed with `*` in place of each `{…}`, and only a tree holding a solution file (`*.sln` or `*.slnx`) is asked the question (manifest rule 9)
 - A generated surface (`COMPLIANCE.md`, or the marked block in `README.md`) agrees row for row, and the exit codes in its provenance line agree with a re-run
 - The `## Validators` table's declared status agrees with the file on disk (advisory)
 

@@ -105,7 +105,8 @@ a shell command line in the Validators table, and a display date. A path pattern
 (`{BC}`, `{release}`, `{yyyy-mm-dd}`) and is never checked for existence as a path claim: it names a
 file a project will produce, not one this repository ships. The one exception asks a different
 question — rule 6's third cause globs such a pattern for an instance a project produced, and only for
-an `Evidence` row in a `*.sln`-bearing tree. **One exemption was opened here, and it has closed:**
+an `Evidence` row in a tree that holds a solution file (`*.sln` or `*.slnx`). **One exemption was
+opened here, and it has closed:**
 the checker named in the Validators table was itself planned rather than present, so until it landed
 its path was the only path claim in this file that did not resolve — and the row that names it said
 so. The exemption ended the moment the file existed, which is why that row now records `exists`:
@@ -126,10 +127,10 @@ project produced is rendered one step lower — `Aligned` — with the cause in 
 note column, naming what was not found. One step, never to a fourth value, and never silently: the
 note is mandatory on a downgraded row. The third cause substitutes `*` for each `{…}` and globs the
 pattern against the working tree — `docs/slices/{BC}/{Entity}.{Operation}/test-plan.md` is tested as
-`docs/slices/*/*/test-plan.md` — and it is asked only where a `*.sln` exists, because the artifacts
-belong to a generated project (rule 9). Read a downgraded row as **not evidenced**, which is what
-the note says; the generator can verify that an artifact and a passing run are absent, and it cannot
-verify that practice follows the model instead.
+`docs/slices/*/*/test-plan.md` — and it is asked only where a `*.sln` or `*.slnx` exists, because the
+artifacts belong to a generated project (rule 9). Read a downgraded row as **not evidenced**, which is
+what the note says; the generator can verify that an artifact and a passing run are absent, and it
+cannot verify that practice follows the model instead.
 
 **7. The generated view.** A generated `COMPLIANCE.md` status table reproduces this file's columns,
 in this file's order, and appends one column — `Note`, at position 9. Every cell is copied verbatim
@@ -162,7 +163,7 @@ shape, on one line, in an HTML comment so it does not render:
 
 **9. Applicability — why this is a no-op in the template.** The rows describe what a *generated
 solution* provides. `verify-config` generates a view only when a solution is present — at least one
-`*.sln` in the working tree. This repository is the template: it has no solution file, no
+`*.sln` or `*.slnx` in the working tree. This repository is the template: it has no solution file, no
 documentation tree and no test projects, so no `Evidence` row can be satisfied and nothing is written
 here. The condition is structural rather than a guard, which is what keeps the template's own file
 set unchanged by a tool that runs inside it.

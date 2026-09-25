@@ -279,6 +279,16 @@ a reader of the raw output sees `FAIL` above `Failures: 0`.
 `hygiene-lint.py` 0 issues, `validate-standards.py` 0 failures / 0 warnings (17 path claims, 1
 validator run, 3 rule-9 applicability notices).
 
+**Post-commit, 2026-09-26 — `.slnx`.** Rule 9's applicability test matched `*.sln` only, so a
+project on the XML solution format read as "no solution": `verify-config` would have reported a
+no-op and never generated `COMPLIANCE.md` or the README section. The repo already disagreed with
+itself here — `.claude/settings.json`'s build hook tests `*.sln *.slnx` — so the checker was the
+outlier. `has_solution()` now matches both, `.slnf` is deliberately excluded (a filter over a
+solution, not one), and rules 4/6/9, `verify-config`'s step 6 and `.ai/tests/README.md` now read
+"a solution file (`*.sln` or `*.slnx`)". **Recorded gap, not fixed:** no committed test fails if
+that tuple is reverted — every suite invocation of this validator runs the no-solution path, and a
+faithful fixture would need real-manifest machinery. Its own task if a guard is wanted.
+
 ## Implementation notes for artifact 9 (`validate-traceability.py`)
 
 - **T5 must count distinct tags, not occurrences.** A scenario and its tag exist in *two* copies —
