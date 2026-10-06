@@ -33,7 +33,7 @@ Validates the directory structure and presence of all required files.
 - Required reference files are present
 - Template files exist
 - The checklist file exists
-- Main documentation files (`CLAUDE.md`, `README.md`, `.ai/session-context.md`)
+- Main documentation files (`AGENTS.md`, `README.md`, `.ai/session-context.md`)
 
 **Run individually:**
 ```bash
@@ -63,7 +63,7 @@ python3 .ai/tests/validate-skills.py
 Validates file references and links throughout the documentation.
 
 **What it checks:**
-- File references in CLAUDE.md exist
+- File references in AGENTS.md exist
 - Skill references are valid
 - Pattern file references are valid
 - Template file references exist
@@ -108,9 +108,9 @@ Validates template token usage and consistency.
 bash .ai/tests/validate-tokens.sh
 ```
 
-### CLAUDE.md References (`validate-claude-md.py`)
+### AGENTS.md References (`validate-agents-md.py`)
 
-Validates every `.ai/` path referenced from `CLAUDE.md`, and flags skills and patterns that exist on disk but are referenced by no task type.
+Validates every `.ai/` path referenced from `AGENTS.md`, and flags skills and patterns that exist on disk but are referenced by no task type.
 
 **What it checks:**
 - Skill references point at an existing `.ai/skills/{name}/SKILL.md`
@@ -120,7 +120,7 @@ Validates every `.ai/` path referenced from `CLAUDE.md`, and flags skills and pa
 
 **Run individually:**
 ```bash
-python3 .ai/tests/validate-claude-md.py
+python3 .ai/tests/validate-agents-md.py
 ```
 
 ### Settings & Structure (`validate-settings.py`)
@@ -171,35 +171,6 @@ Integration tests that verify the template works as a whole.
 python3 .ai/tests/smoke-test.py
 ```
 
-### Reasonix Integration (`validate-reasonix.py`)
-
-Validates the Reasonix Code integration.
-
-**What it checks:**
-- `REASONIX.md` exists and references paths that resolve
-- `.reasonix/skills/` and `.reasonix/agents/` are folder-level junctions into `.ai/`
-- `.claude/settings.json` includes Reasonix in permissions and hooks
-- The sync scripts create and repair the `.reasonix/` junctions
-- Session-management docs mention Reasonix
-
-**Run individually:**
-```bash
-python3 .ai/tests/validate-reasonix.py
-```
-
-### Pi Integration (`validate-pi.py`)
-
-Validates the Pi (claude-pi) integration.
-
-**What it checks:**
-- `.pi/skills/`, `.pi/agents/`, and `.pi/chains/` are folder-level junctions into `.ai/`
-- `.pi/settings.json` exists
-
-**Run individually:**
-```bash
-python3 .ai/tests/validate-pi.py
-```
-
 ### Traceability (`validate-traceability.py`)
 
 Validates the identifier chain that joins story and use-case documents to blueprints, feature files and test code.
@@ -236,22 +207,6 @@ No solution file is present in this tree, so nothing is generated here, the evid
 **Run individually:**
 ```bash
 python3 .ai/tests/validate-standards.py
-```
-
-### DeepSeek Parity (`validate-deepseek-parity.py`)
-
-Validates that `DEEPSEEK.md` carries the same level-2 section structure as `CLAUDE.md`. The PowerShell profile backs up `CLAUDE.md` and copies `DEEPSEEK.md` over it for the length of a DeepSeek session, so a section one file carries and the other does not is silently erased for that session.
-
-**What it checks:**
-- Every level-2 heading in `CLAUDE.md` is present in `DEEPSEEK.md`, and every level-2 heading in `DEEPSEEK.md` is present in `CLAUDE.md`
-- The core sections both files are built on are present in both, so a section lost from both files is still caught
-- Section order differing between the files is an advisory, not a failure
-- **Structural parity, not byte equality** — the two files differ on purpose in their title, identity sentence and model-tier paragraph, and during a profile swap the working tree's `CLAUDE.md` *is* `DEEPSEEK.md`
-- An absent file is a skip, not a defect: with no `CLAUDE.md` or no `DEEPSEEK.md` there is nothing to compare, and the suite exits `0`
-
-**Run individually:**
-```bash
-python3 .ai/tests/validate-deepseek-parity.py
 ```
 
 ### Upgrade Script (`validate-upgrade-script.py`) — pytest only
@@ -448,7 +403,7 @@ Use Git Bash or WSL to run the tests. The scripts use Unix-style paths.
 
 - Before committing changes to the template
 - After adding new skills or patterns
-- After modifying CLAUDE.md or other documentation
+- After modifying AGENTS.md or other documentation
 - Before creating a new template release
 - In CI/CD pipeline on every commit
 

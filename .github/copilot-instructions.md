@@ -79,11 +79,9 @@ See `.ai/reference/tokens.md` for complete definitions.
 
 ## Core Operational Rules
 
-1. Read session context first: `.ai/session-context.md` (never mix project contexts)
-2. Load context on demand from `.ai/` based on work type only
-3. Mark open questions OPEN or ASSUMED, never resolve silently
-4. Before session end: write structured handoff to `.ai/session-context.md`
-5. Verify against `.ai/checklists/pre-submission.md` before completion
+1. Load context on demand from `.ai/` based on work type only
+2. Mark open questions OPEN or ASSUMED, never resolve silently
+3. Verify against `.ai/checklists/pre-submission.md` before completion
 
 ## Task Execution Protocol
 
@@ -197,21 +195,12 @@ Load these files based on task type:
 | Skill Creation | `.ai/skills/skill-creator/SKILL.md` |
 | Council | `.ai/reference/council.md`, `.ai/skills/council/SKILL.md` |
 
-## Session Management
+## Session Memory
 
-Every session:
-1. **Start** — read `.ai/session-context.md`
-2. **Review** — check `.ai/completed/` for relevant prior work
-3. **Track** — write progress to `.ai/progress/{task-slug}.md` in real time
-4. **End** — write handoff to `.ai/session-context.md` using `.ai/reference/templates/session-handoff.md.txt`
+`.ai/session-context.md` is the shared memory for every client. Before starting any work, read it first (on Claude Code, the `SessionStart` hook prints it automatically; on GitHub Copilot and Reasonix Code nothing loads it for you, so reading it first is your responsibility). Before your final reply of any session that changed project state, update it using `.ai/reference/templates/session-handoff.md.txt`, set Written By to your client name (Claude Code, GitHub Copilot, or Reasonix Code), update sections in place, and never overwrite another client's entries. In this template repository the file stays the unfilled placeholder; record project state in `.ai/progress/` and `.ai/completed/` instead.
 
-The session context is shared — Claude Code and GitHub Copilot both read and write the same `.ai/session-context.md`. Always set **Written By: GitHub Copilot** in the handoff so the next session knows the source.
+Every session follows this cycle:
 
-## Switching from Claude Code
-
-If Claude Code was the previous session author:
-- Read `.ai/session-context.md` for full context
-- Check `.ai/progress/` for any in-progress tasks
-- Check `.ai/plans/` for approved plans not yet executed
-- Continue using the same `.ai/skills/`, `.ai/patterns/`, and `.ai/reference/` files
-- No re-setup needed — all context is in `.ai/`
+1. **Start:** Read `.ai/session-context.md` and `.ai/completed/` for context from previous sessions
+2. **Work:** Track progress in `.ai/progress/`, delegate code work to subagents
+3. **End:** Write handoff to `.ai/session-context.md`, move completed progress files to `.ai/completed/`

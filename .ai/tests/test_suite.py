@@ -101,10 +101,10 @@ def test_token_consistency():
 
 
 # ---------------------------------------------------------------------------
-# Suite 6 — CLAUDE.md References
+# Suite 6 — AGENTS.md References
 # ---------------------------------------------------------------------------
-def test_claude_md_references():
-    code, output = _run_python("validate-claude-md.py")
+def test_agents_md_references():
+    code, output = _run_python("validate-agents-md.py")
     assert code == 0, f"\n{output}"
 
 
@@ -140,19 +140,6 @@ def test_upgrade_script():
     assert code == 0, f"\n{output}"
 
 
-# ---------------------------------------------------------------------------
-# Suite 11 — Reasonix Integration
-# ---------------------------------------------------------------------------
-def test_reasonix_integration():
-    code, output = _run_python("validate-reasonix.py")
-    assert code == 0, f"\n{output}"
-
-# ---------------------------------------------------------------------------
-# Suite 12 — Pi Integration
-# ---------------------------------------------------------------------------
-def test_pi_integration():
-    code, output = _run_python("validate-pi.py")
-    assert code == 0, f"\n{output}"
 
 
 # ---------------------------------------------------------------------------
@@ -168,14 +155,6 @@ def test_traceability():
 # ---------------------------------------------------------------------------
 def test_standards():
     code, output = _run_python("validate-standards.py")
-    assert code == 0, f"\n{output}"
-
-
-# ---------------------------------------------------------------------------
-# Suite 15 — DeepSeek Parity
-# ---------------------------------------------------------------------------
-def test_deepseek_parity():
-    code, output = _run_python("validate-deepseek-parity.py")
     assert code == 0, f"\n{output}"
 
 

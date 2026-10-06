@@ -10,7 +10,7 @@ A **generic, modular .NET project template** with:
 - Clean Architecture + CQRS + DDD patterns
 - Comprehensive development guidelines
 - Code templates for rapid development
-- Specialized agent skills for Claude Code, GitHub Copilot, Pi, and Reasonix Code
+- Specialized agent skills for Claude Code, GitHub Copilot, and Reasonix Code
 - Quality checklists and best practices
 - All platforms read `.ai/skills/` and `.ai/agents/` through directory junctions — zero duplication
 
@@ -22,15 +22,12 @@ A **generic, modular .NET project template** with:
 # Copy the AI context directory to your project root
 cp -r /path/to/Template/.ai /path/to/YourProject/.ai
 
-# Copy root config files
-cp /path/to/Template/CLAUDE.md /path/to/YourProject/
-cp /path/to/Template/REASONIX.md /path/to/YourProject/
+# Copy root config file
 cp /path/to/Template/AGENTS.md /path/to/YourProject/
 
 # Copy tool settings (minimal — junctions handle the rest)
-mkdir -p /path/to/YourProject/.claude /path/to/YourProject/.pi /path/to/YourProject/.github
+mkdir -p /path/to/YourProject/.claude /path/to/YourProject/.github
 cp /path/to/Template/.claude/settings.json /path/to/YourProject/.claude/
-cp /path/to/Template/.pi/settings.json /path/to/YourProject/.pi/
 cp /path/to/Template/.github/copilot-instructions.md /path/to/YourProject/.github/
 ```
 
@@ -41,7 +38,7 @@ cd /path/to/YourProject
 python .ai/scripts/sync-skills.py
 ```
 
-This creates 9 directory junctions so all tools read from the same `.ai/skills/` and `.ai/agents/` source. Junction targets are gitignored.
+This creates 6 directory junctions so all tools read from the same `.ai/skills/` and `.ai/agents/` source. Junction targets are gitignored.
 
 ### Verify Installation
 
@@ -97,13 +94,10 @@ Edit `.ai/session-context.md` to establish your project's initial context:
 ## Directory Structure Explained
 
 ```
-AGENTS.md                        # Pi runtime instructions
-CLAUDE.md                        # Claude Code orchestration
-REASONIX.md                      # Reasonix Code orchestration
+AGENTS.md                        # AI orchestration instructions (auto-loaded)
 
 .claude/
 ├── settings.json                # Claude Code configuration (hooks, permissions)
-├── settings.local.json          # Local permission overrides
 ├── skills/  → .ai/skills/       # Junction — reads source directly
 └── agents/  → .ai/agents/       # Junction — reads source directly
 
@@ -115,12 +109,6 @@ REASONIX.md                      # Reasonix Code orchestration
 .reasonix/
 ├── skills/  → .ai/skills/       # Junction — reads source directly
 └── agents/  → .ai/agents/       # Junction — reads source directly (agents have runAs: subagent)
-
-.pi/
-├── settings.json                # Empty — all config via junctions
-├── skills/  → .ai/skills/       # Junction — reads source directly
-├── agents/  → .ai/agents/       # Junction — reads source directly
-└── chains/  → .ai/chains/       # Junction — reads source directly
 
 .ai/                            # All AI context (vendor-neutral, canonical source)
 ├── session-context.md          # Working session memory
@@ -141,7 +129,6 @@ REASONIX.md                      # Reasonix Code orchestration
 │   └── upgrade-template.py     # Safely upgrade existing projects
 ├── skills/                     # Specialized agent personas (source of truth)
 ├── agents/                     # Specialized subagents (each has runAs: subagent)
-├── chains/                     # Chain definitions (pi runner)
 ├── checklists/
 │   └── pre-submission.md       # Comprehensive quality checklist
 ├── project/                    # CUSTOMIZE THESE FOR YOUR PROJECT
@@ -429,7 +416,7 @@ python .ai/scripts/upgrade-template.py /path/to/YourProject --non-interactive
 1. Create `.ai/skills/<skill-name>/SKILL.md` with correct YAML frontmatter
 2. Skills are immediately available to all platforms via junctions — no sync needed
 3. A PostToolUse hook ensures junctions stay intact when `.ai/skills/` files change
-4. Add to the Work-Type Context Mapping table in `CLAUDE.md`
+4. Add to the Work-Type Context Mapping table in `AGENTS.md`
 5. Add to `README.md` skills table
 
 ### Updating an Existing Skill
@@ -447,7 +434,7 @@ This creates the 9 folder-level junctions. On Windows this requires no special p
 ### Contributing Improvements
 
 1. Keep improvements generic — use tokens, not specific project names
-2. Update relevant modular file (not CLAUDE.md unless the rule itself changes)
+2. Update relevant modular file (not AGENTS.md unless the rule itself changes)
 3. Run `bash .ai/tests/run-all-tests.sh` to validate
 4. Update README.md if structural changes were made
 

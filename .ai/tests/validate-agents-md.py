@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Validates that CLAUDE.md correctly references all skills, patterns, and files.
+Validates that AGENTS.md correctly references all skills, patterns, and files.
 Ensures no broken references and no orphaned skills/patterns.
 """
 
@@ -22,16 +22,16 @@ def get_template_root() -> Path:
     script_dir = Path(__file__).parent
     return script_dir.parent.parent
 
-def parse_claude_md_references(claude_md_path: Path) -> Tuple[Set[str], Set[str], Set[str]]:
+def parse_agents_md_references(agents_md_path: Path) -> Tuple[Set[str], Set[str], Set[str]]:
     """
-    Parse CLAUDE.md and extract all file references.
+    Parse AGENTS.md and extract all file references.
     Returns (skill_refs, pattern_refs, other_refs)
     """
     skill_refs = set()
     pattern_refs = set()
     other_refs = set()
 
-    with open(claude_md_path, 'r', encoding='utf-8') as f:
+    with open(agents_md_path, 'r', encoding='utf-8') as f:
         content = f.read()
 
     # Find all markdown-style file references: `.ai/...`
@@ -99,7 +99,7 @@ def validate_file_exists(template_root: Path, file_ref: str) -> Tuple[bool, str]
 def normalize_skill_reference(skill_ref: str) -> str:
     """
     Normalize skill reference to account for both formats:
-    - .ai/skills/dotnet-engineer.md (old format referenced in CLAUDE.md)
+    - .ai/skills/dotnet-engineer.md (old format referenced in AGENTS.md)
     - .ai/skills/dotnet-engineer/SKILL.md (new actual structure)
     """
     # Extract skill name from reference
@@ -115,21 +115,21 @@ def normalize_skill_reference(skill_ref: str) -> str:
     return skill_name
 
 def main():
-    """Run all CLAUDE.md reference validations."""
+    """Run all AGENTS.md reference validations."""
     template_root = get_template_root()
-    claude_md = template_root / 'CLAUDE.md'
+    agents_md = template_root / 'AGENTS.md'
 
-    if not claude_md.exists():
-        print("❌ ERROR: CLAUDE.md not found!")
+    if not agents_md.exists():
+        print("❌ ERROR: AGENTS.md not found!")
         return False
 
     print("=" * 60)
-    print("  CLAUDE.md Reference Validation")
+    print("  AGENTS.md Reference Validation")
     print("=" * 60)
     print()
 
-    # Parse references from CLAUDE.md
-    skill_refs, pattern_refs, other_refs = parse_claude_md_references(claude_md)
+    # Parse references from AGENTS.md
+    skill_refs, pattern_refs, other_refs = parse_agents_md_references(agents_md)
 
     print(f"Found {len(skill_refs)} skill references")
     print(f"Found {len(pattern_refs)} pattern references")
@@ -140,7 +140,7 @@ def main():
 
     # Test 1: Validate skill references exist
     print("=" * 60)
-    print("TEST 1: Skill References in CLAUDE.md")
+    print("TEST 1: Skill References in AGENTS.md")
     print("=" * 60)
 
     existing_skills = get_existing_skills(template_root)
@@ -160,7 +160,7 @@ def main():
 
     # Test 2: Validate pattern references exist
     print("=" * 60)
-    print("TEST 2: Pattern References in CLAUDE.md")
+    print("TEST 2: Pattern References in AGENTS.md")
     print("=" * 60)
 
     for pattern_ref in sorted(pattern_refs):
@@ -173,7 +173,7 @@ def main():
 
     # Test 3: Validate other file references exist
     print("=" * 60)
-    print("TEST 3: Other File References in CLAUDE.md")
+    print("TEST 3: Other File References in AGENTS.md")
     print("=" * 60)
 
     for file_ref in sorted(other_refs):
@@ -211,13 +211,13 @@ def main():
     orphaned_skills = (existing_skill_names - referenced_skill_names) - UTILITY_SKILLS
 
     if orphaned_skills:
-        print("⚠️  WARNING: The following skills exist but are not referenced in CLAUDE.md:")
+        print("⚠️  WARNING: The following skills exist but are not referenced in AGENTS.md:")
         for skill_name in sorted(orphaned_skills):
             print(f"   - {skill_name}")
         print()
         print("Consider adding them to the Work-Type Context Mapping table in .ai/reference/work-type-mapping.md.")
     else:
-        print("✅ No orphaned skills found - all task-type skills are referenced in CLAUDE.md")
+        print("✅ No orphaned skills found - all task-type skills are referenced in AGENTS.md")
         if UTILITY_SKILLS & existing_skill_names:
             print(f"   (utility skills exempt from check: {', '.join(sorted(UTILITY_SKILLS & existing_skill_names))})")
 
@@ -232,13 +232,13 @@ def main():
     orphaned_patterns = existing_patterns - pattern_refs
 
     if orphaned_patterns:
-        print("⚠️  WARNING: The following patterns exist but are not referenced in CLAUDE.md:")
+        print("⚠️  WARNING: The following patterns exist but are not referenced in AGENTS.md:")
         for pattern in sorted(orphaned_patterns):
             print(f"   - {pattern}")
         print()
         print("Consider adding them to the Work-Type Context Mapping table in .ai/reference/work-type-mapping.md.")
     else:
-        print("✅ No orphaned patterns found - all patterns are referenced in CLAUDE.md")
+        print("✅ No orphaned patterns found - all patterns are referenced in AGENTS.md")
 
     print()
 
@@ -247,8 +247,8 @@ def main():
     print("TEST 6: Skill Invocation Format")
     print("=" * 60)
 
-    # Check if CLAUDE.md uses correct skill reference format
-    with open(claude_md, 'r', encoding='utf-8') as f:
+    # Check if AGENTS.md uses correct skill reference format
+    with open(agents_md, 'r', encoding='utf-8') as f:
         content = f.read()
 
     # Skills should be referenced as .ai/skills/{name}.md or .ai/skills/{name}/SKILL.md
