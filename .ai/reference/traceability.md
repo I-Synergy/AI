@@ -286,7 +286,7 @@ these checks and severities:
 | T7 | A story or use-case document with zero identifiers reports one summary warning (see *Legacy Mode*) | WARN |
 
 FAIL means a reference is broken — the identifier it names does not exist, or two artifacts claim the
-same one. WARN is the advisory pattern already used by `validate-claude-md.py`: the trace is
+same one. WARN is the advisory pattern already used by `validate-agents-md.py`: the trace is
 incomplete, the repository is not. The FAIL/WARN split is deliberate; *Legacy Mode* explains why the
 incompleteness of an un-migrated project must never fail a build.
 

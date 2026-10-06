@@ -41,7 +41,7 @@ Invoke specialized skills directly:
 /vertical-slices          - Generate vertical slice blueprint JSON
 /gap-review               - Validate solution against design decisions
 /upgrade-template         - Upgrade existing project from template
-/verify-config            - Audit CLAUDE.md against actual codebase
+/verify-config            - Audit AGENTS.md against actual codebase
 /update-skills            - Sync .ai/skills/ to Claude Code and GitHub Copilot
 ```
 
@@ -88,19 +88,19 @@ Properties: Name, Amount, StartDate, EndDate
 
 ---
 
-## Q2: Do I need to reference the CLAUDE.md file?
+## Q2: Do I need to reference the AGENTS.md file?
 
 ### Answer
 
-**No, you do not need to reference CLAUDE.md explicitly.**
+**No, you do not need to reference AGENTS.md explicitly.**
 
-It's automatically loaded and applied to every conversation.
+It's automatically loaded and applied to every conversation in your AI tool.
 
 ### What happens automatically:
 
-- Global rules from `~/.claude/CLAUDE.md` (your personal preferences)
-- Project rules from `{project}/CLAUDE.md` (template configuration)
-- Both are merged and active in every request
+- Project rules from `{project}/AGENTS.md` (template configuration)
+- Tool-specific config from `.claude/settings.json` or tool-scoped config
+- Both are active in every session
 
 ### Just work naturally:
 
@@ -110,13 +110,12 @@ It's automatically loaded and applied to every conversation.
 "Write unit tests for CreateDebtCommandHandler"
 ```
 
-The AI will automatically follow all patterns, conventions, and rules defined in CLAUDE.md.
+The AI will automatically follow all patterns, conventions, and rules defined in AGENTS.md.
 
-### Only reference CLAUDE.md if you want to:
+### Only reference AGENTS.md if you want to:
 
-- **Override a rule temporarily:** "ignore the no-emoji rule for this file"
-- **Question a rule:** "why does CLAUDE.md forbid MediatR?"
-- **Update configuration:** "add a new pattern to CLAUDE.md"
+- **Question a rule:** "why does AGENTS.md forbid MediatR?"
+- **Update configuration:** "add a new pattern to AGENTS.md"
 
 ---
 
@@ -361,9 +360,9 @@ python .ai/scripts/upgrade-template.py /path/to/YourProject --non-interactive
 
 | Category | Examples | Behavior |
 |----------|---------|---------|
-| **Template-owned** | `.ai/skills/`, `.ai/agents/`, `.ai/chains/`, `.ai/patterns/`, `.ai/reference/`, `.ai/checklists/`, `.ai/tests/`, `.ai/scripts/` | Safely updated |
+| **Template-owned** | `.ai/skills/`, `.ai/agents/`, `.ai/patterns/`, `.ai/reference/`, `.ai/checklists/`, `.ai/tests/`, `.ai/scripts/` | Safely updated |
 | **Project-owned** | `.ai/session-context.md`, `.ai/project/`, `.ai/progress/` | Never touched |
-| **Template-managed** | `CLAUDE.md` | Updated (diffed) — project-specific info goes in `.ai/project/` |
+| **Template-managed** | `AGENTS.md` | Updated (diffed) — project-specific info goes in `.ai/project/` |
 
 The authoritative lists are `TEMPLATE_OWNED` and `PROJECT_OWNED` in `.ai/scripts/upgrade-template.py`; the table above is a summary.
 
@@ -407,15 +406,13 @@ Once pytest is installed, VS Code's Test Explorer panel shows every suite as a c
 |-------|--------|
 | Directory Structure | Required dirs, SKILL.md presence, templates |
 | YAML Frontmatter | name, description, allowed-tools in every SKILL.md |
-| File References | All paths referenced in CLAUDE.md and templates exist |
+| File References | All paths referenced in AGENTS.md and templates exist |
 | Content Quality | Skills and patterns have sufficient content |
 | Token Consistency | `{Entity}`, `{Domain}` etc. defined and used consistently |
-| CLAUDE.md References | No broken `.ai/` paths in CLAUDE.md |
+| AGENTS.md References | No broken `.ai/` paths in AGENTS.md |
 | Settings & Structure | `.claude/settings.json` structure, no stale paths |
 | Copilot Integration | Three-tier skill sync is correct and in sync |
 | Smoke Tests | All skills loadable, names and descriptions unique |
-| Reasonix Integration | `REASONIX.md` paths, `.reasonix/` junctions, settings and hooks |
-| Pi Integration | `.pi/` junctions for skills, agents, and chains; `.pi/settings.json` |
 | Upgrade Script | Script classification and integration tests — pytest only |
 
 The authoritative list of suites is in `.ai/tests/run-all-tests.sh` (bash) and `.ai/tests/test_suite.py` (pytest).
@@ -425,7 +422,7 @@ The authoritative list of suites is in `.ai/tests/run-all-tests.sh` (bash) and `
 ## Key Takeaways
 
 1. **Interaction is flexible** - Use slash commands, natural language, or structured requests
-2. **CLAUDE.md is automatic** - No need to reference it explicitly
+2. **AGENTS.md is automatic** - No need to reference it explicitly
 3. **Agents are automatic** - Spawned when needed, you just focus on what to do
 4. **Skills are smart** - AI recognizes work type and invokes appropriate skills
 5. **Template learns** - Through session context and progressive documentation
@@ -443,6 +440,6 @@ The authoritative list of suites is in `.ai/tests/run-all-tests.sh` (bash) and `
 
 **For more details, see:**
 - [README.md](README.md) - Comprehensive overview
-- [CLAUDE.md](CLAUDE.md) - Orchestration file (automatically loaded)
+- [AGENTS.md](AGENTS.md) - Orchestration file (automatically loaded)
 - [TEMPLATE-USAGE.md](TEMPLATE-USAGE.md) - Detailed usage guide
 - [.ai/session-context.md](.ai/session-context.md) - Session memory (template)

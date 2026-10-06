@@ -6,8 +6,9 @@ Ensure folder-level junctions exist from .ai/skills/ and .ai/agents/ to:
   - .reasonix/skills/  (junction -> .ai/skills/)
   - .claude/agents/  (junction -> .ai/agents/)
   - .github/agents/  (junction -> .ai/agents/)
+  - .reasonix/agents/  (junction -> .ai/agents/)
 
-All platforms read the same canonical source via junctions — no copies or wrappers.
+Everything else reads the canonical source through junctions.
 
 Usage:
     python sync-skills.py              # ensure junctions exist
@@ -24,9 +25,8 @@ SCRIPT_DIR = Path(__file__).parent.parent.parent  # .ai/scripts/ -> .ai/ -> repo
 
 # Source → [target junctions]
 JUNCTIONS = {
-    ".ai/skills": [".claude/skills", ".github/skills", ".reasonix/skills", ".pi/skills"],
-    ".ai/agents": [".claude/agents", ".github/agents", ".reasonix/agents", ".pi/agents"],
-    ".ai/chains": [".pi/chains"],
+    ".ai/skills": [".claude/skills", ".github/skills", ".reasonix/skills"],
+    ".ai/agents": [".claude/agents", ".github/agents", ".reasonix/agents"],
 }
 
 
@@ -127,13 +127,13 @@ def sync_all(dry_run: bool = False) -> int:
                 print(f"  {label} {target_rel} -> {source_rel}")
                 changed += 1
 
-    print(f"\n{changed} junction(s) {'would be ' if dry_run else ''}changed.")
+    print(f"\n{changed} item(s) {'would be ' if dry_run else ''}changed.")
     return 0
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Ensure junctions from .ai/skills/ and .ai/agents/ to all platform targets"
+        description="Ensure junctions from .ai/skills/ and .ai/agents/ to Claude, Copilot and Reasonix platforms"
     )
     parser.add_argument("--dry-run", action="store_true", help="Show changes without writing")
     args = parser.parse_args()
