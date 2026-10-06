@@ -54,7 +54,7 @@ Translates a completed architecture document into a .NET solution scaffold — p
 
 ## Solution Structure
 
-Generate this layout for each bounded context, following CLAUDE.md reference architecture:
+Generate this layout for each bounded context, following the reference architecture in `.ai/project/architecture.md`:
 
 ```
 src/
@@ -90,7 +90,7 @@ Follow the patterns in:
 - `.ai/reference/templates/command-handler.cs.txt`
 - `.ai/reference/templates/query-handler.cs.txt`
 
-Key rules (from CLAUDE.md Critical Coding Rules):
+Key rules (from AGENTS.md Critical Coding Rules):
 - Commands use individual parameters, not model objects
 - Handlers use EF Core primitives only (no repositories, no extension methods)
 - All mapping is manual — use `/* map entity to {Entity} model */` placeholders

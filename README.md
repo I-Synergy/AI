@@ -6,7 +6,7 @@ Professional .NET development template with AI-powered agent orchestration and m
 
 A **production-ready .NET project template** that provides comprehensive development patterns, specialized agent skills, and quality assurance tools for building enterprise applications with Clean Architecture, CQRS, and Domain-Driven Design.
 
-AI context lives in `.ai/` (the single source of truth shared by Claude Code, GitHub Copilot, Pi, and Reasonix Code). Each tool reads the same files through directory junctions — no duplication, no sync lag.
+AI context lives in `.ai/` (the single source of truth shared by Claude Code, GitHub Copilot, and Reasonix Code). Each tool reads the same files through directory junctions — no duplication, no sync lag.
 
 ## Features
 
@@ -86,14 +86,11 @@ See `.ai/reference/tokens.md` for complete definitions.
 # Copy AI context to your project root
 cp -r ./.ai /path/to/YourProject/.ai
 
-# Copy root config files
-cp ./CLAUDE.md /path/to/YourProject/
-cp ./REASONIX.md /path/to/YourProject/
+# Copy root config file
 cp ./AGENTS.md /path/to/YourProject/
 
 # Copy tool configs (minimal — junctions do the rest)
 cp -r ./.claude/settings.json /path/to/YourProject/.claude/
-cp -r ./.pi/settings.json /path/to/YourProject/.pi/
 cp -r ./.github/copilot-instructions.md /path/to/YourProject/.github/
 ```
 
@@ -116,17 +113,14 @@ This creates:
 | `.github/agents` | `.ai/agents` | GitHub Copilot |
 | `.reasonix/skills` | `.ai/skills` | Reasonix Code |
 | `.reasonix/agents` | `.ai/agents` | Reasonix Code |
-| `.pi/skills` | `.ai/skills` | Pi |
-| `.pi/agents` | `.ai/agents` | Pi |
-| `.pi/chains` | `.ai/chains` | Pi |
 
 All junction targets are in `.gitignore` — zero git bloat.
 
 ### 3. Per-Tool Setup
 
-#### Claude Code
+All AI tools auto-load `AGENTS.md` at the project root for orchestration instructions, and discover skills/agents through tool-scoped junctions (`.claude/`, `.github/`, `.reasonix/`).
 
-Claude Code auto-loads `CLAUDE.md` at the project root and discovers skills/agents from `.claude/` junctions. No additional setup needed.
+#### Claude Code
 
 ```bash
 claude  # start in project root
@@ -134,21 +128,11 @@ claude  # start in project root
 
 #### GitHub Copilot
 
-GitHub Copilot reads `.github/copilot-instructions.md` and discovers skills from `.github/skills/` junction. Works automatically in VS Code / GitHub Codespaces.
-
-#### Pi
-
-Pi loads `AGENTS.md` for runtime instructions. Skills and agents are discovered from `.pi/` junctions.
-
-```bash
-pi  # start in project root
-```
-
-`.pi/settings.json` is empty — all configuration comes from `.ai/` via junctions.
+GitHub Copilot also reads `.github/copilot-instructions.md` for VS Code-specific guidance. Works automatically in VS Code / GitHub Codespaces.
 
 #### Reasonix Code
 
-Reasonix Code auto-loads `REASONIX.md` at the project root. Skills are loaded from `.reasonix/skills/` junction; agents from `.reasonix/agents/` (each has `runAs: subagent` for subagent discovery).
+Reasonix Code reads `AGENTS.md` and auto-discovers skills/agents from the `.reasonix/` junction. No additional setup needed — run the tool in the project root.
 
 ### 4. Verify
 
@@ -184,6 +168,18 @@ find /path/to/YourProject/.ai -type f -exec sed -i 's/{entities}/budgets/g' {} +
 
 Edit `.ai/session-context.md` to establish your project's initial state.
 
+### Session Memory Across Clients
+
+`.ai/session-context.md` is the shared memory for every client. All three tools (Claude Code, GitHub Copilot, Reasonix Code) read and write the same file to preserve context across sessions.
+
+| Client | Read Mechanism | Write Mechanism |
+|--------|---|---|
+| **Claude Code** | `SessionStart` hook prints the file (first 200 lines, skipped while placeholder) + instruction in AGENTS.md | Instruction in AGENTS.md: write handoff before final reply using `.ai/reference/templates/session-handoff.md.txt` |
+| **GitHub Copilot** | Instruction in `.github/copilot-instructions.md` (no hook available) | Instruction in `.github/copilot-instructions.md`: write handoff before final reply |
+| **Reasonix Code** | Instruction in `AGENTS.md` (no hook available) | Instruction in `AGENTS.md`: write handoff before final reply |
+
+In this template repository, the file stays as the unfilled placeholder. Project state is recorded in `.ai/progress/` (active tasks) and `.ai/completed/` (finished tasks) instead.
+
 ### Start Developing
 
 ```
@@ -194,10 +190,7 @@ Edit `.ai/session-context.md` to establish your project's initial state.
 
 ```
 /
-├── AGENTS.md                        # Pi runtime instructions (auto-loaded)
-├── CLAUDE.md                        # Claude Code orchestration (auto-loaded)
-├── REASONIX.md                      # Reasonix Code orchestration (auto-loaded)
-├── DEEPSEEK.md                      # DeepSeek backend orchestration (swapped over CLAUDE.md)
+├── AGENTS.md                        # AI orchestration (auto-loaded by all tools)
 ├── TEMPLATE-USAGE.md                # Detailed usage guide
 ├── TEMPLATE-FAQ.md                  # Frequently asked questions
 ├── README.md                        # This file
@@ -210,7 +203,6 @@ Edit `.ai/session-context.md` to establish your project's initial state.
 │   └── settings.json                # Pytest discovery + PIP_CONFIG_FILE
 ├── .claude/
 │   ├── settings.json                # Claude Code config (hooks, permissions)
-│   ├── settings.local.json          # Local permission overrides
 │   ├── skills/  → .ai/skills/       # Junction — do not edit
 │   └── agents/  → .ai/agents/       # Junction — do not edit
 ├── .github/
@@ -223,14 +215,6 @@ Edit `.ai/session-context.md` to establish your project's initial state.
 ├── .reasonix/
 │   ├── skills/  → .ai/skills/       # Junction — do not edit
 │   └── agents/  → .ai/agents/       # Junction — do not edit
-├── .pi/
-│   ├── settings.json                # Empty — config via junctions
-│   ├── skills/  → .ai/skills/       # Junction — do not edit
-│   ├── agents/  → .ai/agents/       # Junction — do not edit
-│   └── chains/  → .ai/chains/       # Junction — do not edit
-├── powershell/                      # Anthropic ↔ DeepSeek backend switcher
-│   ├── Microsoft.PowerShell_profile.ps1
-│   └── README.md                    # Setup and usage
 └── .ai/                             # All AI context (vendor-neutral, shared by all assistants)
     ├── session-context.md           # Working session memory
     ├── reference/
@@ -273,7 +257,7 @@ Edit `.ai/session-context.md` to establish your project's initial state.
     │   ├── object-oriented-programming.md
     │   └── test-driven-development.md
     ├── scripts/                     # Automation scripts
-    │   ├── sync-skills.py           # Sync .ai/skills/ to Claude Code, GitHub Copilot, and Reasonix targets
+    │   ├── sync-skills.py           # Create junctions to .ai/skills/ and .ai/agents/ for Claude Code, GitHub Copilot, and Reasonix
     │   ├── sync-agents.py           # Agent-side entry point (delegates to sync-skills.py)
     │   ├── hygiene-lint.py          # Read-only hygiene lint — stale progress, committed secrets
     │   ├── migrate-to-ai.py         # Migrate a repo from the old .claude/ layout to .ai/
@@ -317,10 +301,6 @@ Edit `.ai/session-context.md` to establish your project's initial state.
     │   ├── book-to-skill/SKILL.md
     │   ├── keycloak-theme-colors/SKILL.md
     │   └── council/SKILL.md
-    ├── chains/                      # Chain definitions (pi runner)
-    │   ├── council.chain.md         # Council protocol (see .ai/reference/council.md)
-    │   ├── implement-and-review.chain.md
-    │   └── scout-plan-implement.chain.md
     ├── checklists/
     │   └── pre-submission.md        # Quality gate — run before completing any task
     ├── project/                     # CUSTOMIZE THESE FOR YOUR PROJECT
@@ -342,12 +322,10 @@ Edit `.ai/session-context.md` to establish your project's initial state.
         ├── validate-references.sh
         ├── validate-content.py
         ├── validate-tokens.sh
-        ├── validate-claude-md.py
+        ├── validate-agents-md.py
         ├── validate-settings.py
         ├── validate-copilot.py
         ├── smoke-test.py
-        ├── validate-reasonix.py
-        ├── validate-pi.py
         ├── validate-traceability.py
         ├── validate-standards.py
         └── validate-upgrade-script.py
@@ -367,20 +345,17 @@ Skills and agents live in `.ai/skills/` and `.ai/agents/` (single source of trut
 .github/agents/   → junction → .ai/agents/
 .reasonix/skills/ → junction → .ai/skills/
 .reasonix/agents/ → junction → .ai/agents/
-.pi/skills/       → junction → .ai/skills/
-.pi/agents/       → junction → .ai/agents/
-.pi/chains/       → junction → .ai/chains/
 ```
 
-Git cannot track Windows junctions (or symlinks, with the common `core.symlinks=false` default), so a fresh clone has **none** of these 9 paths until they're created locally. A `SessionStart` hook in `.claude/settings.json` runs the sync automatically the moment a Claude Code session opens in the repo, and a `PostToolUse` hook re-runs it whenever `.ai/skills/` or `.ai/agents/` files change — so Claude Code sessions self-heal with no manual step.
+Git cannot track Windows junctions (or symlinks, with the common `core.symlinks=false` default), so a fresh clone has **none** of these 6 paths until they're created locally. A `SessionStart` hook in `.claude/settings.json` runs the sync automatically the moment a Claude Code session opens in the repo, and a `PostToolUse` hook re-runs it whenever `.ai/skills/` or `.ai/agents/` files change — so Claude Code sessions self-heal with no manual step.
 
-Other tools (GitHub Copilot, Reasonix Code, pi) don't have an equivalent session-start hook, so after cloning — or before using one of those tools for the first time — run once manually:
+Reasonix Code and GitHub Copilot don't have an equivalent session-start hook, so after cloning — or before using one of those tools for the first time — run once manually:
 
 ```bash
 python .ai/scripts/sync-skills.py
 ```
 
-This creates (or repairs) all 9 junctions; it's idempotent and safe to re-run at any time.
+This creates (or repairs) all 6 junctions; it's idempotent and safe to re-run at any time.
 
 ### Specialized Agents
 
@@ -398,9 +373,9 @@ All code and design work is delegated to specialized subagents — the main conv
 | `ui-tester` | Playwright E2E tests, accessibility checks, visual regression |
 | `writer` | XML docs, READMEs, ADRs, technical prose |
 
-Each agent's `model:` frontmatter in `.ai/agents/` carries the tier alias (`sonnet` or `haiku`); the concrete model behind each slot is defined by the backend profile in `powershell/Microsoft.PowerShell_profile.ps1`.
+Each agent's `model:` frontmatter in `.ai/agents/` carries the tier alias (`sonnet` or `haiku`); the concrete model bound to that tier is chosen by the backend runtime outside this repository.
 
-Agents are defined in `.ai/agents/` — each carries `runAs: subagent` — and every tool reads them through a folder-level junction (`.claude/agents/`, `.github/agents/`, `.reasonix/agents/`, `.pi/agents/`). Designers and UI developers self-test with Playwright before handoff.
+Agents are defined in `.ai/agents/` — each carries `runAs: subagent` — and every tool reads them through a folder-level junction (`.claude/agents/`, `.github/agents/`, `.reasonix/agents/`). Designers and UI developers self-test with Playwright before handoff.
 
 ## Testing
 
@@ -429,15 +404,12 @@ The `.vscode/settings.json` sets `PIP_CONFIG_FILE` automatically in VS Code term
 |--------|----------------|
 | `validate-structure.sh` | Required directories, files, skill SKILL.md presence |
 | `validate-skills.py` | YAML frontmatter in every SKILL.md |
-| `validate-references.sh` | File references in CLAUDE.md, README.md links, and templates |
+| `validate-references.sh` | File references in AGENTS.md, README.md links, and templates |
 | `validate-content.py` | Content quality in skills and patterns |
 | `validate-tokens.sh` | Token consistency across templates and skills |
-| `validate-claude-md.py` | All `.ai/` paths in CLAUDE.md resolve to real files |
-| `validate-settings.py` | `.claude/settings.json` structure and no stale refs |
-| `validate-copilot.py` | Three-tier skill sync (`.ai/` source → Claude Code + `.github/`) |
+| `validate-agents-md.py` | All `.ai/` paths in AGENTS.md resolve to real files |
+| `validate-settings.py` | `.claude/settings.json` structure, no stale refs, and hooks correct |
 | `smoke-test.py` | Skills loadable, names/descriptions unique |
-| `validate-reasonix.py` | Reasonix integration: REASONIX.md, `.reasonix/` junctions, agent skills, sync integrity |
-| `validate-pi.py` | Pi integration: `.pi/` junctions (`skills`, `agents`, `chains`) and `settings.json` |
 | `validate-traceability.py` | Identifier integrity across stories, criteria, `@AC-` scenario tags and `[TestCategory]` attributes |
 | `validate-standards.py` | Standards-compatibility surfaces agree with `.ai/reference/standards.md` and its validator runs |
 | `validate-upgrade-script.py` | Upgrade script classification and integration — pytest only |
@@ -483,7 +455,7 @@ Claude will:
 
 ```
 /upgrade-template        # Interactive: review each changed file before accepting
-                         # CLAUDE.md is updated (diffed), project-owned files are never touched
+                         # AGENTS.md is updated (diffed), project-owned files are never touched
 ```
 
 ### High-Stakes Decisions (Council)
@@ -570,9 +542,7 @@ Every session (Claude Code, GitHub Copilot, and Reasonix Code):
 | File | Purpose |
 |------|---------|
 | `README.md` | This file — overview and quick reference |
-| `CLAUDE.md` | AI orchestration (auto-loaded by Claude Code) |
-| `DEEPSEEK.md` | DeepSeek-variant orchestration (swapped in by the PowerShell profile) |
-| `powershell/` | PowerShell profile for switching between Anthropic and DeepSeek backends |
+| `AGENTS.md` | AI orchestration (auto-loaded by all tools) |
 | `TEMPLATE-USAGE.md` | Detailed usage and customization guide |
 | `TEMPLATE-FAQ.md` | Frequently asked questions |
 | `.ai/reference/critical-rules.md` | Non-negotiable coding patterns |

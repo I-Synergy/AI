@@ -55,9 +55,6 @@ jobs:
       - name: Run standards validation
         run: python3 .ai/tests/validate-standards.py
 
-      - name: Run DeepSeek parity validation
-        run: python3 .ai/tests/validate-deepseek-parity.py
-
       - name: Run all tests together
         run: bash .ai/tests/run-all-tests.sh
 
