@@ -71,7 +71,7 @@ skill-name/
 
 #### Progressive Disclosure
 
-Skills use a three-level loading system:
+Skills use a three-level loading model:
 1. **Metadata** (name + description) — Always in context (~100 words)
 2. **SKILL.md body** — In context whenever skill triggers (<500 lines ideal)
 3. **Bundled resources** — As needed (unlimited)
@@ -95,7 +95,7 @@ Prefer the imperative form in instructions.
 **Defining output formats:**
 ```markdown
 ## Report structure
-ALWAYS use this exact template:
+Use this exact template:
 # [Title]
 ## Executive summary
 ## Key findings
@@ -131,7 +131,7 @@ For each test case:
 4. Ask for feedback: "How does this look? Anything you'd change?"
 5. Improve the skill based on feedback and repeat
 
-Organize outputs into iteration directories on the filesystem:
+Organize outputs into iteration directories on disk:
 ```
 {skill-name}-workspace/
 ├── iteration-1/
