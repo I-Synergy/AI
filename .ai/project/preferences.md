@@ -4,6 +4,32 @@
 
 **Purpose:** This file defines HOW you prefer to work - your personal workflow, communication style, and development approach.
 
+## Environment
+
+### Builds — memory constraint (IMPORTANT)
+
+**Never run `dotnet build` / `dotnet publish` with MSBuild node reuse enabled.** This machine runs out of physical memory whenever it is left on.
+
+MSBuild's default node reuse keeps a pool of worker processes alive after a build completes (one per core) so the next build starts faster. A single solution publish left **18 MSBuild processes plus a `VBCSCompiler` alive — roughly 3.8 GB resident** — and successive builds multiply that.
+
+- **All three knobs are already set** in `.claude/settings.json` → `env`, so builds run through Claude Code get them automatically — including subagents and hooks:
+
+  | Setting | Kills | Typical footprint |
+  |---|---|---|
+  | `MSBUILDDISABLENODEREUSE=1` | MSBuild worker nodes | ~18 processes, ~3.5 GB |
+  | `DOTNET_CLI_USE_MSBUILD_SERVER=0` | MSBuild server | — |
+  | `UseSharedCompilation=false` | `VBCSCompiler` (Roslyn compiler server) | ~430 MB |
+
+  `UseSharedCompilation` works via `env` because MSBuild surfaces environment variables as properties.
+
+- **Verified:** after `dotnet build` on the full solution, process count for `MSBuild` + `VBCSCompiler` + `dotnet` is **0**. Expect the build itself to be slower (~40 s vs ~19 s for an incremental solution build) — that is the cost of not reusing anything.
+- When invoking `dotnet` outside the harness (or if the `env` block is ever removed), pass the flags explicitly:
+  ```bash
+  MSBUILDDISABLENODEREUSE=1 dotnet build <proj> -nodeReuse:false -p:UseSharedCompilation=false
+  ```
+- Run `dotnet build-server shutdown` after heavy builds. **Caveat:** that shuts down the MSBuild *server* and the compiler server, but it does **not** kill node-reuse *worker* processes — those need `Stop-Process`, or the ~15-minute idle timeout. Killing them is safe once CPU time is flat across two samples, which proves they are idle rather than mid-build.
+- **This applies to delegated subagents too.** Any subagent prompt that triggers a .NET build must state this requirement explicitly — several agents each running `dotnet build` is what multiplies the node pools.
+
 ## Working Relationship
 
 ### Communication Style

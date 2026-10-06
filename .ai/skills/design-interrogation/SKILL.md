@@ -408,7 +408,7 @@ After completing each:
 #### Skip Only With Explicit User Consent
 
 If the user says "skip use cases" or "no stories needed", mark the deliverable as **Deferred**
-and include it in the closing summary. Never silently skip.
+and include it in the closing summary. Never skip without recording it there.
 
 ### Step 5: Solution Generation Handoff
 

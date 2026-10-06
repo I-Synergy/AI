@@ -2,10 +2,9 @@
 name: book-to-skill
 description: Converts a technical book (PDF or EPUB) into a structured Claude Code skill — extracting frameworks, mental models, principles, techniques, and anti-patterns the author crystallized. Use when the user wants to study a book through Claude, apply an author's frameworks while working, or build a reusable knowledge base from any PDF or EPUB.
 when_to_use: Trigger phrases — "turn this book into a skill", "create a skill from this PDF", "create a skill from this EPUB", "I want to study X book", "add this book to my skills", "convert PDF to skill", "convert EPUB to skill", "analyze this book", "extract frameworks from this book". Accepts a path to a PDF or EPUB and optional skill name slug.
-disable-model-invocation: true
 context: fork
 agent: general-purpose
-allowed-tools: ["Bash(python3 *)", "Bash(pdftotext *)", "Bash(mkdir *)", "Bash(cp *)", "Bash(find *)", "Bash(wc *)", "Bash(echo *)", "Bash(cat *)", "Bash(date *)", "Read", "Write", "Glob", "Grep"]
+allowed-tools: ["Bash(python3 *)", "Bash(pdftotext *)", "Bash(mkdir *)", "Bash(cp *)", "Bash(find *)", "Bash(wc *)", "Bash(echo *)", "Bash(cat *)", "Bash(date *)", "Bash(rm -f .ai/tmp/book_skill_work/*)", "Bash(rmdir .ai/tmp/book_skill_work)", "Read", "Write", "Glob", "Grep"]
 argument-hint: <path-to-pdf-or-epub> [skill-name-slug]
 arguments: [book_path, skill_name]
 effort: high
@@ -82,16 +81,16 @@ python3 ~/.claude/skills/book-to-skill/scripts/extract.py "$0"
 ```
 
 This creates:
-- `/tmp/book_skill_work/full_text.txt` — full extracted text
-- `/tmp/book_skill_work/metadata.json` — title, estimated pages, token count, size
+- `.ai/tmp/book_skill_work/full_text.txt` — full extracted text
+- `.ai/tmp/book_skill_work/metadata.json` — title, estimated pages, token count, size
 
-Read `/tmp/book_skill_work/metadata.json` to understand what was extracted.
+Read `.ai/tmp/book_skill_work/metadata.json` to understand what was extracted.
 
 ---
 
 ## Step 2.5 — Pre-flight cost estimate
 
-Read `/tmp/book_skill_work/metadata.json` and present the user with an estimate **before doing any generation**:
+Read `.ai/tmp/book_skill_work/metadata.json` and present the user with an estimate **before doing any generation**:
 
 ```
 📖 Book detected: <filename> (<format: PDF or EPUB>)
@@ -125,7 +124,7 @@ Wait for the user to confirm before proceeding. If they say "analyze only", swit
 
 ## Step 3 — Analyze book structure
 
-Read the first 8,000 characters of `/tmp/book_skill_work/full_text.txt` to identify:
+Read the first 8,000 characters of `.ai/tmp/book_skill_work/full_text.txt` to identify:
 - Book **title** and **author(s)**
 - **Chapter structure** (look for "Chapter N", "PART I", numbered headings, table of contents)
 - **Core themes** and subject domain
@@ -202,7 +201,7 @@ mkdir -p ~/.claude/skills/<skill_name>/chapters
 
 For EACH chapter/major section identified in Step 3:
 
-Read the corresponding section of `/tmp/book_skill_work/full_text.txt` (use character offsets or grep for chapter headings).
+Read the corresponding section of `.ai/tmp/book_skill_work/full_text.txt` (use character offsets or grep for chapter headings).
 
 Create `~/.claude/skills/<skill_name>/chapters/ch<NN>-<slug>.md` with this structure:
 
@@ -294,9 +293,9 @@ the relevant chapter file before answering.
 ---
 
 ## Core Frameworks & Mental Models
-<!-- ~2,000 tokens: the author's most important named frameworks and principles.
-     Preserve exact names. Write as "Use X when Y", "Prefer X over Y because Z".
-     This is a toolkit, not a summary. -->
+
+*~2,000 tokens: the author's most important named frameworks and principles. Preserve exact names.
+Write as "Use X when Y", "Prefer X over Y because Z". This is a toolkit, not a summary.*
 
 <generate 2,000 tokens of the most critical frameworks and insights here>
 
@@ -312,7 +311,8 @@ the relevant chapter file before answering.
 
 ## Topic Index
 
-<!-- Alphabetical. Major terms/frameworks → chapter(s) that cover them. -->
+*Alphabetical. Major terms/frameworks → the chapter(s) that cover them.*
+
 - **<Term>** → ch<N>[, ch<N>]
 - **<Term>** → ch<N>
 
@@ -336,7 +336,9 @@ or ask Claude directly.
 ## Step 10 — Cleanup and report
 
 ```bash
-rm -rf /tmp/book_skill_work
+# Scoped to the two files Step 2 writes, then the now-empty directory — never a recursive delete.
+rm -f .ai/tmp/book_skill_work/full_text.txt .ai/tmp/book_skill_work/metadata.json
+rmdir .ai/tmp/book_skill_work 2>/dev/null || true
 ```
 
 Then report to the user:

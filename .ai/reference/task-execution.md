@@ -108,7 +108,7 @@ After completing each step, use the Edit tool to mark it done:
 Do NOT use Write on the progress file — only Edit individual lines.
 ```
 
-Subagents do not inherit this CLAUDE.md. All progress instructions must be explicit in the task prompt.
+Subagents do not inherit this AGENTS.md. All progress instructions must be explicit in the task prompt.
 
 ## Task Definition Template
 

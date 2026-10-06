@@ -9,8 +9,8 @@ __pycache__/
 # VS Code local overrides
 .vscode/*.log
 
-# DeepSeek session swap backup (crash recovery)
-CLAUDE.md.deepseek-backup
+# Agent scratch folder
+.ai/tmp/
 
 # Platform skill/agent junctions (recreated by sync-skills.py)
 .claude/skills/
@@ -19,6 +19,3 @@ CLAUDE.md.deepseek-backup
 .github/agents/
 .reasonix/skills/
 .reasonix/agents/
-.pi/skills/
-.pi/agents/
-.pi/chains/
