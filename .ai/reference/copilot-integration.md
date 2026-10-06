@@ -6,15 +6,15 @@ This template supports **both** Claude AI and GitHub Copilot working together in
 
 ```
 Template/
-├── CLAUDE.md                          # Claude orchestration (agentic workflows)
+├── AGENTS.md                          # Orchestration instructions (all AI clients)
 ├── .github/
-│   ├── copilot-instructions.md        # Copilot workspace guidance
+│   ├── copilot-instructions.md        # Copilot workspace supplement
 │   └── skills/                        # Full content copies for Copilot
 ├── .claude/
 │   └── skills/                        # Thin wrappers for Claude Code dynamic injection
 └── .ai/                               # Shared knowledge base (source of truth)
-    ├── reference/                     # Standards (both systems)
-    ├── patterns/                      # Patterns (both systems)
+    ├── reference/                     # Standards (all systems)
+    ├── patterns/                      # Patterns (all systems)
     ├── scripts/                       # sync-skills.py, migrate-to-ai.py
     ├── skills/                        # Skills source — edit here
     └── project/                       # Shared project context
@@ -37,7 +37,7 @@ Skills have a single source of truth in `.ai/skills/` and are synced to two targ
 | Feature | Claude AI | GitHub Copilot |
 |---------|-----------|----------------|
 | **Primary Use** | Agentic workflows, architecture, planning | Code completion, inline suggestions |
-| **Config File** | `CLAUDE.md` | `.github/copilot-instructions.md` |
+| **Primary Config** | `AGENTS.md` (loaded by all clients) | `AGENTS.md` + `.github/copilot-instructions.md` supplement |
 | **Context Management** | Session-based, progress tracking | Workspace-level, file-based |
 | **Orchestration** | Multi-agent, structured tasks | Single completion context |
 | **Skills** | Specialized skills (via `.claude/skills/` wrappers) | Skills in `.github/skills/` (full copies) |
@@ -106,7 +106,7 @@ If you modify `.ai/patterns/` or `.ai/reference/`:
 ### When You Add New Standards
 
 1. Add to `.ai/reference/`
-2. Update `CLAUDE.md` Work-Type Context Mapping (if needed)
+2. Update `AGENTS.md` if the new standard alters task classifications or agent context
 3. Reference in `.github/copilot-instructions.md` (if applicable)
 
 ## Key Differences
@@ -166,7 +166,7 @@ If you're currently using only Claude:
 **Scenario:** Implement CRUD for new "Product" entity
 
 ```
-1. Claude (via CLAUDE.md):
+1. Claude (via AGENTS.md):
    - Read session context
    - Load .ai/patterns/cqrs-patterns.md
    - Load .ai/skills/dotnet-engineer.md
@@ -174,7 +174,7 @@ If you're currently using only Claude:
    - Generate command/query/handler files
    - Create endpoint scaffolding
 
-2. Copilot (via .github/copilot-instructions.md):
+2. Copilot (via AGENTS.md + .github/copilot-instructions.md):
    - Fill in validation logic in commands
    - Add guard clauses to handlers
    - Generate XML documentation
@@ -220,9 +220,9 @@ bash .ai/tests/run-all-tests.sh
 - ✅ No cross-contamination by design
 
 ### Conflicting Suggestions
-- ✅ Claude's rules in `CLAUDE.md` take precedence for agentic workflows
+- ✅ Both systems load the same master file: `AGENTS.md`
 - ✅ Copilot's suggestions are just that - suggestions (you approve)
-- ✅ Both should align because they reference same `.ai/reference/`
+- ✅ Both align because they follow the same rules and reference same `.ai/reference/`
 
 ## Summary
 

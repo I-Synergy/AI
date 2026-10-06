@@ -21,6 +21,6 @@
 
 ## Documentation Maintenance
 
-- When making architectural changes (new CQRS patterns, data access conventions, mapping approaches, project structure changes), update CLAUDE.md and the relevant `.ai/` reference files to reflect the new patterns in the same session.
-- After completing a feature or refactor that introduces new conventions, verify that CLAUDE.md, `.ai/reference/critical-rules.md`, and `.ai/patterns/cqrs-patterns.md` still accurately describe the codebase. Flag any drift to the user.
-- Run `/verify-config` periodically to audit CLAUDE.md against the actual codebase.
+- When making architectural changes (new CQRS patterns, data access conventions, mapping approaches, project structure changes), update AGENTS.md and the relevant `.ai/` reference files to reflect the new patterns in the same session.
+- After completing a feature or refactor that introduces new conventions, verify that AGENTS.md, `.ai/reference/critical-rules.md`, and `.ai/patterns/cqrs-patterns.md` still accurately describe the codebase. Flag any drift to the user.
+- Run `/verify-config` periodically to audit AGENTS.md against the actual codebase.
