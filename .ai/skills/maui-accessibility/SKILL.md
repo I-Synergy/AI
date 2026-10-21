@@ -1,7 +1,7 @@
 ---
 name: maui-accessibility
 description: >-
-  Improve MAUI accessibility. USE FOR: semantic labels, hints, headings, screen-reader focus/announcements, AutomationProperties, touch targets, decorative content, TalkBack/VoiceOver/Narrator checks. DO NOT USE FOR: general layout, automation-only tests, performance.
+  Improve MAUI accessibility. USE FOR: semantic labels, hints, headings, screen-reader focus/announcements, AutomationProperties, touch targets, decorative content, TalkBack/VoiceOver/Narrator checks. DO NOT USE FOR: general layout, automation-only tests, performance, motion and gesture design (use maui-apple-design).
 ---
 
 # MAUI Accessibility

@@ -1,7 +1,7 @@
 ---
 name: maui-performance
 description: >-
-  Fix measurable MAUI performance issues. USE FOR: `maui profile startup`, Release/physical-device measurements, janky `CollectionView`, compiled bindings, oversized images, `MauiImage` `BaseSize`, thumbnail decoding, trim/NativeAOT regressions, IL2026, source-generated serializers, linker validation. DO NOT USE FOR: generic UI bugs, workload discovery, architecture-only work.
+  Fix measurable MAUI performance issues. USE FOR: `maui profile startup`, Release/physical-device measurements, janky `CollectionView`, compiled bindings, oversized images, `MauiImage` `BaseSize`, thumbnail decoding, trim/NativeAOT regressions, IL2026, source-generated serializers, linker validation. DO NOT USE FOR: generic UI bugs, workload discovery, architecture-only work, motion and gesture design (use maui-apple-design).
 ---
 
 # MAUI Performance
