@@ -12,45 +12,139 @@ AI context lives in `.ai/` (the single source of truth shared by Claude Code, Gi
 
 ### Specialized Skills
 
+Every skill in `.ai/skills/` is listed below. Each is a `SKILL.md` with YAML
+frontmatter whose `description` decides when the model invokes it; the directory
+name is the skill name (`/<skill-name>` invokes it explicitly).
+
+#### Architecture & Design
+
 | Skill | Purpose |
 |-------|---------|
-| **api-endpoints** | API endpoint creation, OpenAPI, Kiota clients, security hardening |
-| **dotnet-engineer** | .NET development, CQRS implementation |
-| **unit-tester** | Unit testing with MSTest and Moq — per-slice test plans and incident reports |
-| **code-reviewer** | Code quality, architecture compliance, ISO/IEC 25010 finding attribution |
-| **technical-writer** | Documentation and API specs |
-| **playwright-tester** | UI testing and automation, traced to acceptance criteria |
-| **blazor-specialist** | Blazor web development |
-| **blazor-theme-generator** | Generate Blazor UI themes from design tokens |
-| **maui-specialist** | MAUI mobile/desktop development |
-| **mobile-release** | Publish MAUI apps to the App Store and Google Play |
-| **winui-specialist** | WinUI 3 desktop development |
-| **xaml-theme-generator** | Generate XAML theme resources from a base color palette |
-| **architect** | Architecture decisions and patterns |
-| **api-security** | API security and authentication |
-| **security** | Application security |
-| **software-security** | Security best practices |
-| **performance-engineer** | Performance optimization |
-| **devops-engineer** | CI/CD and deployment |
-| **css-theme-generator** | Generate CSS theme variables from a base color palette |
-| **database-migration** | Database migrations and schema |
-| **integration-specialist** | Third-party integrations |
+| **architect** | Architecture decisions, technology selection, bounded contexts |
+| **design-interrogation** | Structured design interview — stress-test plans and resolve decision trees |
+| **ubiquitous-language** | Capture and maintain the domain glossary (`UBIQUITOUS_LANGUAGE.md`) |
+| **usecase-specification** | Use case specs with `UC-`/`AF-` IDs and Gherkin |
+| **user-story** | INVEST-validated user stories with `AC-`-identified criteria |
+| **vertical-slices** | Translate use cases/stories into `AC-`-traced vertical slice blueprint JSON |
+| **solution-generator** | Scaffold a .NET solution from an architecture document, tests traced to `AC-` IDs |
+| **gap-review** | Validate a generated solution against the original design decisions |
+| **council** | Expensive-to-reverse decisions — independent seat positions, chair synthesis, dissent recorded verbatim |
+
+#### .NET Implementation
+
+| Skill | Purpose |
+|-------|---------|
+| **dotnet-engineer** | CQRS handlers, endpoints, Blazor/MAUI code — all .NET implementation work |
+| **api-endpoints** | Minimal API endpoints, OpenAPI, Kiota clients, validation and rate limiting |
+| **database-migration** | EF Core migrations, schema design, query tuning, PostgreSQL |
+| **integration-specialist** | Third-party APIs, webhooks, message queues, external service calls |
 | **refactor** | Bulk find-and-replace and pattern migrations across the solution |
-| **design-interrogation** | Structured design interviews — stress-test plans, resolve decision trees, capture quality attributes |
-| **skill-creator** | Create, test, and improve Claude skills iteratively |
-| **ubiquitous-language** | Capture and maintain domain vocabulary glossary |
-| **usecase-specification** | Draft and finalize use case specs with `UC-`/`AF-` IDs and Gherkin |
-| **user-story** | Draft and finalize INVEST-validated user stories with `AC-`-identified criteria and Gherkin |
-| **solution-generator** | Scaffold a .NET solution from an architecture document, with tests traced to `AC-` IDs |
-| **vertical-slices** | Translate use cases/stories to `AC-`-traced vertical slice blueprint JSON |
-| **gap-review** | Validate generated solution against original design decisions |
-| **hugo** | Hugo static site generation — blog, docs, and landing page templates |
+
+#### Security
+
+| Skill | Purpose |
+|-------|---------|
+| **security** | Security strategy, compliance (GDPR/SOC2/HIPAA), threat modelling |
+| **software-security** | Secure coding, OWASP Top 10, security code review |
+| **api-security** | API authn/authz and OWASP API Top 10 |
+
+#### Quality & Delivery
+
+| Skill | Purpose |
+|-------|---------|
+| **code-reviewer** | SOLID/CQRS/architecture review with ISO/IEC 25010 finding attribution |
+| **unit-tester** | MSTest + Moq unit tests, Reqnroll BDD scenarios, per-slice test plans |
+| **playwright-tester** | Playwright E2E, accessibility and visual regression tests |
+| **performance-engineer** | Profiling, query and caching optimisation, response times |
+| **devops-engineer** | CI/CD pipelines, containerisation, IaC, deployment automation |
+
+#### UI Frameworks & Themes
+
+| Skill | Purpose |
+|-------|---------|
+| **blazor-specialist** | Blazor Server/WebAssembly components, state management, forms |
+| **blazor-fluentui** | I-Synergy patterns on Fluent UI Blazor (`View<TViewModel>`, bootstrapper, dialogs) |
+| **winui-specialist** | WinUI 3 / Windows App SDK apps — Fluent layouts, MSIX packaging, WPF migration |
+| **ui-core** | Cross-platform UI abstractions — auth, token storage, localisation, theme view models |
+| **ui-blazor** | I-Synergy Blazor UI library — bootstrapper, Fluent integration, form factor, antiforgery |
+| **ui-wpf** | I-Synergy WPF shell — dialogs, navigation, theme system, BladeView controls |
+| **ui-winui** | I-Synergy WinUI 3 shell — Fluent shell, ContentDialog, title bar, accent sync |
+| **ui-uwp** | I-Synergy UWP shell — Frame navigation, ContentDialog, adaptive layouts |
+| **ui-maui** | I-Synergy MAUI shell — dialogs, navigation, theme, NavigationMenu controls |
+| **blazor-theme-generator** | Blazor `--b-*` theme tokens for dark + light from one accent colour |
+| **css-theme-generator** | CSS custom property theme (light + dark) from one accent colour |
+| **xaml-theme-generator** | XAML ResourceDictionary themes (WinUI/UWP/MAUI) from one accent colour |
+| **keycloak-theme-colors** | Recolour an I-Synergy Keycloak login theme from one base hex colour |
+
+#### MAUI
+
+| Skill | Purpose |
+|-------|---------|
+| **maui-specialist** | Cross-platform MAUI apps, offline-first data, platform features |
+| **maui-blazor** | I-Synergy MVVM patterns for MAUI + Blazor Hybrid shells |
+| **maui-blazor-hybrid** | `BlazorWebView` vs `HybridWebView`, Razor UI, JS/.NET messaging, trim-safe JSON |
+| **maui-app-architecture** | DI/`MauiProgram`, MVVM wiring, Shell routes, compiled bindings, page lifetimes |
+| **maui-app-assets-lifecycle** | Icons, splash screens, images, fonts, raw assets, window lifecycle |
+| **maui-project-structure** | Single-project layout, resource folders, versioning, package IDs |
+| **maui-controls-deep-dive** | `CollectionView` incremental loading, `SafeAreaEdges`, `GraphicsView`, gestures |
+| **maui-ui-patterns** | Layout, binding, state and automation-id fixes for MAUI UI |
+| **maui-apple-design** | Apple-style fluid motion — springs, gestures, momentum, materials, type scale, reduced motion, haptics |
+| **maui-accessibility** | Semantic labels, focus/announcements, touch targets, screen-reader checks |
+| **maui-localization-theming** | RESX localisation, culture switching, RTL, `AppThemeBinding`, dynamic themes |
+| **maui-current-apis** | Target-framework-safe API choices (net8 vs net10) |
+| **maui-custom-handlers** | Handler mappers, renderer→handler migration, platform partials |
+| **maui-platform-invoke** | Native APIs via DI services, manifests, entitlements, lifecycle hooks |
+| **maui-device-capabilities** | Camera, files, geolocation, maps, permissions, platform declarations |
+| **maui-networking-offline-data** | Typed `HttpClient`, emulator hosts, offline-first sync, retries, encryption |
+| **maui-aspire-client** | Aspire service discovery, typed clients, device networking, dev certs |
+| **maui-auth-secure-storage** | WebAuthenticator/MSAL, OAuth redirects, SecureStorage, token cache cleanup |
+| **maui-notifications-deep-links** | Local/push notifications, FCM v1/APNs, notification taps, app links |
+| **maui-essentials-ai** | On-device AI via `Microsoft.Maui.Essentials.AI` (Apple Intelligence, `IChatClient`) |
+| **maui-ai-tool-bindings** | Source-generated `Microsoft.Extensions.AI` tools for MAUI |
+| **maui-performance** | Measurable startup/jank/trim fixes, NativeAOT and linker regressions |
+| **maui-unit-testing** | ViewModel/service tests, fakes, Essentials abstractions, device-test boundaries |
+| **maui-release-notes** | Official .NET/MAUI release notes → app upgrade plan |
+| **maui-labs-platform-targeting** | MAUI Labs desktop heads — Linux GTK4, macOS, WPF |
+| **maui-xcode27-migration** | Xcode 27 scene-lifecycle migration for iOS/Mac Catalyst |
+| **xamarin-forms-migration** | Xamarin.Forms → MAUI migration planning |
+| **mobile-release** | App Store / Google Play artifacts, signing, uploads, store rejections |
+| **dotnet-workload-info** | Workload manifest and SDK requirement lookup from live NuGet APIs |
+
+#### Native Bindings
+
+| Skill | Purpose |
+|-------|---------|
+| **android-java-bindings** | C# bindings for Java/Kotlin Android libraries — AAR/JAR, Metadata.xml, generator errors |
+| **android-slim-bindings** | Android slim bindings and Native Library Interop wrappers |
+| **ios-slim-bindings** | iOS slim bindings — Swift/Objective-C wrappers, XcodeGen, CocoaPods |
+
+#### DevFlow & Device Debugging
+
+| Skill | Purpose |
+|-------|---------|
+| **maui-devflow-onboard** | Add DevFlow to a MAUI app (package refs, `MauiProgram`, variants) |
+| **maui-devflow-debug** | Inspect-and-fix loops against a running MAUI app |
+| **maui-devflow-session-review** | Post-hoc DevFlow friction reports and scrubbed issue drafts |
+| **devflow-automation** | `[DevFlowAction]` shortcuts that drive app state |
+| **devflow-connect** | Diagnose `maui devflow` connection, port and adb-forwarding failures |
+| **maui-ai-debugging** | Screenshots, visual tree, Blazor CDP, simulator/emulator debugging |
+
+#### Documentation & Content
+
+| Skill | Purpose |
+|-------|---------|
+| **technical-writer** | XML docs, API docs, architecture diagrams, READMEs |
+| **hugo** | Hugo + Tailwind v4 sites, headless CMS, Cloudflare deployment |
+| **book-to-skill** | Turn a PDF/EPUB book into a reusable skill |
+
+#### Template Tooling
+
+| Skill | Purpose |
+|-------|---------|
+| **skill-creator** | Create, test and tune skills, including description triggering |
+| **update-skills** | Sync `.ai/skills/` to all targets (Claude Code, GitHub Copilot, Reasonix) |
 | **upgrade-template** | Sync template improvements to existing projects without losing context |
-| **verify-config** | Audit config drift and generate the standards-compatibility view (run `/verify-config`) |
-| **update-skills** | Sync `.ai/skills/` to all targets (Claude Code, GitHub Copilot, Reasonix) (run `/update-skills`) |
-| **book-to-skill** | Convert a technical book (PDF/EPUB) into a structured Claude Code skill |
-| **keycloak-theme-colors** | Update Keycloak login theme accent colors from a base hex color |
-| **council** | High-stakes decision process — independent seat positions, chair synthesis, dissent recorded verbatim |
+| **verify-config** | Audit config drift and generate the standards-compatibility view |
 
 ### Pattern Guides (8)
 
@@ -264,43 +358,7 @@ In this template repository, the file stays as the unfilled placeholder. Project
     │   └── upgrade-template.py      # Safely upgrade an existing project from this template
     ├── agents/                      # Specialized subagents (source of truth)
     ├── skills/                      # Specialized agent personas (source of truth)
-    │   ├── dotnet-engineer/SKILL.md
-    │   ├── unit-tester/SKILL.md
-    │   ├── code-reviewer/SKILL.md
-    │   ├── technical-writer/SKILL.md
-    │   ├── playwright-tester/SKILL.md
-    │   ├── blazor-specialist/SKILL.md
-    │   ├── blazor-theme-generator/SKILL.md
-    │   ├── css-theme-generator/SKILL.md
-    │   ├── maui-specialist/SKILL.md
-    │   ├── mobile-release/SKILL.md
-    │   ├── winui-specialist/SKILL.md
-    │   ├── xaml-theme-generator/SKILL.md
-    │   ├── architect/SKILL.md
-    │   ├── api-security/SKILL.md
-    │   ├── security/SKILL.md
-    │   ├── software-security/SKILL.md
-    │   ├── performance-engineer/SKILL.md
-    │   ├── devops-engineer/SKILL.md
-    │   ├── database-migration/SKILL.md
-    │   ├── integration-specialist/SKILL.md
-    │   ├── refactor/SKILL.md
-    │   ├── design-interrogation/SKILL.md
-    │   ├── skill-creator/SKILL.md
-    │   ├── ubiquitous-language/SKILL.md
-    │   ├── usecase-specification/SKILL.md
-    │   ├── user-story/SKILL.md
-    │   ├── solution-generator/SKILL.md
-    │   ├── vertical-slices/SKILL.md
-    │   ├── gap-review/SKILL.md
-    │   ├── hugo/SKILL.md
-    │   ├── upgrade-template/SKILL.md
-    │   ├── verify-config/SKILL.md
-    │   ├── update-skills/SKILL.md
-    │   ├── api-endpoints/SKILL.md
-    │   ├── book-to-skill/SKILL.md
-    │   ├── keycloak-theme-colors/SKILL.md
-    │   └── council/SKILL.md
+    │   └── <skill>/SKILL.md         # One directory per skill — all listed under "Specialized Skills"
     ├── checklists/
     │   └── pre-submission.md        # Quality gate — run before completing any task
     ├── project/                     # CUSTOMIZE THESE FOR YOUR PROJECT
