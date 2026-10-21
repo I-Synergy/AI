@@ -1,7 +1,7 @@
 ---
 name: maui-ui-patterns
 description: >-
-  Fix MAUI UI layout, state, and automation issues. USE FOR: `CollectionView` scrolling, DataTemplate bindings, command bindings, Grid/FlexLayout sizing, binding-driven states, avoiding `ScrollView` parents, stable AutomationIds, `x:DataType`, EmptyView/loading/error states. DO NOT USE FOR: Shell routes, full accessibility, vendor-specific controls.
+  Fix MAUI UI layout, state, and automation issues. USE FOR: `CollectionView` scrolling, DataTemplate bindings, command bindings, Grid/FlexLayout sizing, binding-driven states, avoiding `ScrollView` parents, stable AutomationIds, `x:DataType`, EmptyView/loading/error states. DO NOT USE FOR: Shell routes, full accessibility, vendor-specific controls, animation and gesture feel (use maui-apple-design).
 ---
 
 # MAUI UI Patterns
