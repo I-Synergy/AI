@@ -111,6 +111,7 @@ def test_template_owned_completeness() -> bool:
         ".vscode/settings.json",
         ".gitignore",
         ".github/workflows/validate-template.yml",
+        ".github/workflows/ci.yml",
     }
 
     missing = required - owned
