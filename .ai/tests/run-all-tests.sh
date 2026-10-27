@@ -55,6 +55,7 @@ run_test "8. Copilot Integration" "python3 '$SCRIPT_DIR/validate-copilot.py'"
 run_test "9. Integration Smoke Tests" "python3 '$SCRIPT_DIR/smoke-test.py'"
 run_test "10. Traceability" "python3 '$SCRIPT_DIR/validate-traceability.py'"
 run_test "11. Standards" "python3 '$SCRIPT_DIR/validate-standards.py'"
+run_test "12. Release Versioning" "python3 '$SCRIPT_DIR/validate-release.py'"
 
 # Final Summary
 echo "========================================="

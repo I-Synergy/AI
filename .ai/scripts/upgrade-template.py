@@ -68,6 +68,7 @@ TEMPLATE_OWNED = [
     ".vscode/settings.json",
     ".gitignore",
     ".github/workflows/validate-template.yml",
+    ".github/workflows/ci.yml",
 ]
 
 # Project owns these — never read, never write.

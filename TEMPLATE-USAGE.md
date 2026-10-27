@@ -390,6 +390,7 @@ Template-owned paths are copied when missing and diffed when they differ:
 | `.vscode/settings.json` | `PIP_CONFIG_FILE` and pytest discovery |
 | `.gitignore` | Junction, `__pycache__` and `.ai/tmp/` ignores |
 | `.github/workflows/validate-template.yml` | CI validation job |
+| `.github/workflows/ci.yml` | Release versioning, tagging and publishing on merge to `main` |
 
 `.claude/settings.json` is handled separately: it is created if absent, otherwise
 merged (hooks, permissions and `plansDirectory` are unioned, your values are kept).
@@ -400,9 +401,9 @@ merged (hooks, permissions and `plansDirectory` are unioned, your values are kep
 `.ai/project/`, `.ai/progress/`, `.ai/completed/`, `.ai/plans/`, `.ai/analysis/`,
 `COMPLIANCE.md`, `.github/copilot-instructions.md` and `.claude/settings.local.json`.
 
-The repository's own `.github/workflows/mirror-to-azure.yml` is deliberately **not**
-template-owned: it mirrors to this template's Azure DevOps project and would be wrong
-in yours. Add your own deployment workflows by hand.
+`.github/workflows/ci.yml` is template-owned, so an upgrade copies it when missing and
+diffs it when it differs. `CHANGELOG.md` is a normal project file: the release workflow
+creates and maintains it, and the upgrade does not copy or diff it.
 
 `.gitignore` is a normal file, not a junction target, so if your project already has
 one the upgrade shows a diff — accept it only after checking your own ignore rules are

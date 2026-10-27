@@ -58,6 +58,9 @@ jobs:
       - name: Run standards validation
         run: python .ai/tests/validate-standards.py
 
+      - name: Run release versioning validation
+        run: python .ai/tests/validate-release.py
+
       - name: Run all tests together
         run: bash .ai/tests/run-all-tests.sh
 
