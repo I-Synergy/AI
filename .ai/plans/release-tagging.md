@@ -86,3 +86,10 @@ The versioning logic was consolidated into a single `.github/workflows/ci.yml` w
 inline steps. `.github/workflows/release.yml`, `scripts/Set-VersionVariables.ps1` and
 `scripts/New-GitTag.ps1` were removed; `validate-template.yml` remains the separate
 validation workflow. The tag is still the plain build number (`$BUILD_NUMBER`).
+
+## Revision 2 — 2026-10-28
+
+`main` is protected and rejects direct pushes, so the workflow no longer commits
+`CHANGELOG.md`. It generates release notes from the commits since the previous tag,
+pushes only the annotated tag, and publishes the GitHub Release. `CHANGELOG.md` is a
+normal, manually curated file.

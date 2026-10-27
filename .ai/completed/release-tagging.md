@@ -17,5 +17,7 @@ Started: 2026-10-28
 Approved plan: `.ai/plans/release-tagging.md`.
 Revision 2026-10-28: consolidated into a single `ci.yml`; `release.yml` and the two
 PowerShell scripts were removed at the user's request.
+Revision 2: `main` is protected, so the workflow no longer commits `CHANGELOG.md`; it
+generates release notes, pushes only the tag and publishes the release.
 Verification: validation suites, pytest, two-release git simulation
 (changelog commit → annotated tag → remote tag), `git diff --check`.
