@@ -28,7 +28,6 @@ TEMPLATE_ROOT = SCRIPT_DIR.parent.parent
 WORKFLOW = TEMPLATE_ROOT / ".github" / "workflows" / "ci.yml"
 OLD_WORKFLOW = TEMPLATE_ROOT / ".github" / "workflows" / "release.yml"
 OLD_SCRIPTS = TEMPLATE_ROOT / "scripts"
-CHANGELOG = TEMPLATE_ROOT / "CHANGELOG.md"
 
 BUILD_NUMBER = "2026.11028.11435"
 MERGE_VERSION = {
@@ -72,11 +71,6 @@ def test_files_exist() -> bool:
         valid = False
     else:
         ok("ci.yml")
-    if not CHANGELOG.exists():
-        fail("CHANGELOG.md not found")
-        valid = False
-    else:
-        ok("CHANGELOG.md")
     if OLD_WORKFLOW.exists():
         fail("release.yml still exists; the release job belongs in ci.yml")
         valid = False
@@ -122,23 +116,29 @@ def test_workflow_wiring(doc: dict, text: str) -> bool:
 
     required = {
         "inline version derivation": "VersionNumber=",
-        "changelog update": "CHANGELOG.md",
+        "release notes": "--notes-file",
         "annotated tag": "git tag -a",
         "gh release create": "gh release create",
-        "release-loop guard": "[skip release]",
     }
     for label, needle in required.items():
         if needle not in text:
             fail(f"workflow does not contain {label}")
             valid = False
     if valid:
-        ok("inline version, changelog, tag and release steps present")
+        ok("inline version, release notes, tag and release steps present")
 
-    if "scripts/" in text:
-        fail("workflow still references scripts/")
-        valid = False
-    else:
-        ok("no external script references")
+    forbidden = {
+        "a commit to main": "git push origin HEAD:main",
+        "a changelog commit": "git commit",
+        "a CHANGELOG.md dependency": "CHANGELOG.md",
+        "an external script": "scripts/",
+    }
+    for label, needle in forbidden.items():
+        if needle in text:
+            fail(f"workflow must not contain {label}")
+            valid = False
+    if valid:
+        ok("main is not modified and no external scripts are used")
 
     if not re.search(r"steps\.build\.outputs\.BuildNumber", text):
         fail("workflow does not pass the resolved BuildNumber through")

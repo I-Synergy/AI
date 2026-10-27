@@ -403,7 +403,7 @@ merged (hooks, permissions and `plansDirectory` are unioned, your values are kep
 
 `.github/workflows/ci.yml` is template-owned, so an upgrade copies it when missing and
 diffs it when it differs. `CHANGELOG.md` is a normal project file: the release workflow
-creates and maintains it, and the upgrade does not copy or diff it.
+does not update it, and the upgrade does not copy or diff it.
 
 `.gitignore` is a normal file, not a junction target, so if your project already has
 one the upgrade shows a diff — accept it only after checking your own ignore rules are
