@@ -1,0 +1,9 @@
+# Python development dependencies for the template validation suite.
+#
+# Install with the project-scoped pip config (see pip.ini):
+#   PIP_CONFIG_FILE=pip.ini pip install -r requirements-dev.txt
+#
+# Keep these pins in step with the versions used in CI
+# (.github/workflows/validate-template.yml).
+PyYAML==6.0.3
+pytest==9.1.1

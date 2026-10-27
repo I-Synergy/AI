@@ -389,7 +389,7 @@ bash .ai/tests/run-all-tests.sh
 
 ```bash
 # Install pytest (use project-scoped pip config if on corporate network)
-pip install --config-file pip.ini pytest
+PIP_CONFIG_FILE=pip.ini pip install -r requirements-dev.txt
 
 # Run all suites
 python -m pytest .ai/tests/test_suite.py -v

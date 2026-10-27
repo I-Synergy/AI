@@ -7,6 +7,9 @@ on:
     branches: [ main, development/main, master, develop ]
   workflow_dispatch:  # Allow manual triggering
 
+permissions:
+  contents: read
+
 jobs:
   validate:
     name: Validate Template Structure and Content
@@ -14,17 +17,17 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
-          python-version: '3.11'
+          python-version: '3.14'
 
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install pyyaml pytest
+          python -m pip install -r requirements-dev.txt
 
       - name: Make test scripts executable
         run: |
@@ -35,35 +38,35 @@ jobs:
         run: bash .ai/tests/validate-structure.sh
 
       - name: Run YAML frontmatter validation
-        run: python3 .ai/tests/validate-skills.py
+        run: python .ai/tests/validate-skills.py
 
       - name: Run reference validation
         run: bash .ai/tests/validate-references.sh
 
       - name: Run content quality validation
-        run: python3 .ai/tests/validate-content.py
+        run: python .ai/tests/validate-content.py
 
       - name: Run token consistency validation
         run: bash .ai/tests/validate-tokens.sh
 
       - name: Run integration smoke tests
-        run: python3 .ai/tests/smoke-test.py
+        run: python .ai/tests/smoke-test.py
 
       - name: Run traceability validation
-        run: python3 .ai/tests/validate-traceability.py
+        run: python .ai/tests/validate-traceability.py
 
       - name: Run standards validation
-        run: python3 .ai/tests/validate-standards.py
+        run: python .ai/tests/validate-standards.py
 
       - name: Run all tests together
         run: bash .ai/tests/run-all-tests.sh
 
       - name: Run pytest suite
-        run: python3 -m pytest .ai/tests/test_suite.py -q
+        run: python -m pytest .ai/tests/test_suite.py -q
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-results
           path: |

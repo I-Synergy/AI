@@ -237,7 +237,7 @@ python -m pytest .ai/tests/test_suite.py -v
 If pip is configured to use a private registry that requires authentication, use the project-scoped override:
 
 ```bash
-pip install --config-file pip.ini pytest
+PIP_CONFIG_FILE=pip.ini pip install -r requirements-dev.txt
 ```
 
 The `pip.ini` at the project root routes `pip install` to public PyPI. The `.vscode/settings.json` sets `PIP_CONFIG_FILE` automatically in VS Code terminals so you don't need to specify it manually.
@@ -373,6 +373,61 @@ python .ai/scripts/upgrade-template.py /path/to/YourProject
 python .ai/scripts/upgrade-template.py /path/to/YourProject --non-interactive
 ```
 
+The same script installs the template into a project that has none of it — any
+template-owned path the target lacks is reported as `ADDED` and copied.
+
+#### What the script installs
+
+Template-owned paths are copied when missing and diffed when they differ:
+
+| Path | Notes |
+|---|---|
+| `.ai/**` | All skills, agents, patterns, reference, scripts, checklists, tests |
+| `AGENTS.md` | Diffed, never silently replaced |
+| `requirements-dev.txt` | Pinned PyYAML + pytest |
+| `pytest.ini` | `testpaths = .ai/tests` |
+| `pip.ini` | Project-scoped PyPI index |
+| `.vscode/settings.json` | `PIP_CONFIG_FILE` and pytest discovery |
+| `.gitignore` | Junction, `__pycache__` and `.ai/tmp/` ignores |
+| `.github/workflows/validate-template.yml` | CI validation job |
+
+`.claude/settings.json` is handled separately: it is created if absent, otherwise
+merged (hooks, permissions and `plansDirectory` are unioned, your values are kept).
+
+#### What it never touches
+
+`PROJECT_OWNED` paths are skipped with no read and no diff — `.ai/session-context.md`,
+`.ai/project/`, `.ai/progress/`, `.ai/completed/`, `.ai/plans/`, `.ai/analysis/`,
+`COMPLIANCE.md`, `.github/copilot-instructions.md` and `.claude/settings.local.json`.
+
+The repository's own `.github/workflows/mirror-to-azure.yml` is deliberately **not**
+template-owned: it mirrors to this template's Azure DevOps project and would be wrong
+in yours. Add your own deployment workflows by hand.
+
+`.gitignore` is a normal file, not a junction target, so if your project already has
+one the upgrade shows a diff — accept it only after checking your own ignore rules are
+still present. The entries the template needs are:
+
+```gitignore
+.claude/skills/
+.claude/agents/
+.github/skills/
+.github/agents/
+.reasonix/skills/
+.reasonix/agents/
+.ai/tmp/
+__pycache__/
+.pytest_cache/
+```
+
+#### After any install or upgrade
+
+```bash
+pip install -r requirements-dev.txt
+python .ai/scripts/sync-skills.py      # recreate the 6 platform junctions
+python -m pytest .ai/tests/test_suite.py -q
+```
+
 ## Troubleshooting
 
 ### "Claude doesn't remember previous decisions"
@@ -397,7 +452,7 @@ python .ai/scripts/upgrade-template.py /path/to/YourProject --non-interactive
 
 ### "pip install failing on corporate network"
 
-**Solution:** Use the project-scoped pip config: `pip install --config-file pip.ini <package>`
+**Solution:** Use the project-scoped pip config: `PIP_CONFIG_FILE=pip.ini pip install <package>`
 
 ## Best Practices
 
