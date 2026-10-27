@@ -19,13 +19,16 @@ on:
       - development/main
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   mirror:
     name: Mirror to Azure DevOps
     runs-on: ubuntu-latest
     steps:
       - name: Checkout (full history)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 

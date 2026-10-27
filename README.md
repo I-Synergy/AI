@@ -443,7 +443,7 @@ The template ships with a validation suite that runs the same checks under bash 
 # Every suite via bash
 bash .ai/tests/run-all-tests.sh
 
-# Every suite via pytest (requires: pip install pytest)
+# Every suite via pytest (requires: pip install -r requirements-dev.txt)
 python -m pytest .ai/tests/test_suite.py -v
 
 # VS Code Test Explorer: install pytest, then open Testing panel
@@ -453,7 +453,7 @@ python -m pytest .ai/tests/test_suite.py -v
 
 On Windows with a corporate pip registry, use the project-scoped override:
 ```bash
-pip install --config-file pip.ini pytest
+PIP_CONFIG_FILE=pip.ini pip install -r requirements-dev.txt
 ```
 
 The `.vscode/settings.json` sets `PIP_CONFIG_FILE` automatically in VS Code terminals.
