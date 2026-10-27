@@ -288,7 +288,7 @@ In this template repository, the file stays as the unfilled placeholder. Project
 ├── TEMPLATE-USAGE.md                # Detailed usage guide
 ├── TEMPLATE-FAQ.md                  # Frequently asked questions
 ├── README.md                        # This file
-├── CHANGELOG.md                     # Release history (maintained by the Release workflow)
+├── CHANGELOG.md                     # Manually curated changelog (not updated by CI)
 ├── LICENSE                          # MIT license
 ├── pytest.ini                       # Pytest configuration (testpaths = .ai/tests)
 ├── pip.ini                          # Project-scoped pip config
@@ -629,10 +629,10 @@ A successful merge to `main` triggers `.github/workflows/ci.yml`, which versions
 
 The step writes the values to `$GITHUB_OUTPUT`. This repository has no .NET solution, so the workflow does not pass them to MSBuild — a project generated from this template can.
 
-**What the workflow does:** derives the build number → prepends the merged commits to `CHANGELOG.md` and commits that change → creates and pushes the annotated tag `$BUILD_NUMBER` (no `v` prefix) → runs `gh release create "$BUILD_NUMBER" --verify-tag`.
+**What the workflow does:** derives the build number → generates release notes from the commits since the previous tag → creates and pushes the annotated tag `$BUILD_NUMBER` (no `v` prefix) → runs `gh release create "$BUILD_NUMBER" --verify-tag --notes-file …`.
 
-**Behaviour:** runs are serialised and never cancelled; an existing tag is reported and skipped; the changelog commit carries `[skip release]` and uses the workflow token, so it cannot start another release; a manual run accepts a `build_number` input.
+**Behaviour:** runs are serialised and never cancelled; an existing tag is reported and skipped; `main` is never modified (only a tag is pushed), so branch protection that requires pull requests does not block the release; `CHANGELOG.md` is not touched; a manual run accepts a `build_number` input.
 
-**Permissions:** the workflow requests `contents: write`. If `main` is protected, add a `RELEASE_TOKEN` secret (a PAT with `contents: write`) so the changelog commit and the tag can be pushed; otherwise `GITHUB_TOKEN` is used.
+**Permissions:** the workflow requests `contents: write` to push the tag and create the release. `GITHUB_TOKEN` is sufficient because no branch push is attempted.
 
 ## [License](LICENSE)
