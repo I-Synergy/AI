@@ -288,6 +288,7 @@ In this template repository, the file stays as the unfilled placeholder. Project
 ├── TEMPLATE-USAGE.md                # Detailed usage guide
 ├── TEMPLATE-FAQ.md                  # Frequently asked questions
 ├── README.md                        # This file
+├── CHANGELOG.md                     # Release history (maintained by the Release workflow)
 ├── LICENSE                          # MIT license
 ├── pytest.ini                       # Pytest configuration (testpaths = .ai/tests)
 ├── pip.ini                          # Project-scoped pip config
@@ -303,7 +304,7 @@ In this template repository, the file stays as the unfilled placeholder. Project
 │   ├── copilot-instructions.md      # GitHub Copilot instructions
 │   ├── workflows/
 │   │   ├── validate-template.yml    # Runs the validation suite in CI
-│   │   └── mirror-to-azure.yml      # Mirrors GitHub → Azure DevOps (see below)
+│   │   └── ci.yml                   # Versions, tags and publishes a release on merge to main
 │   ├── skills/  → .ai/skills/       # Junction — do not edit
 │   └── agents/  → .ai/agents/       # Junction — do not edit
 ├── .reasonix/
@@ -612,17 +613,26 @@ Every session (Claude Code, GitHub Copilot, and Reasonix Code):
 | `.ai/reference/standards.md` | Standards-compatibility manifest read by `verify-config` |
 | `.ai/project/` | Project-specific context files |
 
-## Repository Mirroring
+## Release Versioning
 
-This repository lives in two places: **GitHub** (`I-Synergy/AI`, source of truth) and **Azure DevOps**. A GitHub Action keeps them aligned automatically.
+A successful merge to `main` triggers `.github/workflows/ci.yml`, which versions the repository by release tag.
 
-**Mechanism:** `.github/workflows/mirror-to-azure.yml` runs on every push to `main` and `development/main` (and on manual dispatch), force-pushing the full history to Azure DevOps via `git push --mirror`. GitHub is authoritative; any manual change made directly on Azure DevOps is overwritten on the next mirror.
+**Build number:** `YYYY.1MMdd.1HHmm` in UTC, e.g. `2026.11028.11435`. The `1` prefix keeps every component non-zero and preserves leading zeros.
 
-**One-time setup:**
+**Version variables:** the `Derive version variables` step in `ci.yml` is the single source of truth. It splits the build number and derives:
 
-1. Create an Azure DevOps Personal Access Token with `Code (Read & Write)` scope for the target repo/org.
-2. Add it as a GitHub Actions secret named `AZURE_DEVOPS_PAT` (Settings → Secrets and variables → Actions → New repository secret).
+| Variable | Merge build | PR build |
+|---|---|---|
+| `VersionNumber` | `X.Y.Z.0` | `X.Y.Z.SS` |
+| `VersionInformational` | `X.Y.Z` | `X.Y.Z` |
+| `VersionPackage` | `X.Y.Z` | `X.Y.Z-preview` |
 
-The PAT is injected via `env` and never logged; `--mirror` also propagates branch/tag deletions, so treat Azure DevOps as a read-only copy.
+The step writes the values to `$GITHUB_OUTPUT`. This repository has no .NET solution, so the workflow does not pass them to MSBuild — a project generated from this template can.
+
+**What the workflow does:** derives the build number → prepends the merged commits to `CHANGELOG.md` and commits that change → creates and pushes the annotated tag `$BUILD_NUMBER` (no `v` prefix) → runs `gh release create "$BUILD_NUMBER" --verify-tag`.
+
+**Behaviour:** runs are serialised and never cancelled; an existing tag is reported and skipped; the changelog commit carries `[skip release]` and uses the workflow token, so it cannot start another release; a manual run accepts a `build_number` input.
+
+**Permissions:** the workflow requests `contents: write`. If `main` is protected, add a `RELEASE_TOKEN` secret (a PAT with `contents: write`) so the changelog commit and the tag can be pushed; otherwise `GITHUB_TOKEN` is used.
 
 ## [License](LICENSE)
