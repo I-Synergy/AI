@@ -56,7 +56,9 @@ Every suite should pass.
 
 ## AI Manager Extension (Optional)
 
-[AI Manager](https://github.com/I-Synergy/AIManager) is the VS Code companion for the template's skill and agent catalog. Use it when you want a project to carry only the skills and agents it needs instead of the full set.
+[AI Manager](https://github.com/I-Synergy/AIManager) is the VS Code companion for the template's skill and agent catalog. It solves the problem of a full catalog being too large to copy into every project: a repository would otherwise carry hundreds of skills it never uses, with no clear record of what is installed or what changed upstream.
+
+Use it to choose a preset or individual items. The extension records the selection, installs only those items, and shows drift and upstream changes against the same resolver CI uses.
 
 Install it from the Extensions view (search **AI Manager for Visual Studio Code**) or:
 

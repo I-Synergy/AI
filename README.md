@@ -4,7 +4,9 @@ Professional .NET development template with AI-powered agent orchestration and m
 
 ## AI Manager (VS Code extension)
 
-[AI Manager](https://github.com/I-Synergy/AIManager) is the companion VS Code extension for this template. It gives you a full-page UI for choosing which skills and agents each repository installs, backed by the template's resolver.
+A template catalog can offer hundreds of skills and agents. Copying all of them into every project bloats the AI context, hides what is actually installed, and turns template updates into a blind overwrite.
+
+[AI Manager](https://github.com/I-Synergy/AIManager) solves that. It is the VS Code front end for the template's per-repository resolver: you choose the skills and agents a repository needs — from a preset or item by item — and the extension records that selection, installs only those files, and shows what has drifted or changed upstream. Because it calls the same resolver CI uses, the UI cannot disagree with `sync --check`.
 
 ![AI Manager — Updates view](images/ai-manager/updates-view.png)
 

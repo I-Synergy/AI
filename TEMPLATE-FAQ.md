@@ -423,7 +423,7 @@ The authoritative list of suites is in `.ai/tests/run-all-tests.sh` (bash) and `
 
 ### Answer
 
-Yes. [AI Manager](https://github.com/I-Synergy/AIManager) is the companion VS Code extension for this template. It reads the skill and agent catalog, lets you choose a preset or individual items, and installs the selection into `.ai/skills/` and `.ai/agents/`.
+Yes. [AI Manager](https://github.com/I-Synergy/AIManager) is the companion VS Code extension for this template. It solves the problem of a full catalog being too large to copy into every project: the extension lets you choose a preset or individual skills and agents, records the selection, installs only those items, and shows drift and upstream changes. It reads the skill and agent catalog and installs the selection into `.ai/skills/` and `.ai/agents/`.
 
 Install it from the Extensions view (search **AI Manager for Visual Studio Code**) or:
 
