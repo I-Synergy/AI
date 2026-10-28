@@ -19,7 +19,6 @@ __pycache__/
 .ai/catalog/
 .ai/installed/
 .ai/scripts/catalog.py
-.ai/scripts/sync-instructions.py
 .ai/**/.ai-installed.json
 
 # Platform skill/agent junctions (recreated by sync-skills.py)

@@ -40,6 +40,12 @@ python .ai/scripts/sync-skills.py
 
 This creates 6 directory junctions so all tools read from the same `.ai/skills/` and `.ai/agents/` source. Junction targets are gitignored.
 
+`.github/copilot-instructions.md` is generated from `AGENTS.md`. After editing `AGENTS.md`, regenerate it with:
+
+```bash
+python .ai/scripts/sync-instructions.py
+```
+
 ### Verify Installation
 
 ```bash

@@ -228,7 +228,7 @@ claude  # start in project root
 
 #### GitHub Copilot
 
-GitHub Copilot also reads `.github/copilot-instructions.md` for VS Code-specific guidance. Works automatically in VS Code / GitHub Codespaces.
+GitHub Copilot also reads `.github/copilot-instructions.md` for VS Code-specific guidance. That file is generated from `AGENTS.md`; after editing `AGENTS.md`, run `python .ai/scripts/sync-instructions.py`. Works automatically in VS Code / GitHub Codespaces.
 
 #### Reasonix Code
 
