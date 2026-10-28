@@ -243,7 +243,7 @@ Return exactly these six items:
 
 ## Worked Example
 
-**Framing (Phase 0).** *Should `PUT /budgets/{id}` be replaced by `PATCH /budgets/{id}`, or should
+**Framing (Phase 0).** *Should `PUT /{entities}/{id}` be replaced by `PATCH /{entities}/{id}`, or should
 PATCH be added alongside PUT?* Constraints: the Kiota client is regenerated on every build (the
 OpenAPI MSBuild target in `.ai/reference/critical-rules.md`), so in-repo breakage surfaces at build
 time; external consumers are unknown. Known options: (A) keep PUT, add PATCH; (B) replace PUT.
@@ -262,8 +262,8 @@ the load-bearing point: *"my argument depends on an inventory no seat verified."
 
 **Synthesis (Phase 4).**
 
-- **Decision:** adopt **A** — add `PATCH /budgets/{id}` with explicit `.Produces` metadata and
-  validation; keep `PUT /budgets/{id}` unchanged.
+- **Decision:** adopt **A** — add `PATCH /{entities}/{id}` with explicit `.Produces` metadata and
+  validation; keep `PUT /{entities}/{id}` unchanged.
 - **Rationale:** two seats reached A on independent grounds (surface area, testability); the only
   surviving argument for B was conditional on an unverified fact. B would spend a breaking change to
   fix a documentation defect.
@@ -272,7 +272,7 @@ the load-bearing point: *"my argument depends on an inventory no seat verified."
 - **Recorded dissent (verbatim):** *"Design seat: the PUT route still advertises full replacement
   while the handler accepts partial updates. Keeping it means the OpenAPI spec keeps lying to every
   generated client, and we have now documented that as intentional."*
-- **Reopen conditions:** (1) a consumer inventory showing no external caller of `PUT /budgets/{id}`;
+- **Reopen conditions:** (1) a consumer inventory showing no external caller of `PUT /{entities}/{id}`;
   (2) a versioned route plus a deprecation window. Either fires → reconvene; expect B to carry.
 
 ## Relationship to Existing Mechanisms

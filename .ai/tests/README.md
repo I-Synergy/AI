@@ -179,7 +179,7 @@ Validates the identifier chain that joins story and use-case documents to bluepr
 - T1–T4 (failures) — duplicate `US-`/`UC-`/`AC-` identifiers, `@AC-…` scenario tags that resolve to no declared criterion, every identifier a blueprint's `source` names resolving — `use_cases` and `user_stories` as well as `acceptance_criteria`, with a `source` that names neither key failing as untraceable by construction — and `[TestCategory("AC-…")]` attributes that resolve
 - T5–T6 (advisories) — a declared criterion with no tagged scenario, and a declared criterion with no slice or no test-side reference
 - T7 (advisory) — a legacy or partly-labelled *story or use-case* document, reported once per document rather than once per entry; a context history, glossary or note beside them is out of scope
-- A padded child number (`AC-Budget-014.02`) resolves and is reported as an advisory — `{n}` is unpadded
+- A padded child number (`AC-Widget-014.02`) resolves and is reported as an advisory — `{n}` is unpadded
 - Exit code `1` only when a reference is broken; advisory warnings do not change it
 
 This tree ships no `docs/` tree and no test sources, so the suite passes here by finding nothing to check.

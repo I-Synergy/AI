@@ -110,7 +110,7 @@ Attribution vocabulary and severity taxonomy: `.ai/reference/quality-model.md` (
 
 - [ ] Minimal API pattern used
 - [ ] Proper HTTP methods (POST/GET/PUT/DELETE)
-- [ ] Route conventions followed (/{domain}/{id})
+- [ ] Route conventions followed (/{entities}/{id})
 - [ ] Status codes correct (200, 201, 204, 400, 404)
 - [ ] OpenAPI/Swagger annotations present
 - [ ] Authorization required where appropriate

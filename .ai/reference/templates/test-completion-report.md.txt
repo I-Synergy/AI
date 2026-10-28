@@ -19,7 +19,7 @@ reassurances.
 | Release / version | [{release} — the tag, version or commit range the report covers] |
 | Period covered | [{yyyy-mm-dd} to {yyyy-mm-dd}] |
 | Author, role | [{name}, {role}] |
-| Test plans covered | [`{BC}.{Entity}.{Operation}`, … — the slices in this release] |
+| Test plans covered | [`{Domain}.{Entity}.{Operation}`, … — the slices in this release] |
 | Date | {yyyy-mm-dd} |
 
 ## 1. Overview
@@ -52,7 +52,7 @@ leave the cell blank.]
 
 | Plan | Deviation | Reason | Effect |
 |---|---|---|---|
-| [`{BC}.{Entity}.{Operation}`] | [section or criterion not tested as planned] | [why] | [what is now unverified — carries into section 7] |
+| [`{Domain}.{Entity}.{Operation}`] | [section or criterion not tested as planned] | [why] | [what is now unverified — carries into section 7] |
 
 [Deviations include slices planned and not delivered, levels skipped (an E2E browser not available, a
 BDD scenario deferred), and criteria whose scope changed after the plan was approved. "None" is a
@@ -105,7 +105,7 @@ criterion left uncovered in section 2.]
 
 | Deliverable | Location |
 |---|---|
-| Test plans | [`docs/slices/{BC}/{Entity}.{Operation}/test-plan.md`, per slice] |
+| Test plans | [`docs/slices/{Domain}/{Entity}.{Operation}/test-plan.md`, per slice] |
 | Test code | [the test projects in this release] |
 | Feature files | [the `.feature` files in this release] |
 | Incident reports | [`docs/test-reports/incidents/`] |

@@ -89,7 +89,7 @@ Audits project documentation against actual codebase conventions and enforces ha
    - Compute each row's status: an `Evidence` row keeps `Evidence` only when its validator exits `0`,
      every path in its `Implementing artifact` cell exists, and at least one pattern in its `Evidence a
      project produces` cell matches something the project produced — substitute `*` for each `{…}` and
-     glob it against the working tree, so `docs/slices/{BC}/{Entity}.{Operation}/test-plan.md` is
+     glob it against the working tree, so `docs/slices/{Domain}/{Entity}.{Operation}/test-plan.md` is
      tested as `docs/slices/*/*/test-plan.md`. Where a pattern matches nothing, the row is naming a
      file this project does not hold, and it renders one step lower — `Aligned` — with the cause in the
      generated `Note` column, naming what was not found. One step, never a fourth value, never a silent

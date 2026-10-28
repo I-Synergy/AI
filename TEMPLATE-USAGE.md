@@ -64,13 +64,18 @@ Navigate to `.ai/project/` and customize these files. **Each file has a distinct
 
 Replace these tokens with your actual values:
 
-| Token | Replace With | Example |
-|-------|--------------|---------|
-| `{ApplicationName}` | Your application name | `BudgetTracker` |
-| `{Domain}` | Your domain names | `Budgets`, `Goals`, `Customers` |
-| `{Entity}` | Your entity names | `Budget`, `Goal`, `Customer` |
-| `{entity}` | Entity (lowercase) | `budget`, `goal`, `customer` |
-| `{entities}` | Entity plural (lowercase) | `budgets`, `goals`, `customers` |
+| Token | Meaning | Example Usage |
+|-------|---------|---------------|
+| `{ApplicationName}` | Your application name | `{ApplicationName}.Domain.{Domain}` |
+| `{Domain}` | Your bounded context | `{ApplicationName}.Domain.{Domain}` |
+| `{Entity}` | Your aggregate root (PascalCase) | `Create{Entity}Command` |
+| `{Entities}` | Aggregate root plural — DbSet names | `dataContext.{Entities}` |
+| `{entity}` | Aggregate root (camelCase) | `{entity}Id` |
+| `{entities}` | Aggregate root plural (camelCase) | `/{entities}` |
+| `{ChildEntity}` | Child entity (PascalCase) | `{Entity}With{ChildEntities}Response` |
+| `{ChildEntities}` | Child entity plural (PascalCase) | `dataContext.{ChildEntities}` |
+| `{childEntity}` | Child entity (camelCase) | `{childEntity}Id` |
+| `{childEntities}` | Child entity plural (camelCase) | `/{childEntities}` |
 
 ### Initialize Session Context
 
@@ -152,10 +157,10 @@ AGENTS.md                        # AI orchestration instructions (auto-loaded)
 
 1. **Copy template:** `.ai/reference/templates/command-handler.cs.txt`
 2. **Replace tokens:**
-   - `{ApplicationName}` → `BudgetTracker`
-   - `{Domain}` → `Budgets`
-   - `{Entity}` → `Budget`
-3. **Save as:** `src/BudgetTracker.Domain.Budgets/Features/Budget/Commands/CreateBudgetCommand.cs`
+   - `{ApplicationName}` → your application name
+   - `{Domain}` → your bounded context
+   - `{Entity}` → your aggregate root
+3. **Save as:** `src/{ApplicationName}.Domain.{Domain}/Features/{Entity}/Commands/Create{Entity}Command.cs`
 
 ### Token Replacement Example
 
@@ -166,19 +171,15 @@ namespace {ApplicationName}.Domain.{Domain}.Features.{Entity}.Commands;
 public sealed record Create{Entity}Command(...) : ICommand<Create{Entity}Response>;
 ```
 
-**After Replacement:**
-```csharp
-namespace BudgetTracker.Domain.Budgets.Features.Budget.Commands;
-
-public sealed record CreateBudgetCommand(...) : ICommand<CreateBudgetResponse>;
-```
+**After Replacement:** every token is substituted with your own names, following the same
+`{ApplicationName}.Domain.{Domain}` / `Create{Entity}Command` shape.
 
 ## Using Specialized Agent Skills
 
 ### Example: Implementing a New Feature
 
 ```
-User: "Implement complete CRUD for Budget entity"
+User: "Implement complete CRUD for {Entity} entity"
 
 Claude will:
 1. Load .ai/skills/dotnet-engineer/SKILL.md
@@ -190,7 +191,7 @@ Claude will:
 ### Example: Writing Tests
 
 ```
-User: "Write comprehensive tests for Budget handlers"
+User: "Write comprehensive tests for {Entity} handlers"
 
 Claude will:
 1. Load .ai/skills/unit-tester/SKILL.md
@@ -291,7 +292,7 @@ Once pytest is installed:
 
 - **Architectural Decisions:** "We chose to use MediatR because..."
 - **User Preferences:** "User prefers verbose logging in development"
-- **Project-Specific Patterns:** "Budget domain is our reference implementation"
+- **Project-Specific Patterns:** "{Domain} domain is our reference implementation"
 - **Blocked Paths:** "Tried approach X, didn't work because Y"
 
 ## Progress Tracking
@@ -299,16 +300,16 @@ Once pytest is installed:
 ### Progress File Format
 
 ```markdown
-# Implement Budget CRUD
+# Implement {Entity} CRUD
 
 Status: IN PROGRESS
 Started: 2026-04-19
 
 ## Steps
-- [x] Created CreateBudgetCommand and Handler
-- [x] Created GetBudgetByIdQuery and Handler
-- [ ] CreateUpdateBudgetCommand and Handler
-- [ ] Create DeleteBudgetCommand and Handler
+- [x] Created Create{Entity}Command and Handler
+- [x] Created Get{Entity}ByIdQuery and Handler
+- [ ] CreateUpdate{Entity}Command and Handler
+- [ ] Create Delete{Entity}Command and Handler
 - [ ] Create endpoints
 - [ ] Write tests
 

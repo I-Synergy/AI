@@ -98,28 +98,28 @@ public sealed class Create{Entity}CommandHandler(DataContext dataContext)
 
 ```csharp
 // Create
-var entity = new Budget { BudgetId = Guid.NewGuid(), Description = command.Description };
-dataContext.Budgets.Add(entity);
+var entity = new {Entity} { {Entity}Id = Guid.NewGuid(), Description = command.Description };
+dataContext.{Entities}.Add(entity);
 await dataContext.SaveChangesAsync(cancellationToken);
 
 // Read single
-var entity = await dataContext.Budgets.FirstOrDefaultAsync(e => e.BudgetId == id, cancellationToken);
-var model = /* map entity to Budget model */;
+var entity = await dataContext.{Entities}.FirstOrDefaultAsync(e => e.{Entity}Id == id, cancellationToken);
+var model = /* map entity to {Entity} model */;
 
 // Read list
-var models = await dataContext.Budgets
+var models = await dataContext.{Entities}
     .OrderBy(b => b.Description)
     .Select(b => /* map to model */)
     .ToListAsync(cancellationToken);
 
 // Update — change tracker detects mutations on tracked entities
-var entity = await dataContext.Budgets.FirstOrDefaultAsync(e => e.BudgetId == command.BudgetId, cancellationToken);
+var entity = await dataContext.{Entities}.FirstOrDefaultAsync(e => e.{Entity}Id == command.{Entity}Id, cancellationToken);
 entity.Description = command.Description;
 await dataContext.SaveChangesAsync(cancellationToken);
 
 // Delete
-var entity = await dataContext.Budgets.FirstOrDefaultAsync(e => e.BudgetId == command.BudgetId, cancellationToken);
-dataContext.Budgets.Remove(entity);
+var entity = await dataContext.{Entities}.FirstOrDefaultAsync(e => e.{Entity}Id == command.{Entity}Id, cancellationToken);
+dataContext.{Entities}.Remove(entity);
 await dataContext.SaveChangesAsync(cancellationToken);
 ```
 
@@ -348,8 +348,8 @@ public sealed record {Entity}CreatedEvent(
 - **Alternative Patterns:** [{Domain}.{Entity}] - [What pattern it demonstrates]
 
 **Example:**
-- **Primary Reference:** [Budgets.Budget] - Complete CRUD implementation with all operations, comprehensive testing, full documentation
-- **Alternative Patterns:** [Customers.Customer] - Demonstrates soft-delete pattern with audit fields
+- **Primary Reference:** [{Domain}.{Entity}] - Complete CRUD implementation with all operations, comprehensive testing, full documentation
+- **Alternative Patterns:** [{Domain2}.{Entity}] - Demonstrates soft-delete pattern with audit fields
 
 ## Known Limitations
 

@@ -47,7 +47,7 @@ mapping is not reproduced here; the correspondence a reader is most likely looki
 
 | # | Information item | Clause / Annex | Produced where | Produced by | Why it was adopted |
 |---|---|---|---|---|---|
-| 1 | **Test plan** | 7.2 / Annex E | `docs/slices/{BC}/{Entity}.{Operation}/test-plan.md` | the `tester`, per vertical slice, derived from `blueprint.json` | Its entry and exit criteria are what the traceability checks T5/T6 measure against. The only genuinely new writing in this set. |
+| 1 | **Test plan** | 7.2 / Annex E | `docs/slices/{Domain}/{Entity}.{Operation}/test-plan.md` | the `tester`, per vertical slice, derived from `blueprint.json` | Its entry and exit criteria are what the traceability checks T5/T6 measure against. The only genuinely new writing in this set. |
 | 2 | **Test case specification** | 8.3 / Annex I | *generated — no separate file* | free by-product of `.ai/reference/traceability.md` | The acceptance-criteria ↔ scenario ↔ test mapping **is** this item. Do not author a second document for it. |
 | 3 | **Test completion report** | 7.4 / Annex G | `docs/test-reports/{release}-test-completion-report.md` | per release, at release time | Carries **Test measures** and **Residual risks** — the two sections this template treats as the ones a certification auditor would sample first. |
 | 4 | **Test incident report** | 8.11 / Annex R | `docs/test-reports/incidents/{TIR-id}.md` | one per failure, by whoever found it | A failure recorded only as a red test is not reproducible by anyone else; derivable from MSTest `.trx` output. |
@@ -55,7 +55,7 @@ mapping is not reproduced here; the correspondence a reader is most likely looki
 ### 1 — Test plan (7.2, Annex E)
 
 One plan per vertical slice, written when the slice is generated and updated when its scope changes.
-It is derived from `docs/slices/{BC}/{Entity}.{Operation}/blueprint.json`, so nothing in it is
+It is derived from `docs/slices/{Domain}/{Entity}.{Operation}/blueprint.json`, so nothing in it is
 invented: the items under test come from `files_to_create` and the criteria in scope come from
 `source.acceptance_criteria`.
 
@@ -82,7 +82,7 @@ the expected result, and a reference to the test that implements it — is exact
 
 | What a case specification carries | Where it already lives |
 |---|---|
-| A stable identifier for the case | `AC-{BC}-{NNN}.{n}`, declared in the story or use-case document |
+| A stable identifier for the case | `AC-{Domain}-{NNN}.{n}`, declared in the story or use-case document |
 | The objective / test condition | the criterion text on that checkbox line |
 | Steps and expected result | the Gherkin scenario tagged `@AC-…`, plus the blueprint's implementation detail |
 | The implementing test | `[TestCategory("AC-…")]` on the MSTest method, or the executable `@AC-…` scenario |
@@ -197,7 +197,7 @@ sources the seventeenth item, it is added with its own reason and nothing else i
 
 | Artifact | Path | Written by |
 |---|---|---|
-| Test plan | `docs/slices/{BC}/{Entity}.{Operation}/test-plan.md` | `tester` (`unit-tester` / `playwright-tester`), per slice |
+| Test plan | `docs/slices/{Domain}/{Entity}.{Operation}/test-plan.md` | `tester` (`unit-tester` / `playwright-tester`), per slice |
 | Test case specification | *none — generated from the traceability chain* | `.ai/reference/traceability.md` + `validate-traceability.py` |
 | Test completion report | `docs/test-reports/{release}-test-completion-report.md` | release process |
 | Test incident report | `docs/test-reports/incidents/{TIR-id}.md` | whoever observed the failure |
@@ -227,7 +227,7 @@ but the four items must each resolve to something an auditor can open.
 
 ## Quick Checklist
 
-- [ ] The slice has a test plan at `docs/slices/{BC}/{Entity}.{Operation}/test-plan.md`, derived from
+- [ ] The slice has a test plan at `docs/slices/{Domain}/{Entity}.{Operation}/test-plan.md`, derived from
       its `blueprint.json`, with entry and exit criteria
 - [ ] Every criterion in the slice's `source.acceptance_criteria` is named in that plan
 - [ ] No separate test case specification was authored — the `AC-` ↔ scenario ↔ test chain is it

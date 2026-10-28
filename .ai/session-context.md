@@ -1,6 +1,7 @@
 # Session Context Template (CUSTOMIZE THIS)
 
-**Instructions:** Copy this to `.ai/session-context.md` and customize for your project.
+**Instructions:** This file ships as a placeholder. Replace the bracketed values and the example
+blocks with your project's context, then keep it updated at the end of every session.
 
 # {ApplicationName} Session Context
 
@@ -101,10 +102,10 @@
 
 **Example:**
 
-### Budgets (Reference Implementation)
+### {Domain} (Reference Implementation)
 
 **Status:** Complete and production-ready
-**Location:** `src/BudgetTracker.Domain.Budgets/`
+**Location:** `src/{ApplicationName}.Domain.{Domain}/`
 **Use As Template:** Yes - all future domain implementations should follow this pattern
 
 **Key Learnings:**
@@ -129,9 +130,9 @@
 
 ### Issue 1: EF Core Eager Loading Performance
 
-- **Issue:** N+1 queries when loading budget with goals and debts
+- **Issue:** N+1 queries when loading an {entity} with its {childEntities}
 - **Status:** Resolved
-- **Workaround:** Added explicit `.Include(b => b.Goals).Include(b => b.Debts)` to all budget queries
+- **Workaround:** Added explicit `.Include(b => b.{ChildEntities})` to all {entity} queries
 - **Long-term solution:** Consider projection to DTOs with specific includes per use case
 
 ---
@@ -171,12 +172,12 @@
 
 ### Feature Implementation Patterns
 
-1. **Budgets.Budget** - Complete CRUD with all operations, full test coverage, comprehensive documentation
-2. **Customers.Customer** - Demonstrates soft-delete pattern and audit logging
-3. **Orders.Order** - Shows aggregate root with child entities (OrderLines)
+1. **{Domain}.{Entity}** - Complete CRUD with all operations, full test coverage, comprehensive documentation
+2. **{Domain2}.{Entity}** - Demonstrates soft-delete pattern and audit logging
+3. **{Domain3}.{Entity}** - Shows aggregate root with child entities (`{ChildEntities}`)
 
 **Pattern to Follow:**
-Copy Budgets.Budget structure exactly - proven and working in production.
+Copy {Domain}.{Entity} structure exactly - proven and working in production.
 
 ---
 
@@ -292,9 +293,9 @@ Copy Budgets.Budget structure exactly - proven and working in production.
 
 **Example:**
 
-1. **Current Focus:** Implement Customers domain following Budgets reference pattern
-2. **Blockers:** Waiting for Customer API schema approval from Product team
-3. **Recent Decisions:** Decided to use soft-delete for Customers (see Decision log above)
+1. **Current Focus:** Implement {Domain2} domain following the {Domain} reference pattern
+2. **Blockers:** Waiting for {Domain2} API schema approval from the product team
+3. **Recent Decisions:** Decided to use soft-delete for {Domain2} (see Decision log above)
 4. **Patterns Changed:** None - continue following established patterns
 5. **Written By:** Claude Code on 2026-04-19
 

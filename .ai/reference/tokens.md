@@ -1,15 +1,30 @@
 # Template Tokens Reference
 
-Throughout this template, the following placeholders are used. Replace them when implementing:
+Throughout this template, the following placeholders are used. Replace them when implementing.
+The template itself ships no concrete business domain: every example is expressed with tokens.
 
-| Token | Replace With | Example |
-|-------|--------------|---------|
-| `{ApplicationName}` | Your application name | `BudgetTracker` |
-| `{Domain}` | Domain/bounded context name | `Budgets`, `Goals`, `Debts` |
-| `{Entity}` | Entity name (PascalCase) | `Budget`, `Goal`, `Debt` |
-| `{Entities}` | Entity plural (PascalCase) — used for DbSet names | `Budgets`, `Goals`, `Debts` |
-| `{entity}` | Entity name (lowercase) | `budget`, `goal`, `debt` |
-| `{entities}` | Entity plural (lowercase) | `budgets`, `goals`, `debts` |
+| Token | Meaning | Example Usage |
+|-------|---------|---------------|
+| `{ApplicationName}` | Your application name | `{ApplicationName}.Domain.{Domain}` |
+| `{Domain}` | Bounded context name | `{ApplicationName}.Domain.{Domain}` |
+| `{Entity}` | Aggregate root (PascalCase) | `Create{Entity}Command` |
+| `{Entities}` | Aggregate root plural (PascalCase) — used for DbSet names | `dataContext.{Entities}` |
+| `{entity}` | Aggregate root (camelCase) | `{entity}Id` |
+| `{entities}` | Aggregate root plural (camelCase) | `/{entities}` |
+| `{ChildEntity}` | Child entity inside an aggregate (PascalCase) | `{Entity}With{ChildEntities}Response` |
+| `{ChildEntities}` | Child entity plural (PascalCase) | `dataContext.{ChildEntities}` |
+| `{childEntity}` | Child entity (camelCase) | `{childEntity}Id` |
+| `{childEntities}` | Child entity plural (camelCase) | `/{childEntities}` |
+
+## Derived Forms
+
+Identifiers are composed from the tokens using the naming conventions:
+
+- `Create{Entity}Command`, `Update{Entity}Command`, `Delete{Entity}Command`
+- `Get{Entity}ByIdQuery`, `Get{Entities}ListQuery`
+- `{Entity}Id`, `{Entity}Status`, `{Entity}Endpoints`, `{Entity}CreatedEvent`
+- `{ApplicationName}.{Layer}.{Domain}` namespaces
+- `/{entities}` routes, `{entities}` tables, `{entity}_id` columns
 
 ## Special Files (Always in .ai/)
 
@@ -20,7 +35,7 @@ Throughout this template, the following placeholders are used. Replace them when
 ## Example Transformation
 
 - **Template:** `{ApplicationName}.Domain.{Domain}`
-- **Actual:** `BudgetTracker.Domain.Budgets`
+- **After replacement:** the same pattern with your own application and bounded-context names
 
 ## Namespace Examples
 
@@ -29,11 +44,6 @@ Throughout this template, the following placeholders are used. Replace them when
 namespace {ApplicationName}.Domain.{Domain}.Features.{Entity}.Commands;
 namespace {ApplicationName}.Services.{Domain}.Endpoints;
 namespace {ApplicationName}.Entities.{Domain};
-
-// Actual implementation
-namespace BudgetTracker.Domain.Budgets.Features.Budget.Commands;
-namespace BudgetTracker.Services.Budgets.Endpoints;
-namespace BudgetTracker.Entities.Budgets;
 ```
 
 ## File Path Examples
@@ -42,8 +52,4 @@ namespace BudgetTracker.Entities.Budgets;
 // Template paths
 src/{ApplicationName}.Domain.{Domain}/Features/{Entity}/Commands/Create{Entity}Command.cs
 src/{ApplicationName}.Services.{Domain}/Endpoints/{Entity}Endpoints.cs
-
-// Actual paths
-src/BudgetTracker.Domain.Budgets/Features/Budget/Commands/CreateBudgetCommand.cs
-src/BudgetTracker.Services.Budgets/Endpoints/BudgetEndpoints.cs
 ```

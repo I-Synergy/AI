@@ -4,20 +4,20 @@
 
 | Element | Convention | Example |
 |---------|-----------|----------|
-| **Namespace** | `{ApplicationName}.{Layer}.{Domain}` | `BudgetTracker.Domain.Budgets` |
-| **Command** | `{Action}{Entity}Command` | `CreateBudgetCommand` |
-| **Query** | `Get{Entity}{Criteria}Query` | `GetBudgetByIdQuery` |
-| **Handler** | `{Action}{Entity}CommandHandler` / `Get{Entity}{Criteria}QueryHandler` | `CreateBudgetCommandHandler` |
-| **Response** | `{Action}{Entity}Response` | `CreateBudgetResponse` |
-| **DTO / Model** | `{Entity}` (no suffix) | `Budget` |
+| **Namespace** | `{ApplicationName}.{Layer}.{Domain}` | `{ApplicationName}.Domain.{Domain}` |
+| **Command** | `{Action}{Entity}Command` | `Create{Entity}Command` |
+| **Query** | `Get{Entity}{Criteria}Query` | `Get{Entity}ByIdQuery` |
+| **Handler** | `{Action}{Entity}CommandHandler` / `Get{Entity}{Criteria}QueryHandler` | `Create{Entity}CommandHandler` |
+| **Response** | `{Action}{Entity}Response` | `Create{Entity}Response` |
+| **DTO / Model** | `{Entity}` (no suffix) | `{Entity}` |
 | **Interface** | `I{Type}` | `ICommandHandler<T>` |
-| **Classes** | PascalCase | `BudgetEndpoints` |
-| **Methods** | PascalCase + `Async` suffix | `GetBudgetByIdAsync` |
-| **Properties** | PascalCase | `BudgetId`, `CreatedDate` |
+| **Classes** | PascalCase | `{Entity}Endpoints` |
+| **Methods** | PascalCase + `Async` suffix | `Get{Entity}ByIdAsync` |
+| **Properties** | PascalCase | `{Entity}Id`, `CreatedDate` |
 | **Private fields** | `_camelCase` | `_dataContext`, `_logger` |
-| **Parameters/locals** | camelCase | `budgetId`, `cancellationToken` |
-| **Constants** | PascalCase | `MaxBudgetAmount` |
-| **Enums** | PascalCase (type and values) | `BudgetStatus.Active` |
+| **Parameters/locals** | camelCase | `{entity}Id`, `cancellationToken` |
+| **Constants** | PascalCase | `Max{Entity}Amount` |
+| **Enums** | PascalCase (type and values) | `{Entity}Status.Active` |
 
 ## Namespace Patterns
 
@@ -38,10 +38,10 @@
 {ApplicationName}.Data
 
 // Examples
-BudgetTracker.Domain.Budgets
-BudgetTracker.Domain.Budgets.Features.Budget.Commands
-BudgetTracker.Services.Budgets.Endpoints
-BudgetTracker.Entities.Budgets
+{ApplicationName}.Domain.{Domain}
+{ApplicationName}.Domain.{Domain}.Features.{Entity}.Commands
+{ApplicationName}.Services.{Domain}.Endpoints
+{ApplicationName}.Entities.{Domain}
 ```
 
 ## File Naming
@@ -54,9 +54,9 @@ Update{Entity}Command.cs
 Delete{Entity}Command.cs
 
 Examples:
-CreateBudgetCommand.cs
-UpdateBudgetCommand.cs
-DeleteBudgetCommand.cs
+Create{Entity}Command.cs
+Update{Entity}Command.cs
+Delete{Entity}Command.cs
 ```
 
 ### Queries
@@ -67,9 +67,9 @@ Get{Entity}ListQuery.cs
 Get{Entities}By{Criteria}Query.cs
 
 Examples:
-GetBudgetByIdQuery.cs
-GetBudgetListQuery.cs
-GetBudgetsByUserIdQuery.cs
+Get{Entity}ByIdQuery.cs
+Get{Entity}ListQuery.cs
+Get{Entities}ByUserIdQuery.cs
 ```
 
 ### Handlers
@@ -79,8 +79,8 @@ GetBudgetsByUserIdQuery.cs
 Get{Entity}{Criteria}QueryHandler.cs
 
 Examples:
-CreateBudgetCommandHandler.cs
-GetBudgetByIdQueryHandler.cs
+Create{Entity}CommandHandler.cs
+Get{Entity}ByIdQueryHandler.cs
 ```
 
 ### Responses
@@ -91,9 +91,9 @@ Create{Entity}Response.cs
 {Entity}SummaryResponse.cs
 
 Examples:
-CreateBudgetResponse.cs
-BudgetResponse.cs
-BudgetSummaryResponse.cs
+Create{Entity}Response.cs
+{Entity}Response.cs
+{Entity}SummaryResponse.cs
 ```
 
 ### Endpoints
@@ -102,8 +102,8 @@ BudgetSummaryResponse.cs
 {Entity}Endpoints.cs
 
 Examples:
-BudgetEndpoints.cs
-GoalEndpoints.cs
+{Entity}Endpoints.cs
+{ChildEntity}Endpoints.cs
 ```
 
 
@@ -116,16 +116,16 @@ EF Core automatically handles C# PascalCase to database snake_case conversion.
 
 ```csharp
 // C# Entity
-public class Budget
+public class {Entity}
 {
-    public Guid BudgetId { get; set; }
+    public Guid {Entity}Id { get; set; }
     public string Name { get; set; }
     public decimal TotalAmount { get; set; }
 }
 
 // Database table (automatic)
-Table: budgets
-Columns: budget_id, name, total_amount
+Table: {entities}
+Columns: {entity}_id, name, total_amount
 ```
 
 ## API Endpoints
@@ -133,29 +133,29 @@ Columns: budget_id, name, total_amount
 ### Route Patterns
 
 ```
-POST   /{domain}              # Create
-GET    /{domain}/{id}         # Read single
-GET    /{domain}              # Read list
-PUT    /{domain}/{id}         # Update
-DELETE /{domain}/{id}         # Delete
+POST   /{entities}            # Create
+GET    /{entities}/{id}       # Read single
+GET    /{entities}            # Read list
+PUT    /{entities}/{id}       # Update
+DELETE /{entities}/{id}       # Delete
 
 Examples:
-POST   /budgets
-GET    /budgets/123e4567-e89b-12d3-a456-426614174000
-GET    /budgets
-PUT    /budgets/123e4567-e89b-12d3-a456-426614174000
-DELETE /budgets/123e4567-e89b-12d3-a456-426614174000
+POST   /{entities}
+GET    /{entities}/123e4567-e89b-12d3-a456-426614174000
+GET    /{entities}
+PUT    /{entities}/123e4567-e89b-12d3-a456-426614174000
+DELETE /{entities}/123e4567-e89b-12d3-a456-426614174000
 ```
 
 ### Versioning
 
 ```
-/v1/{domain}
-/v2/{domain}
+/v1/{entities}
+/v2/{entities}
 
 Examples:
-/v1/budgets
-/v2/budgets
+/v1/{entities}
+/v2/{entities}
 ```
 
 ## Test Naming
@@ -168,7 +168,7 @@ public async Task HandleAsync_{Scenario}_{ExpectedResult}()
 
 Examples:
 [TestMethod]
-public async Task HandleAsync_ValidCommand_CreatesBudgetSuccessfully()
+public async Task HandleAsync_ValidCommand_Creates{Entity}Successfully()
 
 [TestMethod]
 public async Task HandleAsync_NullCommand_ThrowsArgumentNullException()
@@ -183,8 +183,8 @@ public async Task HandleAsync_NegativeAmount_ThrowsArgumentException()
 {Entity}Management.feature
 
 Examples:
-BudgetManagement.feature
-GoalManagement.feature
+{Entity}Management.feature
+{ChildEntity}Management.feature
 ```
 
 ### Step Definitions
@@ -193,8 +193,8 @@ GoalManagement.feature
 {Entity}ManagementSteps.cs
 
 Examples:
-BudgetManagementSteps.cs
-GoalManagementSteps.cs
+{Entity}ManagementSteps.cs
+{ChildEntity}ManagementSteps.cs
 ```
 
 ## Method Naming
@@ -208,8 +208,8 @@ public async Task<TResponse> HandleAsync(
     CancellationToken cancellationToken = default)
 
 // Examples
-public async Task<CreateBudgetResponse> HandleAsync(
-    CreateBudgetCommand command,
+public async Task<Create{Entity}Response> HandleAsync(
+    Create{Entity}Command command,
     CancellationToken cancellationToken = default)
 ```
 
@@ -218,23 +218,23 @@ public async Task<CreateBudgetResponse> HandleAsync(
 ```csharp
 // Use named DbSet properties on DataContext directly — no repositories, no extension methods
 // Create
-dataContext.Budgets.Add(entity);
+dataContext.{Entities}.Add(entity);
 await dataContext.SaveChangesAsync(cancellationToken);
 
 // Read single
-var entity = await dataContext.Budgets.FirstOrDefaultAsync(e => e.BudgetId == id, cancellationToken);
+var entity = await dataContext.{Entities}.FirstOrDefaultAsync(e => e.{Entity}Id == id, cancellationToken);
 
 // Read list
-var entities = await dataContext.Budgets.OrderBy(e => e.Description).ToListAsync(cancellationToken);
+var entities = await dataContext.{Entities}.OrderBy(e => e.Description).ToListAsync(cancellationToken);
 
 // Update — property mutation on tracked entity, no .Update() call needed
 entity.Description = command.Description;
 await dataContext.SaveChangesAsync(cancellationToken);
 
 // Delete — lookup first, null-check, then remove; validate rowsAffected
-var entityToDelete = await dataContext.Budgets.FirstOrDefaultAsync(e => e.BudgetId == id, cancellationToken);
+var entityToDelete = await dataContext.{Entities}.FirstOrDefaultAsync(e => e.{Entity}Id == id, cancellationToken);
 if (entityToDelete is null) return NotFoundResponse();
-dataContext.Budgets.Remove(entityToDelete);
+dataContext.{Entities}.Remove(entityToDelete);
 var rowsAffected = await dataContext.SaveChangesAsync(cancellationToken);
 if (rowsAffected == 0) return FailureResponse();
 ```
@@ -245,8 +245,8 @@ if (rowsAffected == 0) return FailureResponse();
 
 ```csharp
 // camelCase, descriptive
-var budgetModel = ...;
-var createdBudget = ...;
+var {entity}Model = ...;
+var created{Entity} = ...;
 var userId = ...;
 
 // NOT abbreviated
@@ -259,7 +259,7 @@ var b = ...;   // ❌ Bad
 ```csharp
 // camelCase, descriptive
 public async Task DoSomething(
-    Guid budgetId,
+    Guid {entity}Id,
     string userName,
     CancellationToken cancellationToken)
 ```
@@ -269,7 +269,7 @@ public async Task DoSomething(
 ```csharp
 // _camelCase with underscore prefix
 private readonly DataContext _dataContext;
-private readonly ILogger<CreateBudgetCommandHandler> _logger;
+private readonly ILogger<Create{Entity}CommandHandler> _logger;
 private readonly IMapper _mapper;
 ```
 
@@ -279,15 +279,15 @@ private readonly IMapper _mapper;
 
 ```csharp
 // PascalCase
-public const int MaxBudgetNameLength = 100;
-public const decimal MinimumBudgetAmount = 0.01m;
+public const int Max{Entity}NameLength = 100;
+public const decimal Minimum{Entity}Amount = 0.01m;
 ```
 
 ### Enums
 
 ```csharp
 // Type and values both PascalCase
-public enum BudgetStatus
+public enum {Entity}Status
 {
     Active,
     Inactive,
@@ -295,7 +295,7 @@ public enum BudgetStatus
 }
 
 // Usage
-var status = BudgetStatus.Active;
+var status = {Entity}Status.Active;
 ```
 
 ## Event Naming
@@ -304,11 +304,11 @@ var status = BudgetStatus.Active;
 {Entity}{Action}Event
 
 Examples:
-BudgetCreatedEvent
-BudgetUpdatedEvent
-BudgetDeletedEvent
-GoalAchievedEvent
-PaymentProcessedEvent
+{Entity}CreatedEvent
+{Entity}UpdatedEvent
+{Entity}DeletedEvent
+{ChildEntity}AchievedEvent
+{ChildEntity}ArchivedEvent
 ```
 
 ## Anti-Patterns to Avoid
@@ -319,7 +319,7 @@ var bgt = ...;
 var usrId = ...;
 
 // ✅ Use full names
-var budget = ...;
+var {entity} = ...;
 var userId = ...;
 
 // ❌ Avoid generic names
@@ -328,9 +328,9 @@ var temp = ...;
 var item = ...;
 
 // ✅ Use specific names
-var budgetModel = ...;
-var createdBudget = ...;
-var activeBudget = ...;
+var {entity}Model = ...;
+var created{Entity} = ...;
+var active{Entity} = ...;
 
 // ❌ Avoid Hungarian notation
 string strName = ...;

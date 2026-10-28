@@ -6,7 +6,7 @@ You are a development agent working within a .NET project template. You are powe
 
 ## Session Memory
 
-`.ai/session-context.md` is the shared memory for every client. Before starting any work, read it first (on Claude Code, the `SessionStart` hook prints it automatically; on GitHub Copilot and Reasonix Code nothing loads it for you, so reading it first is your responsibility). Before your final reply of any session that changed project state, update it using `.ai/reference/templates/session-handoff.md.txt`, set Written By to your client name (Claude Code, GitHub Copilot, or Reasonix Code), update sections in place, and never overwrite another client's entries. In this template repository the file stays the unfilled placeholder; record project state in `.ai/progress/` and `.ai/completed/` instead.
+`.ai/session-context.md` is the shared memory for every client. Before starting any work, read it first (on Claude Code, the `SessionStart` hook prints it automatically; on GitHub Copilot and Reasonix Code nothing loads it for you, so reading it first is your responsibility). Before your final reply of any session that changed project state, update it using `.ai/reference/templates/session-handoff.md.txt`, set Written By to your client name (Claude Code, GitHub Copilot, or Reasonix Code), update sections in place, and never overwrite another client's entries.
 
 Every session follows this cycle:
 
@@ -96,15 +96,15 @@ These are non-negotiable. Violating any of them causes bugs.
 Never pass model objects to commands. Extract each property individually.
 ```csharp
 // CORRECT
-public sealed record CreateDebtCommand(Guid BudgetId, string Description, decimal Amount) : ICommand<CreateDebtResponse>;
+public sealed record Create{ChildEntity}Command(Guid {Entity}Id, string Description, decimal Amount) : ICommand<Create{ChildEntity}Response>;
 // WRONG
-public sealed record CreateDebtCommand(Debt Debt) : ICommand<CreateDebtResponse>;
+public sealed record Create{ChildEntity}Command({ChildEntity} {childEntity}) : ICommand<Create{ChildEntity}Response>;
 ```
 
 ### 2. Data Access: EF Core Primitives Directly on DataContext
 No repositories. No extension methods (AddItemAsync, GetItemByIdAsync). Use DbSet properties directly.
-- Create: `dataContext.Budgets.Add(entity)` + `SaveChangesAsync`
-- Read: `dataContext.Budgets.FirstOrDefaultAsync(e => e.BudgetId == id, ct)`
+- Create: `dataContext.{Entities}.Add(entity)` + `SaveChangesAsync`
+- Read: `dataContext.{Entities}.FirstOrDefaultAsync(e => e.{Entity}Id == id, ct)`
 - Update: mutate tracked entity properties + `SaveChangesAsync` (no `.Update()` call needed)
 - Delete: `FirstOrDefaultAsync` → null check → `Remove(entity)` → `SaveChangesAsync` → check rows affected
 
@@ -115,19 +115,19 @@ Every async handler method must accept and pass through `CancellationToken cance
 Always map entities to Models before returning from handlers. Responses wrap Models, never entities.
 
 ### 5. Handler Naming: Always Include Command/Query Suffix
-`CreateBudgetCommandHandler`, `GetBudgetByIdQueryHandler` — never `CreateBudgetHandler`.
+`Create{Entity}CommandHandler`, `Get{Entity}ByIdQueryHandler` — never `Create{Entity}Handler`.
 
 ### 6. Example File Organization: One Type Per File, Subfolder Per Operation
 ```
-Features/Budgets/
-  Commands/CreateBudget/
-    CreateBudgetCommand.cs
-    CreateBudgetCommandHandler.cs
-    CreateBudgetResponse.cs
-  Queries/GetBudgetById/
-    GetBudgetByIdQuery.cs
-    GetBudgetByIdQueryHandler.cs
-    GetBudgetByIdResponse.cs
+Features/{Entity}/
+  Commands/Create{Entity}/
+    Create{Entity}Command.cs
+    Create{Entity}CommandHandler.cs
+    Create{Entity}Response.cs
+  Queries/Get{Entity}ById/
+    Get{Entity}ByIdQuery.cs
+    Get{Entity}ByIdQueryHandler.cs
+    Get{Entity}ByIdResponse.cs
 ```
 
 ### 7. Enum Naming: Plural (except *Status)

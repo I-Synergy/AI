@@ -182,15 +182,15 @@ public sealed record Get{Entities}ListResponse(IReadOnlyList<{Entity}> {Entities
 
 ```csharp
 public sealed record GetDepositsTotalAmountQuery(
-    Guid? GoalId = null,
-    Guid? BudgetId = null,
+    Guid? {ChildEntity}Id = null,
+    Guid? {Entity}Id = null,
     DateTimeOffset? StartDate = null,
     DateTimeOffset? EndDate = null
 ) : IQuery<decimal>;
 
 // Usage with named parameters
-var query = new GetDepositsTotalAmountQuery(GoalId: id);
-var query = new GetDepositsTotalAmountQuery(BudgetId: id);
+var query = new GetDepositsTotalAmountQuery({ChildEntity}Id: id);
+var query = new GetDepositsTotalAmountQuery({Entity}Id: id);
 var query = new GetDepositsTotalAmountQuery(StartDate: start, EndDate: end);
 ```
 
@@ -314,7 +314,7 @@ public sealed class Delete{Entity}CommandHandler(
         if (entity is null)
         {
             logger.LogWarning("{Entity} {Id} not found", command.{Entity}Id);
-            throw new InvalidOperationException($"{{Entity}} {command.{Entity}Id} not found");
+            throw new InvalidOperationException($"{Entity} {command.{Entity}Id} not found");
         }
 
         dataContext.{Entities}.Remove(entity);
@@ -327,7 +327,7 @@ public sealed class Delete{Entity}CommandHandler(
         }
 
         logger.LogWarning("Failed to delete {entity} {Id} - no rows affected", command.{Entity}Id);
-        throw new InvalidOperationException($"Failed to delete {{Entity}} {command.{Entity}Id}");
+        throw new InvalidOperationException($"Failed to delete {Entity} {command.{Entity}Id}");
     }
 }
 ```
@@ -370,7 +370,7 @@ public sealed class Get{Entity}ByIdQueryHandler(
         catch (Exception ex)
         {
             logger.LogError(ex, "Error retrieving {entity} {Id}", query.{Entity}Id);
-            throw new InvalidOperationException($"An unexpected error occurred while retrieving the {{Entity}}");
+            throw new InvalidOperationException($"An unexpected error occurred while retrieving the {Entity}");
         }
     }
 }
@@ -461,7 +461,7 @@ public sealed record {Entity}(
 ```
 
 Key rules:
-- No "Model" suffix (just `Budget`, not `BudgetModel`)
+- No "Model" suffix (just `{Entity}`, not `{Entity}Model`)
 - Positional record syntax
 - Lives in `{ApplicationName}.Domain.{Domain}.Models` namespace (inside domain project, not separate project)
 
@@ -636,7 +636,7 @@ if (entity is not null)
 - **Aggregate is the source of truth** — always load via `IAggregateRepository`, not from the EF read model.
 - **EF read model is a projection** — it exists for query performance; it mirrors the aggregate state.
 - **Query handlers** remain simple EF-only reads — they do NOT use the aggregate repository.
-- **Domain services** (e.g., `BudgetSchedulingService`) may be injected alongside the aggregate repo for side effects.
+- **Domain services** (e.g., `{Entity}SchedulingService`) may be injected alongside the aggregate repo for side effects.
 
 ---
 
@@ -646,28 +646,28 @@ if (entity is not null)
 
 ```csharp
 // WRONG
-public sealed record CreateDebtCommand(Debt Debt) : ICommand<CreateDebtResponse>;
+public sealed record Create{ChildEntity}Command({ChildEntity} {childEntity}) : ICommand<Create{ChildEntity}Response>;
 
 // CORRECT
-public sealed record CreateDebtCommand(
-    Guid BudgetId,
+public sealed record Create{ChildEntity}Command(
+    Guid {Entity}Id,
     string Description,
     decimal Amount
-) : ICommand<CreateDebtResponse>;
+) : ICommand<Create{ChildEntity}Response>;
 ```
 
 ### Wrong: Using Extension Methods for Data Access
 
 ```csharp
 // WRONG
-await dataContext.AddItemAsync<Budget, BudgetModel>(model, ct);
-await dataContext.GetItemByIdAsync<Budget, BudgetModel, Guid>(id, ct);
-await dataContext.RemoveItemAsync<Budget, Guid>(id, ct);
+await dataContext.AddItemAsync<{Entity}, {Entity}Model>(model, ct);
+await dataContext.GetItemByIdAsync<{Entity}, {Entity}Model, Guid>(id, ct);
+await dataContext.RemoveItemAsync<{Entity}, Guid>(id, ct);
 
 // CORRECT — use named DbSet properties
-dataContext.Budgets.Add(entity);
-await dataContext.Budgets.FirstOrDefaultAsync(e => e.BudgetId == id, ct);
-dataContext.Budgets.Remove(entity);
+dataContext.{Entities}.Add(entity);
+await dataContext.{Entities}.FirstOrDefaultAsync(e => e.{Entity}Id == id, ct);
+dataContext.{Entities}.Remove(entity);
 await dataContext.SaveChangesAsync(ct);
 ```
 
@@ -675,37 +675,37 @@ await dataContext.SaveChangesAsync(ct);
 
 ```csharp
 // WRONG - Response with flat properties
-public sealed record BudgetResponse(Guid BudgetId, string Description, ...);
+public sealed record {Entity}Response(Guid {Entity}Id, string Description, ...);
 
 // CORRECT - Response wraps Model
-public sealed record GetBudgetByIdResponse(Budget? Budget);
-public sealed record GetBudgetsListResponse(IReadOnlyList<Budget> Budgets);
+public sealed record Get{Entity}ByIdResponse({Entity}? {Entity});
+public sealed record Get{Entities}ListResponse(IReadOnlyList<{Entity}> {Entities});
 ```
 
 ### Wrong: Handler Naming Without Suffix
 
 ```csharp
 // WRONG
-public sealed class CreateBudgetHandler : ICommandHandler<...>
-public sealed class GetBudgetByIdHandler : IQueryHandler<...>
+public sealed class Create{Entity}Handler : ICommandHandler<...>
+public sealed class Get{Entity}ByIdHandler : IQueryHandler<...>
 
 // CORRECT
-public sealed class CreateBudgetCommandHandler : ICommandHandler<...>
-public sealed class GetBudgetByIdQueryHandler : IQueryHandler<...>
+public sealed class Create{Entity}CommandHandler : ICommandHandler<...>
+public sealed class Get{Entity}ByIdQueryHandler : IQueryHandler<...>
 ```
 
 ### Wrong: Exposing Domain Entities
 
 ```csharp
 // WRONG - Returns domain entity
-public async Task<Entities.Budgets.Budget> HandleAsync(...) { return entity; }
+public async Task<Entities.{Domain}.{Entity}> HandleAsync(...) { return entity; }
 
 // CORRECT - Returns response wrapping model
-public async Task<GetBudgetByIdResponse> HandleAsync(...)
+public async Task<Get{Entity}ByIdResponse> HandleAsync(...)
 {
-    var entity = await dataContext.Budgets.FirstOrDefaultAsync(e => e.BudgetId == query.BudgetId, ct);
-    // TODO: map entity to Budget model
-    var budget = /* map entity */;
-    return new GetBudgetByIdResponse(budget);
+    var entity = await dataContext.{Entities}.FirstOrDefaultAsync(e => e.{Entity}Id == query.{Entity}Id, ct);
+    // TODO: map entity to {Entity} model
+    var {entity} = /* map entity */;
+    return new Get{Entity}ByIdResponse({entity});
 }
 ```

@@ -161,14 +161,20 @@ name is the skill name (`/<skill-name>` invokes it explicitly).
 
 ### Template Tokens
 
-| Token | Replace With | Example |
-|-------|--------------|---------|
-| `{ApplicationName}` | Your application name | `BudgetTracker` |
-| `{Domain}` | Domain/bounded context | `Budgets`, `Goals`, `Debts` |
-| `{Entity}` | Entity name (PascalCase) | `Budget`, `Goal`, `Debt` |
-| `{Entities}` | Entity plural (PascalCase) — used for DbSet names | `Budgets`, `Goals`, `Debts` |
-| `{entity}` | Entity name (lowercase) | `budget`, `goal`, `debt` |
-| `{entities}` | Entity plural (lowercase) | `budgets`, `goals`, `debts` |
+| Token | Meaning | Example Usage |
+|-------|---------|---------------|
+| `{ApplicationName}` | Your application name | `{ApplicationName}.Domain.{Domain}` |
+| `{Domain}` | Bounded context | `{ApplicationName}.Domain.{Domain}` |
+| `{Entity}` | Aggregate root (PascalCase) | `Create{Entity}Command` |
+| `{Entities}` | Aggregate root plural (PascalCase) — used for DbSet names | `dataContext.{Entities}` |
+| `{entity}` | Aggregate root (camelCase) | `{entity}Id` |
+| `{entities}` | Aggregate root plural (camelCase) | `/{entities}` |
+| `{ChildEntity}` | Child entity (PascalCase) | `{Entity}With{ChildEntities}Response` |
+| `{ChildEntities}` | Child entity plural (PascalCase) | `dataContext.{ChildEntities}` |
+| `{childEntity}` | Child entity (camelCase) | `{childEntity}Id` |
+| `{childEntities}` | Child entity plural (camelCase) | `/{childEntities}` |
+
+The template ships no concrete business domain; every example is expressed with these tokens.
 
 See `.ai/reference/tokens.md` for complete definitions.
 
@@ -250,12 +256,17 @@ Edit files in `.ai/project/` to customize for your project:
 ### Replace Tokens
 
 ```bash
-find /path/to/YourProject/.ai -type f -exec sed -i 's/{ApplicationName}/BudgetTracker/g' {} +
-find /path/to/YourProject/.ai -type f -exec sed -i 's/{Domain}/Budgets/g' {} +
-find /path/to/YourProject/.ai -type f -exec sed -i 's/{Entity}/Budget/g' {} +
-find /path/to/YourProject/.ai -type f -exec sed -i 's/{Entities}/Budgets/g' {} +
-find /path/to/YourProject/.ai -type f -exec sed -i 's/{entity}/budget/g' {} +
-find /path/to/YourProject/.ai -type f -exec sed -i 's/{entities}/budgets/g' {} +
+# Replace each token with your own value, longest/most-specific first
+find /path/to/YourProject/.ai -type f -exec sed -i 's/{ApplicationName}/YourApplication/g' {} +
+find /path/to/YourProject/.ai -type f -exec sed -i 's/{ChildEntities}/YourChildEntities/g' {} +
+find /path/to/YourProject/.ai -type f -exec sed -i 's/{ChildEntity}/YourChildEntity/g' {} +
+find /path/to/YourProject/.ai -type f -exec sed -i 's/{childEntities}/yourChildEntities/g' {} +
+find /path/to/YourProject/.ai -type f -exec sed -i 's/{childEntity}/yourChildEntity/g' {} +
+find /path/to/YourProject/.ai -type f -exec sed -i 's/{Domain}/YourDomain/g' {} +
+find /path/to/YourProject/.ai -type f -exec sed -i 's/{Entities}/YourEntities/g' {} +
+find /path/to/YourProject/.ai -type f -exec sed -i 's/{Entity}/YourEntity/g' {} +
+find /path/to/YourProject/.ai -type f -exec sed -i 's/{entities}/yourEntities/g' {} +
+find /path/to/YourProject/.ai -type f -exec sed -i 's/{entity}/yourEntity/g' {} +
 ```
 
 ### Initialize Session Context
@@ -272,12 +283,12 @@ Edit `.ai/session-context.md` to establish your project's initial state.
 | **GitHub Copilot** | Instruction in `.github/copilot-instructions.md` (no hook available) | Instruction in `.github/copilot-instructions.md`: write handoff before final reply |
 | **Reasonix Code** | Instruction in `AGENTS.md` (no hook available) | Instruction in `AGENTS.md`: write handoff before final reply |
 
-In this template repository, the file stays as the unfilled placeholder. Project state is recorded in `.ai/progress/` (active tasks) and `.ai/completed/` (finished tasks) instead.
+`.ai/session-context.md` ships as an unfilled placeholder — fill it in for your project and keep it updated. `.ai/plans/`, `.ai/progress/`, and `.ai/completed/` ship empty; they are populated only while work is in flight.
 
 ### Start Developing
 
 ```
-/api-endpoints "Create CRUD endpoints for Budget entity"
+/api-endpoints "Create CRUD endpoints for {Entity} entity"
 ```
 
 ## File Structure
@@ -478,7 +489,7 @@ The `.vscode/settings.json` sets `PIP_CONFIG_FILE` automatically in VS Code term
 ### Implementing a Feature
 
 ```
-"Implement complete CRUD for Budget entity"
+"Implement complete CRUD for {Entity} entity"
 
 Claude will:
 1. Read .ai/session-context.md
@@ -492,7 +503,7 @@ Claude will:
 ### Writing Tests
 
 ```
-"Write comprehensive tests for Budget handlers"
+"Write comprehensive tests for {Entity} handlers"
 
 Claude will:
 1. Load .ai/skills/unit-tester/SKILL.md + .ai/patterns/testing-patterns.md

@@ -329,7 +329,7 @@ def test_session_memory_section() -> bool:
     print("-" * 40)
 
     marker_1 = "`.ai/session-context.md` is the shared memory for every client"
-    marker_2 = "In this template repository the file stays the unfilled placeholder"
+    marker_2 = "never overwrite another client's entries"
     heading = "## Session Memory"
 
     files_to_check = [

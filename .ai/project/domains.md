@@ -20,9 +20,9 @@
 **Example:**
 | Domain | Purpose | Status | Team/Owner |
 |--------|---------|--------|------------|
-| Budgets | Financial planning and tracking | Active | Finance Team |
-| Customers | Customer relationship management | Active | Sales Team |
-| Orders | Sales order processing | Planned | Operations Team |
+| {Domain1} | [Primary business capability] | Active | Team A |
+| {Domain2} | [Supporting business capability] | Active | Team B |
+| {Domain3} | [Reporting capability] | Planned | Team C |
 
 ---
 
@@ -44,9 +44,8 @@
 **Example:**
 | Entity | Description | Aggregate Root? | Key Properties |
 |--------|-------------|-----------------|----------------|
-| Budget | Financial budget period | Yes | Name, Amount, StartDate, EndDate |
-| Goal | Savings goal within budget | No | Name, TargetAmount, CurrentAmount |
-| Debt | Debt to pay off | No | Creditor, TotalAmount, OutstandingAmount |
+| {Entity} | Primary aggregate root | Yes | Name, Amount, StartDate, EndDate |
+| {ChildEntity} | Child entity owned by {Entity} | No | Name, Amount, CreatedDate |
 
 **Domain Events:**
 
@@ -55,9 +54,9 @@
 - [{Entity}Deleted] - [When fired and why it matters]
 
 **Example:**
-- [BudgetCreated] - When a new budget is successfully created; triggers notification to user
-- [GoalAchieved] - When a goal reaches its target amount; triggers celebration notification
-- [DebtPaidOff] - When debt outstanding amount reaches zero; triggers credit score update
+- [{Entity}Created] - When a new {entity} is successfully created; triggers notification to user
+- [{ChildEntity}Updated] - When a child {childEntity} changes; triggers aggregate recalculation
+- [{Entity}Deleted] - When an {entity} is removed; triggers cleanup of related records
 
 **Business Rules:**
 
@@ -66,10 +65,10 @@
 3. [Rule 3] - [Description and rationale]
 
 **Example:**
-1. Budget amount must be positive - Cannot create negative budgets
-2. Goals total cannot exceed budget amount - Prevents over-allocation of funds
-3. Debt payment date cannot be in the past - Ensures valid payment scheduling
-4. Budget dates cannot overlap for same user - Prevents ambiguous period assignment
+1. {Entity}.Amount must be positive - Cannot create negative {entities}
+2. The sum of child {childEntities} cannot exceed the parent {entity} amount - Prevents over-allocation
+3. {ChildEntity}.CreatedDate cannot be in the future - Ensures valid chronological data
+4. {Entity} periods cannot overlap for the same owner - Prevents ambiguous period assignment
 
 **Validation Rules:**
 
@@ -80,9 +79,9 @@
 **Example:**
 | Field | Validation | Error Message |
 |-------|-----------|---------------|
-| Budget.Name | Required, Max 100 chars | "Budget name is required and must be less than 100 characters" |
-| Budget.Amount | > 0, < 1,000,000 | "Budget amount must be between 0 and 1,000,000" |
-| Goal.TargetAmount | > 0 | "Goal target amount must be positive" |
+| {Entity}.Name | Required, Max 100 chars | "{Entity} name is required and must be less than 100 characters" |
+| {Entity}.Amount | > 0, < 1,000,000 | "{Entity} amount must be between 0 and 1,000,000" |
+| {ChildEntity}.Amount | > 0 | "{ChildEntity} amount must be positive" |
 
 **Domain-Specific Patterns:**
 
@@ -90,9 +89,9 @@
 - [Pattern 2] - [Why used in this domain]
 
 **Example:**
-- **Soft Delete** - Budget entities use soft delete (IsDeleted flag) to maintain historical data for reporting
-- **Cascade Archiving** - Deleting a budget marks all child goals/debts as archived, not deleted
-- **Temporal Data** - Budget has StartDate/EndDate for period-based queries and overlapping validation
+- **Soft Delete** - {Entity} entities use soft delete (IsDeleted flag) to maintain historical data for reporting
+- **Cascade Archiving** - Deleting an {entity} marks its child {childEntities} as archived, not deleted
+- **Temporal Data** - {Entity} has StartDate/EndDate for period-based queries and overlapping validation
 
 **Project Structure:**
 
@@ -112,7 +111,7 @@
 
 **Example:**
 - **Depends On:** None (core domain)
-- **Depended On By:** Reports (reads budget data), Analytics (aggregates budget metrics)
+- **Depended On By:** {Domain2} (reads {entity} data), {Domain3} (aggregates {entity} metrics)
 
 ---
 
@@ -130,10 +129,9 @@
 [Visual representation of domain dependencies]
 
 Example:
-Orders ----reads----→ Customers (get customer details)
-Orders ----creates---→ Invoices (create invoice from order)
-Payments ----updates---→ Invoices (mark invoice as paid)
-Reports ----reads----→ All Domains (aggregate reporting data)
+{Domain1} ----reads----→ {Domain2} (get related details)
+{Domain1} ----creates---→ {Domain3} (raise a domain event)
+{Domain3} ----reads----→ All Domains (aggregate reporting data)
 ```
 
 **Relationship Details:**
@@ -145,10 +143,9 @@ Reports ----reads----→ All Domains (aggregate reporting data)
 **Example:**
 | Source Domain | Relationship | Target Domain | Method | Notes |
 |--------------|--------------|---------------|--------|-------|
-| Orders | reads | Customers | Direct reference | Get customer details for order |
-| Orders | creates | Invoices | Domain event | Create invoice when order completed |
-| Payments | updates | Invoices | API call | Mark invoice as paid |
-| Reports | reads | All | Read-only queries | Aggregate data for reporting |
+| {Domain1} | reads | {Domain2} | Direct reference | Get related details |
+| {Domain1} | creates | {Domain3} | Domain event | Create a record when the aggregate completes |
+| {Domain3} | reads | All | Read-only queries | Aggregate data for reporting |
 
 ## Shared Concepts
 
@@ -161,9 +158,8 @@ Reports ----reads----→ All Domains (aggregate reporting data)
 **Example:**
 | Concept | Domains | Approach | Location |
 |---------|---------|----------|----------|
-| Address | Customers, Suppliers, Invoices | Shared value object | Common.ValueObjects |
-| Money | Orders, Invoices, Payments | Shared value object with currency | Common.ValueObjects |
-| Person | Customers, Users, Contacts | Duplicated (different contexts) | Each domain |
+| {ValueObject} | {Domain1}, {Domain2} | Shared value object | Common.ValueObjects |
+| Money | {Domain1}, {Domain2} | Shared value object with currency | Common.ValueObjects |
 | AuditFields | All domains | Base entity | Common.Entities.BaseEntity |
 
 ## Domain Maturity
@@ -182,9 +178,9 @@ Reports ----reads----→ All Domains (aggregate reporting data)
 **Example:**
 | Domain | Maturity | Coverage | Technical Debt | Notes |
 |--------|----------|----------|----------------|-------|
-| Budgets | Mature | 100% | Low | Complete CRUD, full testing, comprehensive documentation |
-| Customers | Growing | 60% | Medium | Missing bulk operations, needs performance optimization |
-| Orders | Initial | 20% | Low | Basic create/read only, needs update/delete and validation |
+| {Domain1} | Mature | 100% | Low | Complete CRUD, full testing, comprehensive documentation |
+| {Domain2} | Growing | 60% | Medium | Missing bulk operations, needs performance optimization |
+| {Domain3} | Initial | 20% | Low | Basic create/read only, needs update/delete and validation |
 
 ## Reference Implementation
 
@@ -199,7 +195,7 @@ Reports ----reads----→ All Domains (aggregate reporting data)
 
 **Example:**
 
-**Primary Reference:** [Budgets] - Complete implementation with all CRUD operations, comprehensive testing, full documentation
+**Primary Reference:** [{Entities}] - Complete implementation with all CRUD operations, comprehensive testing, full documentation
 
 **What to copy from the reference:**
 - CQRS handler structure and naming conventions
@@ -224,22 +220,22 @@ Reports ----reads----→ All Domains (aggregate reporting data)
 
 **Example:**
 
-### Budgets Evolution
+### {Entities} Evolution
 
 **Version 1.0 (2025-01-01):**
-- Basic budget CRUD operations
-- Simple goal tracking
+- Basic {entity} CRUD operations
+- Simple {childEntity} tracking
 - Basic validation
 
 **Version 2.0 (2025-02-01):**
-- Added debt management
+- Added {childEntity} management
 - Implemented recurring transactions
-- Added budget templates
+- Added {entity} templates
 - Enhanced validation with business rules
 
 **Version 2.1 (2025-02-15):**
-- Performance optimization for large budget lists
-- Added budget category filtering
+- Performance optimization for large {entity} lists
+- Added {entity} category filtering
 - Implemented soft delete for historical data
 
 ## Future Domains
@@ -253,9 +249,9 @@ Reports ----reads----→ All Domains (aggregate reporting data)
 **Example:**
 | Future Domain | Purpose | Priority | Dependencies | Estimated Effort |
 |---------------|---------|----------|--------------|------------------|
-| Analytics | Reporting and insights | Medium | Budgets, Orders | Medium |
+| {Domain2} | Reporting and insights | Medium | {Entities} | Medium |
 | Notifications | User notifications | Low | All domains | Small |
-| Workflows | Automated business workflows | High | Orders, Invoices | Large |
+| {Domain3} | Automated business workflows | High | {Entities} | Large |
 
 ## Domain Ubiquitous Language
 
@@ -269,14 +265,14 @@ Reports ----reads----→ All Domains (aggregate reporting data)
 
 **Example:**
 
-### Budgets Terms
+### {Domain} Terms
 
 | Term | Definition | Usage |
 |------|------------|-------|
-| Budget | A financial plan for a specific time period | Budget entity, BudgetModel DTO |
-| Goal | A savings target within a budget | Goal entity, child of Budget |
-| Allocation | Assignment of budget amount to categories | Property on Budget entity |
-| Rollover | Carrying unused budget to next period | Feature flag on Budget |
+| {Entity} | Primary aggregate root record | {Entity} entity, {Entity}Model DTO |
+| {ChildEntity} | A child record owned by an {entity} | {ChildEntity} entity, child of {Entity} |
+| Allocation | Assignment of {entity} amount to categories | Property on {Entity} entity |
+| Rollover | Carrying unused {entity} to next period | Feature flag on {Entity} |
 
 ---
 
