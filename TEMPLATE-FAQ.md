@@ -423,12 +423,12 @@ The authoritative list of suites is in `.ai/tests/run-all-tests.sh` (bash) and `
 
 ### Answer
 
-Yes. [AI Manager](https://github.com/I-Synergy/AIManager) is the companion VS Code extension for this template. It solves the problem of a full catalog being too large to copy into every project: the extension lets you choose a preset or individual skills and agents, records the selection, installs only those items, and shows drift and upstream changes. It reads the skill and agent catalog and installs the selection into `.ai/skills/` and `.ai/agents/`.
+Yes. [AI Workspace Manager](https://marketplace.visualstudio.com/items?itemName=I-Synergy.aiworkspacemanager) is the companion VS Code extension for this template. It solves the problem of a full catalog being too large to copy into every project: the extension lets you choose a preset or individual skills and agents, records the selection, installs only those items, and shows drift and upstream changes. It reads the skill and agent catalog and installs the selection into `.ai/skills/` and `.ai/agents/`.
 
-Install it from the Extensions view (search **AI Manager for Visual Studio Code**) or:
+Install it from the Extensions view (search **AI Workspace Manager for VS Code**) or:
 
 ```bash
-code --install-extension I-Synergy.ai-manager
+code --install-extension I-Synergy.aiworkspacemanager
 ```
 
 The extension keeps its selection and tooling state in `.ai/ai.json`, `.ai/ai.lock.json`, `.ai/tooling.json`, `.ai/catalog/`, `.ai/installed/`, and `*.ai-installed.json`. Those paths are gitignored: they describe the current machine's installed selection, not template content. Only `.ai/skills/` and `.ai/agents/` are committed.
