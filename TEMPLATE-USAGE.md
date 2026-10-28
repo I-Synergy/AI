@@ -58,6 +58,12 @@ Every suite should pass.
 
 [AI Manager](https://github.com/I-Synergy/AIManager) is the VS Code companion for the template's skill and agent catalog. Use it when you want a project to carry only the skills and agents it needs instead of the full set.
 
+Install it from the Extensions view (search **AI Manager for Visual Studio Code**) or:
+
+```bash
+code --install-extension I-Synergy.ai-manager
+```
+
 ### What It Does
 
 1. Reads the catalog of available skills and agents.

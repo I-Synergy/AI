@@ -2,6 +2,28 @@
 
 Professional .NET development template with AI-powered agent orchestration and modular architecture.
 
+## AI Manager (VS Code extension)
+
+[AI Manager](https://github.com/I-Synergy/AIManager) is the companion VS Code extension for this template. It gives you a full-page UI for choosing which skills and agents each repository installs, backed by the template's resolver.
+
+![AI Manager — Updates view](images/ai-manager/updates-view.png)
+
+![AI Manager — Sources settings](images/ai-manager/sources-view.png)
+
+- **Browse** — search the whole catalog, filter by kind / source / state, and install a selection in bulk.
+- **Installed** — see what this repo has, grouped by health, and remove or prune leftovers.
+- **Updates** — compare installed items with upstream and update the safe ones.
+- **Presets** — start from a named selection (Architecture, Security, .NET, MAUI, …) with resolved counts and deltas.
+- **Settings** — choose the Python interpreter and manage sources, refs, and releases.
+
+Install it from the Extensions view (search **AI Manager for Visual Studio Code**) or:
+
+```bash
+code --install-extension I-Synergy.ai-manager
+```
+
+Open the project folder and use the AI Manager view. The extension keeps its local state in `.ai/ai.json`, `.ai/ai.lock.json`, `.ai/tooling.json`, `.ai/catalog/`, `.ai/installed/`, and the `*.ai-installed.json` markers. Those paths are **gitignored** here: they describe one machine's installed selection, not template content. The selected skills and agents themselves live in `.ai/skills/` and `.ai/agents/` and remain the committed source of truth.
+
 ## Overview
 
 A **production-ready .NET project template** that provides comprehensive development patterns, specialized agent skills, and quality assurance tools for building enterprise applications with Clean Architecture, CQRS, and Domain-Driven Design.
@@ -241,17 +263,6 @@ bash .ai/tests/run-all-tests.sh
 ```
 
 Every suite should pass.
-
-### 5. Optional: AI Manager Extension
-
-[AI Manager](https://github.com/I-Synergy/AIManager) is the companion VS Code extension for this template. Instead of carrying every skill and agent, it lets you choose the ones a project needs:
-
-- browse skills and agents by category, or start from a preset such as Architecture or Security
-- record the selected items and their resolved revisions
-- install the selection under `.ai/skills/` and `.ai/agents/`
-- keep the bundled catalog tooling available to the repository
-
-Open the project folder in VS Code with AI Manager installed, then use its view to choose a preset or individual items. The extension keeps its local state in `.ai/ai.json`, `.ai/ai.lock.json`, `.ai/tooling.json`, `.ai/catalog/`, `.ai/installed/`, and the `*.ai-installed.json` markers. Those paths are **gitignored** here: they describe one machine's installed selection, not template content. The selected skills and agents themselves live in `.ai/skills/` and `.ai/agents/` and remain the committed source of truth.
 
 ### Customize Project Files
 
