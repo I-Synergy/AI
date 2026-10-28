@@ -28,30 +28,30 @@ must not be relaxed.
 
 | Entity | Format | Example | Vehicle |
 |---|---|---|---|
-| User story | `US-{BC}-{NNN}` | `US-Budget-014` | heading |
-| Acceptance criterion | `AC-{BC}-{NNN}.{n}` | `AC-Budget-014.2` | checkbox line |
-| Gherkin scenario | `@AC-{BC}-{NNN}.{n}` | `@AC-Budget-014.2` | tag — one per scenario |
-| Use case | `UC-{BC}-{NNN}` | `UC-Budget-007` | heading |
-| Alternate flow | `AF-{BC}-{NNN}.{n}` | `AF-Budget-007.1` | list item and Gherkin tag |
-| Slice | existing `{Entity}.{Operation}` | `Budget.Create` | blueprint `slice` key |
-| Test | `[TestCategory("AC-…")]` | `AC-Budget-014.2` | MSTest attribute |
+| User story | `US-{Domain}-{NNN}` | `US-{Domain}-014` | heading |
+| Acceptance criterion | `AC-{Domain}-{NNN}.{n}` | `AC-{Domain}-014.2` | checkbox line |
+| Gherkin scenario | `@AC-{Domain}-{NNN}.{n}` | `@AC-{Domain}-014.2` | tag — one per scenario |
+| Use case | `UC-{Domain}-{NNN}` | `UC-{Domain}-007` | heading |
+| Alternate flow | `AF-{Domain}-{NNN}.{n}` | `AF-{Domain}-007.1` | list item and Gherkin tag |
+| Slice | existing `{Entity}.{Operation}` | `{Entity}.Create` | blueprint `slice` key |
+| Test | `[TestCategory("AC-…")]` | `AC-{Domain}-014.2` | MSTest attribute |
 
-- **`{BC}` is the bounded context's name, as one PascalCase token.** It is the context's name as
+- **`{Domain}` is the bounded context's name, as one PascalCase token.** It is the context's name as
   written in `UBIQUITOUS_LANGUAGE.md`, and it is the same string used as the directory segment in
-  `docs/bounded-contexts/{BC}/` and `docs/slices/{BC}/`, and as the project segment in
-  `{Solution}.{BC}.Tests`. A multi-word name joins in PascalCase (`HouseholdPlanning`) — never a
-  space, hyphen or underscore. The token is copied verbatim: not abbreviated (`Budget`, never
-  `BUD`), not re-cased (`Budget`, never `budget`), not pluralised or singularised. If the ubiquitous
-  language says `Budgets`, every identifier says `Budgets`.
+  `docs/bounded-contexts/{Domain}/` and `docs/slices/{Domain}/`, and as the project segment in
+  `{Solution}.{Domain}.Tests`. A multi-word name joins in PascalCase (`HouseholdPlanning`) — never a
+  space, hyphen or underscore. The token is copied verbatim: not abbreviated (`{Domain}`, never
+  `BUD`), not re-cased (`{Domain}`, never `domain`), not pluralised or singularised. If the ubiquitous
+  language says `{Domain}`, every identifier says `{Domain}`.
 - **`{NNN}` is exactly three digits, zero-padded**, starting at `001`. `1` and `0001` are both
   malformed. The range is `001`–`999`; a bounded context approaching 999 stories is a signal it
   should be split, not that the field should widen.
 - **`{n}` is an unpadded sequence number** allocated inside its parent. The parent is named by the
-  `{NNN}` that precedes it: `AC-Budget-014.2` is the second acceptance criterion of story
-  `US-Budget-014`, and `AF-Budget-007.1` the first alternate flow of use case `UC-Budget-007`.
+  `{NNN}` that precedes it: `AC-{Domain}-014.2` is the second acceptance criterion of story
+  `US-{Domain}-014`, and `AF-{Domain}-007.1` the first alternate flow of use case `UC-{Domain}-007`.
   `{n}` never appears without its parent.
 - **Prefixes are upper case** — `US-`, `AC-`, `UC-`, `AF-` — and identifiers are matched literally
-  and case-sensitively. `ac-budget-014.2` is not a variant of `AC-Budget-014.2`; it is a typo.
+  and case-sensitively. `ac-{entity}-014.2` is not a variant of `AC-{Domain}-014.2`; it is a typo.
 - **The only separators are `-` between segments and `.` before the child number.** No `_`, no
   spaces, no slashes.
 
@@ -60,21 +60,21 @@ must not be relaxed.
 Identifiers are unique **within one bounded context**, not across the repository.
 
 - `US-` and `UC-` are independent numbering spaces in the same context: a context may contain both
-  `US-Budget-014` and `UC-Budget-014`, and that is not a collision. `AC-` and `AF-` numbers are
+  `US-{Domain}-014` and `UC-{Domain}-014`, and that is not a collision. `AC-` and `AF-` numbers are
   derived from their parent's number, so they inherit the parent's uniqueness; `.n` completes it.
-- The `{BC}` token in an identifier must match the context whose document declares it. A story
-  declared in `docs/bounded-contexts/Budget/user-stories.md` uses `US-Budget-…`; an identifier with
+- The `{Domain}` token in an identifier must match the context whose document declares it. A story
+  declared in `docs/bounded-contexts/{Entity}/user-stories.md` uses `US-{Domain}-…`; an identifier with
   a different context token in that file names a context the file does not belong to.
 - A reference may point at an identifier owned by another context — a cross-context end-to-end
   scenario, for example. It resolves against the owning context's documents, named by the
-  identifier's own `{BC}` token; where the referencing artifact lives is not constrained.
-- The slice is the exception that proves the rule: `Budget.Create` is scoped by its path, so its
-  full identity is `docs/slices/{BC}/{Entity}.{Operation}/` plus the blueprint's `slice` key. The
-  blueprint's `bounded_context` value is the same `{BC}` token.
+  identifier's own `{Domain}` token; where the referencing artifact lives is not constrained.
+- The slice is the exception that proves the rule: `{Entity}.Create` is scoped by its path, so its
+  full identity is `docs/slices/{Domain}/{Entity}.{Operation}/` plus the blueprint's `slice` key. The
+  blueprint's `bounded_context` value is the same `{Domain}` token.
 
 **Why scoped rather than bare.** The generated artifacts are already scoped by path — story files
-live at `docs/bounded-contexts/{BC}/…`, feature files at `docs/slices/{BC}/…`, tests in
-`{Solution}.{BC}.Tests/` — so a bare `AC-014.2` would normally resolve inside any one of them, and
+live at `docs/bounded-contexts/{Domain}/…`, feature files at `docs/slices/{Domain}/…`, tests in
+`{Solution}.{Domain}.Tests/` — so a bare `AC-014.2` would normally resolve inside any one of them, and
 the shorter form reads better. Scoping is not a fix for a collision that exists today; it is
 insurance against the aggregation this convention introduces. A per-release test completion report
 spans bounded contexts, and so does the validator's own coverage output; at that point a bare
@@ -120,8 +120,8 @@ block; its numbers are never reused and never renumbered. Retired identifiers ar
 ```markdown
 ## Retired IDs
 
-- US-Budget-009: retired 2026-09-18 — the bulk-import story moved to the Import context.
-- AC-Budget-014.3: retired 2026-09-25 — merged into AC-Budget-014.2.
+- US-{Domain}-009: retired 2026-09-18 — the bulk-import story moved to the Import context.
+- AC-{Domain}-014.3: retired 2026-09-25 — merged into AC-{Domain}-014.2.
 ```
 
 The line format is `- {ID}: retired {yyyy-mm-dd} — {reason}`. Omit the section while nothing has been
@@ -150,10 +150,10 @@ scenarios per criterion.
 **Correct** — one tag, on the line directly above the scenario:
 
 ```gherkin
-  @AC-Budget-014.2
+  @AC-{Domain}-014.2
   Scenario: Reject a non-positive amount
     Given I am an authenticated user
-    When I record a budget of 0.00
+    When I record a {entity} of 0.00
     Then the creation fails with a validation error
 ```
 
@@ -175,7 +175,7 @@ twice":
    one criterion. Merge them: keep the lower `.n`, retire the other, and re-point its references.
 
 Two tags on one scenario are never written, and no combined identifier
-(`AC-Budget-014.1-014.2`) exists. **Why the rule is absolute:** the tag is the only edge the validator
+(`AC-{Domain}-014.1-014.2`) exists. **Why the rule is absolute:** the tag is the only edge the validator
 follows in both directions. With one tag per scenario, a red test maps to exactly one criterion, and
 a criterion enumerates exactly the scenarios that are evidence for it. Relax it and neither direction
 can be computed without a disjunction in every check.
@@ -184,22 +184,22 @@ can be computed without a disjunction in every check.
 
 | Artifact | Where the identifier goes |
 |---|---|
-| Story heading | `docs/bounded-contexts/{BC}/user-stories.md`: `### US-Budget-014: Record a budget` |
-| Criterion | same file, as a checkbox line: `- [ ] AC-Budget-014.2: A non-positive amount is rejected.` |
-| Scenario | the Gherkin block in the story file, and `docs/slices/{BC}/{Entity}.{Operation}/{Entity}.{Operation}.feature`: a tag line directly above `Scenario:` |
-| Use case heading | `docs/bounded-contexts/{BC}/use-cases.md`: `### UC-Budget-007: Record a budget` |
-| Alternate flow | same file: `- AF-Budget-007.1: {Condition} → {Steps}`, and a `@AF-Budget-007.1` tag on the scenario that realizes it |
-| Slice | `docs/slices/{BC}/{Entity}.{Operation}/blueprint.json`: the existing `slice` key, plus identifiers in `source` |
-| Test | `{Solution}.{BC}.Tests/`: the `// Traces:` header comment and `[TestCategory("AC-…")]` on the method |
+| Story heading | `docs/bounded-contexts/{Domain}/user-stories.md`: `### US-{Domain}-014: Record a {entity}` |
+| Criterion | same file, as a checkbox line: `- [ ] AC-{Domain}-014.2: A non-positive amount is rejected.` |
+| Scenario | the Gherkin block in the story file, and `docs/slices/{Domain}/{Entity}.{Operation}/{Entity}.{Operation}.feature`: a tag line directly above `Scenario:` |
+| Use case heading | `docs/bounded-contexts/{Domain}/use-cases.md`: `### UC-{Domain}-007: Record a {entity}` |
+| Alternate flow | same file: `- AF-{Domain}-007.1: {Condition} → {Steps}`, and a `@AF-{Domain}-007.1` tag on the scenario that realizes it |
+| Slice | `docs/slices/{Domain}/{Entity}.{Operation}/blueprint.json`: the existing `slice` key, plus identifiers in `source` |
+| Test | `{Solution}.{Domain}.Tests/`: the `// Traces:` header comment and `[TestCategory("AC-…")]` on the method |
 
 **Story and use-case documents.** The working shape, which the skills emit exactly:
 
 ````markdown
-### US-Budget-014: Record a budget
+### US-{Domain}-014: Record a {entity}
 
 **Acceptance Criteria:**
-- [ ] AC-Budget-014.1: A budget is created and stored with a unique identifier.
-- [ ] AC-Budget-014.2: A non-positive amount is rejected with a validation error.
+- [ ] AC-{Domain}-014.1: A {entity} is created and stored with a unique identifier.
+- [ ] AC-{Domain}-014.2: A non-positive amount is rejected with a validation error.
 ````
 
 The criterion text follows the identifier after a colon, mirroring the story heading and the existing
@@ -210,9 +210,9 @@ text.
 
 ```json
   "source": {
-    "use_cases": ["UC-Budget-007"],
-    "user_stories": ["US-Budget-014"],
-    "acceptance_criteria": ["AC-Budget-014.1", "AC-Budget-014.2"]
+    "use_cases": ["UC-{Domain}-007"],
+    "user_stories": ["US-{Domain}-014"],
+    "acceptance_criteria": ["AC-{Domain}-014.1", "AC-{Domain}-014.2"]
   }
 ```
 
@@ -234,21 +234,21 @@ text.
 **Feature files and the runner.** The tag lives with the scenario in every copy of the file. Step
 definitions are shared across scenarios and carry no identifiers — they cannot, because Reqnroll
 binds them by step text, not by scenario. Where a project keeps both a design-time copy under
-`docs/slices/{BC}/…` and an executable copy under `{Solution}.{BC}.Tests/Features/`, the tags travel
+`docs/slices/{Domain}/…` and an executable copy under `{Solution}.{Domain}.Tests/Features/`, the tags travel
 with the scenarios; the executable copy is never stripped.
 
 **Test classes.** Two identifiers, two vehicles:
 
 ```csharp
-// File: tests/{ApplicationName}.Budget.Tests/Budget/CreateBudgetCommandHandlerTests.cs
-// Traces: US-Budget-014 / AC-Budget-014.1, AC-Budget-014.2
+// File: tests/{ApplicationName}.{Entity}.Tests/{Entity}/Create{Entity}CommandHandlerTests.cs
+// Traces: US-{Domain}-014 / AC-{Domain}-014.1, AC-{Domain}-014.2
 
 [TestClass]
-public class CreateBudgetCommandHandlerTests
+public class Create{Entity}CommandHandlerTests
 {
     [TestMethod]
-    [TestCategory("AC-Budget-014.1")]
-    public async Task HandleAsync_ValidCommand_CreatesBudgetSuccessfully()
+    [TestCategory("AC-{Domain}-014.1")]
+    public async Task HandleAsync_ValidCommand_Creates{Entity}Successfully()
     {
         // ...
     }
@@ -304,15 +304,15 @@ Those files still *declare* identifiers and are walked for declarations, referen
 tags like any other — only the legacy and mixed mode warnings are withheld from them, because an
 absence of story identifiers in a document that holds no stories is not an incomplete trace.
 
-**A padded child number resolves, and is reported.** `AC-Budget-014.02` is read as a criterion
+**A padded child number resolves, and is reported.** `AC-{Domain}-014.02` is read as a criterion
 rather than dropped: tightening the match to `[1-9]\d*` would remove the *declaration*, which turns
 a formatting slip into a coverage hole and makes every reference to it dangle. Instead the
 tolerance stays and the shape is reported as an advisory warning, once at the declaration and once
 at each reference carrying it — `{n}` is unpadded, so the fix is to rewrite it as
-`AC-Budget-014.2`. Like every other advisory here, it does not change the exit code.
+`AC-{Domain}-014.2`. Like every other advisory here, it does not change the exit code.
 
 **Not enforced by these checks**, though the convention requires them — author discipline for now:
-the `{BC}` token matching the containing directory, the one-traceability-tag-per-scenario cardinality,
+the `{Domain}` token matching the containing directory, the one-traceability-tag-per-scenario cardinality,
 the `// Traces:` header format, and the single `[TestCategory("AC-…")]` per method.
 
 ## Legacy Mode
@@ -332,7 +332,7 @@ somewhere.
 failures —
 
 ```text
-WARN docs/bounded-contexts/Budget/user-stories.md — legacy mode: 0 of 6 stories carry identifiers;
+WARN docs/bounded-contexts/{Entity}/user-stories.md — legacy mode: 0 of 6 stories carry identifiers;
      criterion-level checks (T5, T6) skipped for this file
 ```
 
@@ -351,113 +351,113 @@ must not block a build.
 
 ## Worked Example
 
-One bounded context (`Budget`), one story, taken through every vehicle. This is the text an agent is
+One bounded context (`{Entity}`), one story, taken through every vehicle. This is the text an agent is
 expected to emit; copy the shapes, not the words.
 
-**1 — Story, criteria and scenarios.** `docs/bounded-contexts/Budget/user-stories.md`
+**1 — Story, criteria and scenarios.** `docs/bounded-contexts/{Entity}/user-stories.md`
 
 ````markdown
-## User Stories — Budget
+## User Stories — {Entity}
 
-### US-Budget-014: Record a budget
+### US-{Domain}-014: Record a {entity}
 
 **As a** household planner
-**I want** to record a monthly budget
+**I want** to record a monthly {entity}
 **So that** I can track spending against it
 
 **Acceptance Criteria:**
-- [ ] AC-Budget-014.1: A budget is created and stored with a unique identifier.
-- [ ] AC-Budget-014.2: A non-positive amount is rejected with a validation error.
+- [ ] AC-{Domain}-014.1: A {entity} is created and stored with a unique identifier.
+- [ ] AC-{Domain}-014.2: A non-positive amount is rejected with a validation error.
 
 **Gherkin:**
 ```gherkin
-Feature: Record a budget
+Feature: Record a {entity}
 
-  @AC-Budget-014.1
-  Scenario: Create a valid budget
+  @AC-{Domain}-014.1
+  Scenario: Create a valid {entity}
     Given I am an authenticated user
-    When I record a budget of 100.00
-    Then the budget is stored
-    And the budget has a unique identifier
+    When I record a {entity} of 100.00
+    Then the {entity} is stored
+    And the {entity} has a unique identifier
 
-  @AC-Budget-014.2
+  @AC-{Domain}-014.2
   Scenario: Reject a non-positive amount
     Given I am an authenticated user
-    When I record a budget of 0.00
+    When I record a {entity} of 0.00
     Then the creation fails with a validation error
 ```
 ````
 
-**2 — Slice blueprint.** `docs/slices/Budget/Budget.Create/blueprint.json`
+**2 — Slice blueprint.** `docs/slices/{Entity}/{Entity}.Create/blueprint.json`
 
 ```json
 {
-  "slice": "Budget.Create",
-  "bounded_context": "Budget",
+  "slice": "{Entity}.Create",
+  "bounded_context": "{Entity}",
   "operation_type": "Command",
-  "entity": "Budget",
-  "handler_class": "CreateBudgetCommandHandler",
+  "entity": "{Entity}",
+  "handler_class": "Create{Entity}CommandHandler",
   "inputs": [
     { "name": "Amount", "type": "decimal", "required": true }
   ],
   "outputs": [
-    { "name": "BudgetId", "type": "Guid" }
+    { "name": "{Entity}Id", "type": "Guid" }
   ],
   "files_to_create": [
-    "{Solution}.Domain.Budget/Features/Budget/Commands/CreateBudget/CreateBudgetCommand.cs",
-    "{Solution}.Domain.Budget/Features/Budget/Commands/CreateBudget/CreateBudgetCommandHandler.cs",
-    "{Solution}.Budget.Tests/Budget/CreateBudgetCommandHandlerTests.cs"
+    "{Solution}.Domain.{Entity}/Features/{Entity}/Commands/Create{Entity}/Create{Entity}Command.cs",
+    "{Solution}.Domain.{Entity}/Features/{Entity}/Commands/Create{Entity}/Create{Entity}CommandHandler.cs",
+    "{Solution}.{Entity}.Tests/{Entity}/Create{Entity}CommandHandlerTests.cs"
   ],
   "source": {
-    "user_stories": ["US-Budget-014"],
-    "acceptance_criteria": ["AC-Budget-014.1", "AC-Budget-014.2"]
+    "user_stories": ["US-{Domain}-014"],
+    "acceptance_criteria": ["AC-{Domain}-014.1", "AC-{Domain}-014.2"]
   }
 }
 ```
 
-**3 — Feature file.** `docs/slices/Budget/Budget.Create/Budget.Create.feature`
+**3 — Feature file.** `docs/slices/{Entity}/{Entity}.Create/{Entity}.Create.feature`
 
 ```gherkin
-# File: docs/slices/Budget/Budget.Create/Budget.Create.feature
+# File: docs/slices/{Entity}/{Entity}.Create/{Entity}.Create.feature
 
-Feature: Record a budget
+Feature: Record a {entity}
 
-  @AC-Budget-014.1
-  Scenario: Create a valid budget
+  @AC-{Domain}-014.1
+  Scenario: Create a valid {entity}
     Given I am an authenticated user
-    When I record a budget of 100.00
-    Then the budget is stored
-    And the budget has a unique identifier
+    When I record a {entity} of 100.00
+    Then the {entity} is stored
+    And the {entity} has a unique identifier
 
-  @AC-Budget-014.2
+  @AC-{Domain}-014.2
   Scenario: Reject a non-positive amount
     Given I am an authenticated user
-    When I record a budget of 0.00
+    When I record a {entity} of 0.00
     Then the creation fails with a validation error
 ```
 
-**4 — Test class.** `tests/{ApplicationName}.Budget.Tests/Budget/CreateBudgetCommandHandlerTests.cs`
+**4 — Test class.** `tests/{ApplicationName}.{Entity}.Tests/{Entity}/Create{Entity}CommandHandlerTests.cs`
 
 ```csharp
-// File: tests/{ApplicationName}.Budget.Tests/Budget/CreateBudgetCommandHandlerTests.cs
-// Traces: US-Budget-014 / AC-Budget-014.1, AC-Budget-014.2
+// File: tests/{ApplicationName}.{Entity}.Tests/{Entity}/Create{Entity}CommandHandlerTests.cs
+// Traces: US-{Domain}-014 / AC-{Domain}-014.1, AC-{Domain}-014.2
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace {ApplicationName}.Budget.Tests.Budget;
+namespace {ApplicationName}.{Entity}.Tests.{Entity};
 
 [TestClass]
-public class CreateBudgetCommandHandlerTests
+public class Create{Entity}CommandHandlerTests
 {
     [TestMethod]
-    [TestCategory("AC-Budget-014.1")]
-    public async Task HandleAsync_ValidCommand_CreatesBudgetSuccessfully()
+    [TestCategory("AC-{Domain}-014.1")]
+    public async Task HandleAsync_ValidCommand_Creates{Entity}Successfully()
     {
-        // Arrange / Act / Assert — the budget is stored and gets a unique identifier
+        // Arrange / Act / Assert — the {entity} is stored and gets a unique identifier
     }
 
     [TestMethod]
-    [TestCategory("AC-Budget-014.2")]
+    [TestCategory("AC-{Domain}-014.2")]
     [ExpectedException(typeof(ArgumentException))]
     public async Task HandleAsync_NonPositiveAmount_ThrowsArgumentException()
     {
@@ -469,19 +469,19 @@ public class CreateBudgetCommandHandlerTests
 **The chain, assembled**
 
 ```text
-docs/bounded-contexts/Budget/user-stories.md
-  US-Budget-014
-    ├─ AC-Budget-014.1 ─ @AC-Budget-014.1 ─ [TestCategory("AC-Budget-014.1")]
-    └─ AC-Budget-014.2 ─ @AC-Budget-014.2 ─ [TestCategory("AC-Budget-014.2")]
+docs/bounded-contexts/{Entity}/user-stories.md
+  US-{Domain}-014
+    ├─ AC-{Domain}-014.1 ─ @AC-{Domain}-014.1 ─ [TestCategory("AC-{Domain}-014.1")]
+    └─ AC-{Domain}-014.2 ─ @AC-{Domain}-014.2 ─ [TestCategory("AC-{Domain}-014.2")]
 
-docs/slices/Budget/Budget.Create/blueprint.json
-  source.user_stories        → US-Budget-014
-  source.acceptance_criteria → AC-Budget-014.1, AC-Budget-014.2
+docs/slices/{Entity}/{Entity}.Create/blueprint.json
+  source.user_stories        → US-{Domain}-014
+  source.acceptance_criteria → AC-{Domain}-014.1, AC-{Domain}-014.2
 ```
 
 ## What This Does Not Do
 
-- **It does not measure coverage or quality.** A test carrying `[TestCategory("AC-Budget-014.2")]`
+- **It does not measure coverage or quality.** A test carrying `[TestCategory("AC-{Domain}-014.2")]`
   proves that someone asserted the link — not that the test verifies the criterion, not that the
   criterion is meaningful, and not that the scenario's steps are correct. The validator checks that
   references resolve; it cannot check meaning.
@@ -502,8 +502,8 @@ docs/slices/Budget/Budget.Create/blueprint.json
 
 ## Quick Checklist
 
-- [ ] Story and use-case headings carry `US-{BC}-{NNN}` / `UC-{BC}-{NNN}`, with `{BC}` copied from the ubiquitous language
-- [ ] Every criterion is `- [ ] AC-{BC}-{NNN}.{n}: {text}`; every alternate flow `- AF-{BC}-{NNN}.{n}: {…}`
+- [ ] Story and use-case headings carry `US-{Domain}-{NNN}` / `UC-{Domain}-{NNN}`, with `{Domain}` copied from the ubiquitous language
+- [ ] Every criterion is `- [ ] AC-{Domain}-{NNN}.{n}: {text}`; every alternate flow `- AF-{Domain}-{NNN}.{n}: {…}`
 - [ ] Every scenario carries exactly one `@AC-…` (or `@AF-…`) tag, directly above `Scenario:`
 - [ ] Every blueprint `source` holds identifier arrays and no free-text criteria
 - [ ] Every test method that is evidence for a criterion has one `[TestCategory("AC-…")]`; the file header lists `US-… / AC-…`

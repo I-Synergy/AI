@@ -25,10 +25,10 @@ These packages are NOT allowed in this template architecture. Always use the spe
 
 ```csharp
 ❌ WRONG - MediatR
-public class CreateBudgetHandler : IRequestHandler<CreateBudgetCommand, CreateBudgetResponse>
+public class Create{Entity}Handler : IRequestHandler<Create{Entity}Command, Create{Entity}Response>
 {
-    public async Task<CreateBudgetResponse> Handle(
-        CreateBudgetCommand request,
+    public async Task<Create{Entity}Response> Handle(
+        Create{Entity}Command request,
         CancellationToken cancellationToken)
     {
         // MediatR pattern
@@ -36,10 +36,10 @@ public class CreateBudgetHandler : IRequestHandler<CreateBudgetCommand, CreateBu
 }
 
 ✅ CORRECT - Direct CQRS
-public class CreateBudgetCommandHandler : ICommandHandler<CreateBudgetCommand, CreateBudgetResponse>
+public class Create{Entity}CommandHandler : ICommandHandler<Create{Entity}Command, Create{Entity}Response>
 {
-    public async Task<CreateBudgetResponse> HandleAsync(
-        CreateBudgetCommand command,
+    public async Task<Create{Entity}Response> HandleAsync(
+        Create{Entity}Command command,
         CancellationToken cancellationToken = default)
     {
         // Project's CQRS pattern
@@ -56,11 +56,11 @@ public class CreateBudgetCommandHandler : ICommandHandler<CreateBudgetCommand, C
 
 ```gherkin
 ✅ CORRECT - Reqnroll
-Feature: Budget Management
-  Scenario: Create a new budget
+Feature: {Entity} Management
+  Scenario: Create a new {entity}
     Given I am an authenticated user
-    When I create a budget with name "Q1 2025"
-    Then the budget should be created successfully
+    When I create a {entity} with name "Example"
+    Then the {entity} should be created successfully
 ```
 
 ### xUnit/NUnit vs. MSTest
@@ -72,21 +72,21 @@ Feature: Budget Management
 ```csharp
 ❌ WRONG - xUnit
 [Fact]
-public async Task ShouldCreateBudget()
+public async Task ShouldCreate{Entity}()
 {
     // xUnit pattern
 }
 
 ❌ WRONG - NUnit
 [Test]
-public async Task ShouldCreateBudget()
+public async Task ShouldCreate{Entity}()
 {
     // NUnit pattern
 }
 
 ✅ CORRECT - MSTest
 [TestMethod]
-public async Task HandleAsync_ValidCommand_CreatesBudgetSuccessfully()
+public async Task HandleAsync_ValidCommand_Creates{Entity}Successfully()
 {
     // MSTest pattern
 }
@@ -117,12 +117,12 @@ builder.Services.AddOpenApi();
 
 ```csharp
 ❌ WRONG - Serilog
-Log.Information("Created {EntityType} with ID {EntityId}", nameof(Budget), budgetId);
+Log.Information("Created {EntityType} with ID {EntityId}", nameof({Entity}), {entity}Id);
 
 ✅ CORRECT - ILogger
 _logger.LogInformation(
     "Created {EntityType} with ID {EntityId}",
-    nameof(Budget), budgetId);
+    nameof({Entity}), {entity}Id);
 ```
 
 ### FluentValidation vs. Data Annotations
@@ -133,9 +133,9 @@ _logger.LogInformation(
 
 ```csharp
 ❌ WRONG - FluentValidation
-public class CreateBudgetCommandValidator : AbstractValidator<CreateBudgetCommand>
+public class Create{Entity}CommandValidator : AbstractValidator<Create{Entity}Command>
 {
-    public CreateBudgetCommandValidator()
+    public Create{Entity}CommandValidator()
     {
         RuleFor(x => x.Name).NotEmpty().MaximumLength(100);
         RuleFor(x => x.Amount).GreaterThan(0);
@@ -143,14 +143,14 @@ public class CreateBudgetCommandValidator : AbstractValidator<CreateBudgetComman
 }
 
 ✅ CORRECT - Data Annotations
-public sealed record CreateBudgetCommand(
+public sealed record Create{Entity}Command(
     [Required]
     [StringLength(100, MinimumLength = 3)]
     string Name,
 
     [Range(0.01, double.MaxValue)]
     decimal Amount
-) : ICommand<CreateBudgetResponse>, IValidatableObject
+) : ICommand<Create{Entity}Response>, IValidatableObject
 {
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {

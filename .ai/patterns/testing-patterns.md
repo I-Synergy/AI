@@ -99,7 +99,7 @@ Feature: {Entity} Management
   I want to manage {entities}
   So that I can track my data
 
-  @AC-{BC}-{NNN}.1
+  @AC-{Domain}-{NNN}.1
   Scenario: Create a new {entity}
     Given I am an authenticated user
     When I create a {entity} with the following details:
@@ -109,14 +109,14 @@ Feature: {Entity} Management
     And the {entity} should have a unique identifier
     And the {entity} should be retrievable by its identifier
 
-  @AC-{BC}-{NNN}.2
+  @AC-{Domain}-{NNN}.2
   Scenario: Cannot create {entity} with invalid data
     Given I am an authenticated user
     When I attempt to create a {entity} with negative Property2
     Then the creation should fail with a validation error
     And the error message should indicate Property2 must be positive
 
-  @AC-{BC}-{NNN}.3
+  @AC-{Domain}-{NNN}.3
   Scenario: Update an existing {entity}
     Given I am an authenticated user
     And a {entity} exists with Property1 "Original Value"
@@ -124,7 +124,7 @@ Feature: {Entity} Management
     Then the {entity} should be updated successfully
     And the {entity} Property1 should be "Updated Value"
 
-  @AC-{BC}-{NNN}.4
+  @AC-{Domain}-{NNN}.4
   Scenario: Delete an existing {entity}
     Given I am an authenticated user
     And a {entity} exists
@@ -132,7 +132,7 @@ Feature: {Entity} Management
     Then the {entity} should be deleted successfully
     And the {entity} should not be retrievable
 
-  @AC-{BC}-{NNN}.5
+  @AC-{Domain}-{NNN}.5
   Scenario: Get list of {entities} with pagination
     Given I am an authenticated user
     And 25 {entities} exist
@@ -145,7 +145,7 @@ Feature: {Entity} Management
 ## Traceability
 
 Every scenario states which acceptance criterion it is evidence for, as a tag on the line directly
-above `Scenario:` — `@AC-{BC}-{NNN}.{n}`, where `{BC}` is the bounded context, `{NNN}` the story and
+above `Scenario:` — `@AC-{Domain}-{NNN}.{n}`, where `{Domain}` is the bounded context, `{NNN}` the story and
 `{n}` the criterion within it. The full convention, including how identifiers are allocated and
 retired, is `.ai/reference/traceability.md`.
 
@@ -221,7 +221,7 @@ public class {Entity}ManagementSteps
 // Pattern: MethodName_Scenario_ExpectedResult
 
 [TestMethod]
-public async Task HandleAsync_ValidCommand_CreatesBudgetSuccessfully()
+public async Task HandleAsync_ValidCommand_Creates{Entity}Successfully()
 
 [TestMethod]
 public async Task HandleAsync_NullCommand_ThrowsArgumentNullException()
@@ -290,13 +290,13 @@ internal static class DbSetMockHelper
 }
 
 // ─── Setup DbSet to return data from FirstOrDefaultAsync ───
-var expectedBudget = new BudgetModel { BudgetId = Guid.NewGuid(), Description = "Test" };
-var budgetsMock = DbSetMockHelper.CreateMock(new List<BudgetModel> { expectedBudget });
-_dataContextMock.Setup(x => x.Budgets).Returns(budgetsMock.Object);
+var expected{Entity} = new {Entity}Model { {Entity}Id = Guid.NewGuid(), Description = "Test" };
+var {entities}Mock = DbSetMockHelper.CreateMock(new List<{Entity}Model> { expected{Entity} });
+_dataContextMock.Setup(x => x.{Entities}).Returns({entities}Mock.Object);
 
 // ─── Verify Add + SaveChanges (Create) ───
 _dataContextMock.Verify(
-    x => x.Budgets.Add(It.Is<BudgetModel>(m => m.Description == "Test")),
+    x => x.{Entities}.Add(It.Is<{Entity}Model>(m => m.Description == "Test")),
     Times.Once);
 _dataContextMock.Verify(
     x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
@@ -304,15 +304,15 @@ _dataContextMock.Verify(
 
 // ─── Verify Remove + SaveChanges (Delete) ───
 _dataContextMock.Verify(
-    x => x.Budgets.Remove(It.IsAny<BudgetModel>()),
+    x => x.{Entities}.Remove(It.IsAny<{Entity}Model>()),
     Times.Once);
 _dataContextMock.Verify(
     x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
     Times.Once);
 
 // ─── Setup empty DbSet (not found => FirstOrDefaultAsync returns null) ───
-var emptyBudgetsMock = DbSetMockHelper.CreateMock(new List<BudgetModel>());
-_dataContextMock.Setup(x => x.Budgets).Returns(emptyBudgetsMock.Object);
+var empty{Entities}Mock = DbSetMockHelper.CreateMock(new List<{Entity}Model>());
+_dataContextMock.Setup(x => x.{Entities}).Returns(empty{Entities}Mock.Object);
 ```
 
 ## Test Organization

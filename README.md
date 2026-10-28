@@ -2,6 +2,30 @@
 
 Professional .NET development template with AI-powered agent orchestration and modular architecture.
 
+## AI Manager (VS Code extension)
+
+A template catalog can offer hundreds of skills and agents. Copying all of them into every project bloats the AI context, hides what is actually installed, and turns template updates into a blind overwrite.
+
+[AI Manager](https://github.com/I-Synergy/AIManager) solves that. It is the VS Code front end for the template's per-repository resolver: you choose the skills and agents a repository needs — from a preset or item by item — and the extension records that selection, installs only those files, and shows what has drifted or changed upstream. Because it calls the same resolver CI uses, the UI cannot disagree with `sync --check`.
+
+![AI Manager — Updates view](images/ai-manager/updates-view.png)
+
+![AI Manager — Sources settings](images/ai-manager/sources-view.png)
+
+- **Browse** — search the whole catalog, filter by kind / source / state, and install a selection in bulk.
+- **Installed** — see what this repo has, grouped by health, and remove or prune leftovers.
+- **Updates** — compare installed items with upstream and update the safe ones.
+- **Presets** — start from a named selection (Architecture, Security, .NET, MAUI, …) with resolved counts and deltas.
+- **Settings** — choose the Python interpreter and manage sources, refs, and releases.
+
+Install it from the Extensions view (search **AI Manager for Visual Studio Code**) or:
+
+```bash
+code --install-extension I-Synergy.ai-manager
+```
+
+Open the project folder and use the AI Manager view. The extension keeps its local state in `.ai/ai.json`, `.ai/ai.lock.json`, `.ai/tooling.json`, `.ai/catalog/`, `.ai/installed/`, and the `*.ai-installed.json` markers. Those paths are **gitignored** here: they describe one machine's installed selection, not template content. The selected skills and agents themselves live in `.ai/skills/` and `.ai/agents/` and remain the committed source of truth.
+
 ## Overview
 
 A **production-ready .NET project template** that provides comprehensive development patterns, specialized agent skills, and quality assurance tools for building enterprise applications with Clean Architecture, CQRS, and Domain-Driven Design.
@@ -161,14 +185,20 @@ name is the skill name (`/<skill-name>` invokes it explicitly).
 
 ### Template Tokens
 
-| Token | Replace With | Example |
-|-------|--------------|---------|
-| `{ApplicationName}` | Your application name | `BudgetTracker` |
-| `{Domain}` | Domain/bounded context | `Budgets`, `Goals`, `Debts` |
-| `{Entity}` | Entity name (PascalCase) | `Budget`, `Goal`, `Debt` |
-| `{Entities}` | Entity plural (PascalCase) — used for DbSet names | `Budgets`, `Goals`, `Debts` |
-| `{entity}` | Entity name (lowercase) | `budget`, `goal`, `debt` |
-| `{entities}` | Entity plural (lowercase) | `budgets`, `goals`, `debts` |
+| Token | Meaning | Example Usage |
+|-------|---------|---------------|
+| `{ApplicationName}` | Your application name | `{ApplicationName}.Domain.{Domain}` |
+| `{Domain}` | Bounded context | `{ApplicationName}.Domain.{Domain}` |
+| `{Entity}` | Aggregate root (PascalCase) | `Create{Entity}Command` |
+| `{Entities}` | Aggregate root plural (PascalCase) — used for DbSet names | `dataContext.{Entities}` |
+| `{entity}` | Aggregate root (camelCase) | `{entity}Id` |
+| `{entities}` | Aggregate root plural (camelCase) | `/{entities}` |
+| `{ChildEntity}` | Child entity (PascalCase) | `{Entity}With{ChildEntities}Response` |
+| `{ChildEntities}` | Child entity plural (PascalCase) | `dataContext.{ChildEntities}` |
+| `{childEntity}` | Child entity (camelCase) | `{childEntity}Id` |
+| `{childEntities}` | Child entity plural (camelCase) | `/{childEntities}` |
+
+The template ships no concrete business domain; every example is expressed with these tokens.
 
 See `.ai/reference/tokens.md` for complete definitions.
 
@@ -222,7 +252,7 @@ claude  # start in project root
 
 #### GitHub Copilot
 
-GitHub Copilot also reads `.github/copilot-instructions.md` for VS Code-specific guidance. Works automatically in VS Code / GitHub Codespaces.
+GitHub Copilot also reads `.github/copilot-instructions.md` for VS Code-specific guidance. That file is generated from `AGENTS.md`; after editing `AGENTS.md`, run `python .ai/scripts/sync-instructions.py`. Works automatically in VS Code / GitHub Codespaces.
 
 #### Reasonix Code
 
@@ -250,12 +280,17 @@ Edit files in `.ai/project/` to customize for your project:
 ### Replace Tokens
 
 ```bash
-find /path/to/YourProject/.ai -type f -exec sed -i 's/{ApplicationName}/BudgetTracker/g' {} +
-find /path/to/YourProject/.ai -type f -exec sed -i 's/{Domain}/Budgets/g' {} +
-find /path/to/YourProject/.ai -type f -exec sed -i 's/{Entity}/Budget/g' {} +
-find /path/to/YourProject/.ai -type f -exec sed -i 's/{Entities}/Budgets/g' {} +
-find /path/to/YourProject/.ai -type f -exec sed -i 's/{entity}/budget/g' {} +
-find /path/to/YourProject/.ai -type f -exec sed -i 's/{entities}/budgets/g' {} +
+# Replace each token with your own value, longest/most-specific first
+find /path/to/YourProject/.ai -type f -exec sed -i 's/{ApplicationName}/YourApplication/g' {} +
+find /path/to/YourProject/.ai -type f -exec sed -i 's/{ChildEntities}/YourChildEntities/g' {} +
+find /path/to/YourProject/.ai -type f -exec sed -i 's/{ChildEntity}/YourChildEntity/g' {} +
+find /path/to/YourProject/.ai -type f -exec sed -i 's/{childEntities}/yourChildEntities/g' {} +
+find /path/to/YourProject/.ai -type f -exec sed -i 's/{childEntity}/yourChildEntity/g' {} +
+find /path/to/YourProject/.ai -type f -exec sed -i 's/{Domain}/YourDomain/g' {} +
+find /path/to/YourProject/.ai -type f -exec sed -i 's/{Entities}/YourEntities/g' {} +
+find /path/to/YourProject/.ai -type f -exec sed -i 's/{Entity}/YourEntity/g' {} +
+find /path/to/YourProject/.ai -type f -exec sed -i 's/{entities}/yourEntities/g' {} +
+find /path/to/YourProject/.ai -type f -exec sed -i 's/{entity}/yourEntity/g' {} +
 ```
 
 ### Initialize Session Context
@@ -272,12 +307,12 @@ Edit `.ai/session-context.md` to establish your project's initial state.
 | **GitHub Copilot** | Instruction in `.github/copilot-instructions.md` (no hook available) | Instruction in `.github/copilot-instructions.md`: write handoff before final reply |
 | **Reasonix Code** | Instruction in `AGENTS.md` (no hook available) | Instruction in `AGENTS.md`: write handoff before final reply |
 
-In this template repository, the file stays as the unfilled placeholder. Project state is recorded in `.ai/progress/` (active tasks) and `.ai/completed/` (finished tasks) instead.
+`.ai/session-context.md` ships as an unfilled placeholder — fill it in for your project and keep it updated. `.ai/plans/`, `.ai/progress/`, and `.ai/completed/` ship empty; they are populated only while work is in flight.
 
 ### Start Developing
 
 ```
-/api-endpoints "Create CRUD endpoints for Budget entity"
+/api-endpoints "Create CRUD endpoints for {Entity} entity"
 ```
 
 ## File Structure
@@ -478,7 +513,7 @@ The `.vscode/settings.json` sets `PIP_CONFIG_FILE` automatically in VS Code term
 ### Implementing a Feature
 
 ```
-"Implement complete CRUD for Budget entity"
+"Implement complete CRUD for {Entity} entity"
 
 Claude will:
 1. Read .ai/session-context.md
@@ -492,7 +527,7 @@ Claude will:
 ### Writing Tests
 
 ```
-"Write comprehensive tests for Budget handlers"
+"Write comprehensive tests for {Entity} handlers"
 
 Claude will:
 1. Load .ai/skills/unit-tester/SKILL.md + .ai/patterns/testing-patterns.md

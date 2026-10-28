@@ -8,50 +8,50 @@ These are non-negotiable patterns that cause bugs if violated.
 
 ```csharp
 // CORRECT - Individual parameters
-public sealed record CreateDebtCommand(
-    Guid BudgetId,
+public sealed record Create{ChildEntity}Command(
+    Guid {Entity}Id,
     string Description,
     decimal Amount
-) : ICommand<CreateDebtResponse>;
+) : ICommand<Create{ChildEntity}Response>;
 
 // WRONG - Passing model object
-public sealed record CreateDebtCommand(
-    Debt Debt
-) : ICommand<CreateDebtResponse>;
+public sealed record Create{ChildEntity}Command(
+    {ChildEntity} {childEntity}
+) : ICommand<Create{ChildEntity}Response>;
 ```
 
 ### Endpoint Construction
 
 ```csharp
 // CORRECT - Extract properties from model
-app.MapPost("/debts", async (Debt model, ICommandHandler handler) =>
+app.MapPost("/{childEntities}", async ({ChildEntity} model, ICommandHandler handler) =>
 {
-    var command = new CreateDebtCommand(model.BudgetId, model.Description, model.Amount);
+    var command = new Create{ChildEntity}Command(model.{Entity}Id, model.Description, model.Amount);
     return await handler.HandleAsync(command);
 });
 
 // WRONG - Passing model directly
-var command = new CreateDebtCommand(model);
+var command = new Create{ChildEntity}Command(model);
 ```
 
 ## 2. Delete Operations: Use FirstOrDefaultAsync + Remove + SaveChangesAsync
 
 ```csharp
 // CORRECT
-var entity = await dataContext.Debts.FirstOrDefaultAsync(e => e.DebtId == command.DebtId, cancellationToken);
+var entity = await dataContext.{ChildEntities}.FirstOrDefaultAsync(e => e.{ChildEntity}Id == command.{ChildEntity}Id, cancellationToken);
 
 if (entity is null)
-    throw new InvalidOperationException($"Debt {command.DebtId} not found");
+    throw new InvalidOperationException($"{ChildEntity} {command.{ChildEntity}Id} not found");
 
-dataContext.Debts.Remove(entity);
+dataContext.{ChildEntities}.Remove(entity);
 var rowsAffected = await dataContext.SaveChangesAsync(cancellationToken);
 
 if (rowsAffected == 0)
-    throw new InvalidOperationException($"Failed to delete Debt {command.DebtId}");
+    throw new InvalidOperationException($"Failed to delete {ChildEntity} {command.{ChildEntity}Id}");
 
 // WRONG - These extension methods are NOT used
-await dataContext.DeleteItemByIdAsync<Debt, Guid>(id, cancellationToken);
-await dataContext.RemoveItemAsync<Debt, Guid>(id, cancellationToken);
+await dataContext.DeleteItemByIdAsync<{ChildEntity}, Guid>(id, cancellationToken);
+await dataContext.RemoveItemAsync<{ChildEntity}, Guid>(id, cancellationToken);
 ```
 
 ## 3. Query Parameters: Use Named Parameters
@@ -60,8 +60,8 @@ For optional filters, always use named parameters to avoid ambiguity.
 
 ```csharp
 // CORRECT - Named parameters prevent ambiguity
-var query = new GetDepositsTotalAmountQuery(GoalId: id);
-var query = new GetDepositsTotalAmountQuery(BudgetId: id);
+var query = new GetDepositsTotalAmountQuery({ChildEntity}Id: id);
+var query = new GetDepositsTotalAmountQuery({Entity}Id: id);
 
 // WRONG - Positional parameters are ambiguous
 var query = new GetDepositsTotalAmountQuery(id, true);
@@ -74,61 +74,61 @@ var query = new GetDepositsTotalAmountQuery(id, true);
 ```csharp
 // CORRECT — Use named DbSet properties from DataContext for all operations
 // Create
-var entity = new Entities.Budgets.Budget { BudgetId = Guid.NewGuid(), ... };
-dataContext.Budgets.Add(entity);
+var entity = new Entities.{Entities}.{Entity} { {Entity}Id = Guid.NewGuid(), ... };
+dataContext.{Entities}.Add(entity);
 await dataContext.SaveChangesAsync(cancellationToken);
 
 // Read single
-var entity = await dataContext.Budgets.FirstOrDefaultAsync(e => e.BudgetId == id, cancellationToken);
-var model = /* map entity to Budget model */;
+var entity = await dataContext.{Entities}.FirstOrDefaultAsync(e => e.{Entity}Id == id, cancellationToken);
+var model = /* map entity to {Entity} model */;
 
 // Read list
-var models = await dataContext.Budgets
+var models = await dataContext.{Entities}
     .OrderBy(b => b.Description)
-    .Select(b => /* map b to Budget model */)
+    .Select(b => /* map b to {Entity} model */)
     .ToListAsync(cancellationToken);
 
 // Update — no .Update() call needed; change tracker detects property mutations on tracked entities
-var entity = await dataContext.Budgets.FirstOrDefaultAsync(e => e.BudgetId == command.BudgetId, cancellationToken);
+var entity = await dataContext.{Entities}.FirstOrDefaultAsync(e => e.{Entity}Id == command.{Entity}Id, cancellationToken);
 entity.Description = command.Description;
 await dataContext.SaveChangesAsync(cancellationToken);
 
 // Delete
-var entity = await dataContext.Budgets.FirstOrDefaultAsync(e => e.BudgetId == command.BudgetId, cancellationToken);
-dataContext.Budgets.Remove(entity);
+var entity = await dataContext.{Entities}.FirstOrDefaultAsync(e => e.{Entity}Id == command.{Entity}Id, cancellationToken);
+dataContext.{Entities}.Remove(entity);
 await dataContext.SaveChangesAsync(cancellationToken);
 
 // WRONG - We don't use repositories
 await _repository.Add(model);
 
 // WRONG - We don't use these extension methods
-await dataContext.AddItemAsync<Budget, BudgetModel>(model, ct);
-await dataContext.GetItemByIdAsync<Budget, BudgetModel, Guid>(id, ct);
+await dataContext.AddItemAsync<{Entity}, {Entity}Model>(model, ct);
+await dataContext.GetItemByIdAsync<{Entity}, {Entity}Model, Guid>(id, ct);
 ```
 
 ## 5. Async: Always Include CancellationToken
 
 ```csharp
 // CORRECT
-public async Task<GetBudgetByIdResponse> HandleAsync(
-    GetBudgetByIdQuery query,
+public async Task<Get{Entity}ByIdResponse> HandleAsync(
+    Get{Entity}ByIdQuery query,
     CancellationToken cancellationToken = default)
 {
-    var entity = await dataContext.Budgets.FirstOrDefaultAsync(e => e.BudgetId == query.BudgetId, cancellationToken);
-    var budget = /* map entity to Budget model */;
-    return new GetBudgetByIdResponse(budget);
+    var entity = await dataContext.{Entities}.FirstOrDefaultAsync(e => e.{Entity}Id == query.{Entity}Id, cancellationToken);
+    var {entity} = /* map entity to {Entity} model */;
+    return new Get{Entity}ByIdResponse({entity});
 }
 
 // WRONG - Blocking on async
-public GetBudgetByIdResponse Handle(GetBudgetByIdQuery query)
+public Get{Entity}ByIdResponse Handle(Get{Entity}ByIdQuery query)
 {
-    var entity = dataContext.Budgets.FirstOrDefaultAsync(
-        e => e.BudgetId == query.BudgetId,
+    var entity = dataContext.{Entities}.FirstOrDefaultAsync(
+        e => e.{Entity}Id == query.{Entity}Id,
         CancellationToken.None).Result; // DEADLOCK RISK!
 }
 
 // WRONG - No CancellationToken
-public async Task<GetBudgetByIdResponse> HandleAsync(GetBudgetByIdQuery query)
+public async Task<Get{Entity}ByIdResponse> HandleAsync(Get{Entity}ByIdQuery query)
 {
     // Missing cancellation support
 }
@@ -140,17 +140,17 @@ Always convert to Models before returning from handlers. Responses wrap Models.
 
 ```csharp
 // CORRECT - Response wraps Model
-public async Task<GetBudgetByIdResponse> HandleAsync(...)
+public async Task<Get{Entity}ByIdResponse> HandleAsync(...)
 {
-    var entity = await dataContext.Budgets.FirstOrDefaultAsync(e => e.BudgetId == query.BudgetId, ct);
-    var budget = /* map entity to Budget model */;
-    return new GetBudgetByIdResponse(budget);
+    var entity = await dataContext.{Entities}.FirstOrDefaultAsync(e => e.{Entity}Id == query.{Entity}Id, ct);
+    var {entity} = /* map entity to {Entity} model */;
+    return new Get{Entity}ByIdResponse({entity});
 }
 
 // WRONG - Return domain entity directly
-public async Task<Entities.Budgets.Budget> HandleAsync(...)
+public async Task<Entities.{Entities}.{Entity}> HandleAsync(...)
 {
-    return await dataContext.Budgets.FirstOrDefaultAsync(e => e.BudgetId == id, ct);
+    return await dataContext.{Entities}.FirstOrDefaultAsync(e => e.{Entity}Id == id, ct);
 }
 ```
 
@@ -175,36 +175,36 @@ Every session MUST:
 
 ```csharp
 // CORRECT
-public sealed class CreateBudgetCommandHandler : ICommandHandler<...>
-public sealed class GetBudgetByIdQueryHandler : IQueryHandler<...>
+public sealed class Create{Entity}CommandHandler : ICommandHandler<...>
+public sealed class Get{Entity}ByIdQueryHandler : IQueryHandler<...>
 
 // WRONG - Missing suffix
-public sealed class CreateBudgetHandler : ICommandHandler<...>
-public sealed class GetBudgetByIdHandler : IQueryHandler<...>
+public sealed class Create{Entity}Handler : ICommandHandler<...>
+public sealed class Get{Entity}ByIdHandler : IQueryHandler<...>
 ```
 
 ## 10. File Organization: One Type Per File, Subfolder Per Operation
 
 ```
 // CORRECT - Each operation gets its own subfolder with separate files
-Features/Budgets/
-  Commands/CreateBudget/
-    CreateBudgetCommand.cs
-    CreateBudgetCommandHandler.cs
-    CreateBudgetResponse.cs
-  Commands/UpdateBudget/
-    UpdateBudgetCommand.cs
-    UpdateBudgetCommandHandler.cs
-    UpdateBudgetResponse.cs
-  Queries/GetBudgetById/
-    GetBudgetByIdQuery.cs
-    GetBudgetByIdQueryHandler.cs
-    GetBudgetByIdResponse.cs
+Features/{Entity}/
+  Commands/Create{Entity}/
+    Create{Entity}Command.cs
+    Create{Entity}CommandHandler.cs
+    Create{Entity}Response.cs
+  Commands/Update{Entity}/
+    Update{Entity}Command.cs
+    Update{Entity}CommandHandler.cs
+    Update{Entity}Response.cs
+  Queries/Get{Entity}ById/
+    Get{Entity}ByIdQuery.cs
+    Get{Entity}ByIdQueryHandler.cs
+    Get{Entity}ByIdResponse.cs
 
 // WRONG - Flat folders or combined files
-Features/Budgets/Commands/
-  CreateBudgetCommand.cs      (command + response combined)
-  CreateBudgetHandler.cs
+Features/{Entity}/Commands/
+  Create{Entity}Command.cs      (command + response combined)
+  Create{Entity}Handler.cs
 ```
 
 ## 11. Enum Naming: Always Plural (except *Status)
@@ -260,16 +260,16 @@ All projects MUST reference `{ApplicationName}.Common` either directly or transi
 // {ApplicationName}.Common/Enums/PaymentStatus.cs
 public enum PaymentStatus { Pending, Succeeded, Failed }
 
-// {ApplicationName}.Domain.Payments references Common
+// {ApplicationName}.Domain.{Domain} references Common
 // {ApplicationName}.Data references Domain (transitively gets Common)
 // {ApplicationName}.Services references Domain (transitively gets Common)
 
 // WRONG — Enum defined in a domain project, forcing Data → Domain dependency for enums
-// {ApplicationName}.Domain.Payments/Enums/PaymentStatus.cs
+// {ApplicationName}.Domain.{Domain}/Enums/{Entity}Status.cs
 
 // WRONG — Duplicate enum definitions across projects
-// {ApplicationName}.Domain.Payments: PaymentStatus
-// {ApplicationName}.Models.Payments: PaymentStatus  (duplicate)
+// {ApplicationName}.Domain.{Domain}: {Entity}Status
+// {ApplicationName}.Models.{Domain}: {Entity}Status  (duplicate)
 ```
 
 Other types that belong in Common: shared constants, common interfaces (e.g., `IEntity`, `IAuditable`), reusable value objects, and extension methods used across multiple projects.
@@ -283,17 +283,17 @@ An entity MUST never reference a model, and a model MUST never reference an enti
 // {ApplicationName}.Common/Enums/PaymentStatus.cs
 public enum PaymentStatus { Pending, Succeeded, Failed }
 
-// {ApplicationName}.Entities.Payments/Payment.cs
-public class Payment { public PaymentStatus Status { get; set; } }
+// {ApplicationName}.Entities.{Domain}/{Entity}.cs
+public class {Entity} { public {Entity}Status Status { get; set; } }
 
-// {ApplicationName}.Models.Payments/PaymentModel.cs
+// {ApplicationName}.Models.{Domain}/{Entity}Model.cs
 public sealed record PaymentModel(PaymentStatus Status);
 
 // WRONG — Entity project references Models project for a shared enum
-// {ApplicationName}.Entities.Payments has a project reference to {ApplicationName}.Models.Payments
+// {ApplicationName}.Entities.{Domain} has a project reference to {ApplicationName}.Models.Payments
 
 // WRONG — Model project references Entities project for a shared enum
-// {ApplicationName}.Models.Payments has a project reference to {ApplicationName}.Entities.Payments
+// {ApplicationName}.Models.{Domain} has a project reference to {ApplicationName}.Entities.Payments
 ```
 
 A cross-reference between Entities and Models is the canary — it signals a type that should have been extracted to Common.

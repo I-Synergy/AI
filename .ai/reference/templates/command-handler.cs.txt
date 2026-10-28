@@ -207,7 +207,7 @@ public sealed class Delete{Entity}CommandHandler(
         if (entity is null)
         {
             logger.LogWarning("{Entity} {Id} not found", command.{Entity}Id);
-            throw new InvalidOperationException($"{{Entity}} {command.{Entity}Id} not found");
+            throw new InvalidOperationException($"{Entity} {command.{Entity}Id} not found");
         }
 
         dataContext.{Entities}.Remove(entity);
@@ -220,6 +220,6 @@ public sealed class Delete{Entity}CommandHandler(
         }
 
         logger.LogWarning("Failed to delete {entity} {Id} - no rows affected", command.{Entity}Id);
-        throw new InvalidOperationException($"Failed to delete {{Entity}} {command.{Entity}Id}");
+        throw new InvalidOperationException($"Failed to delete {Entity} {command.{Entity}Id}");
     }
 }

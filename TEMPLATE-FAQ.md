@@ -50,11 +50,11 @@ Invoke specialized skills directly:
 Just describe what you want:
 
 ```
-"Implement CQRS commands and queries for the Budget entity"
-"Add API endpoints for Budget management"
-"Write unit tests for CreateBudgetCommandHandler"
+"Implement CQRS commands and queries for the {Entity} entity"
+"Add API endpoints for {Entity} management"
+"Write unit tests for Create{Entity}CommandHandler"
 "Review the current domain structure"
-"Optimize database queries in the Budgets domain"
+"Optimize database queries in the {Domain} domain"
 "Create E2E tests for the login flow"
 "Stress-test my API design"
 "Extract a ubiquitous language glossary from this spec"
@@ -72,7 +72,7 @@ The AI automatically:
 For complex work, provide structured details:
 
 ```
-Implement Budget Domain
+Implement {Entity} Domain
 
 Requirements:
 - Create entity, model, domain layer
@@ -81,8 +81,8 @@ Requirements:
 - Add API endpoints
 - Write unit tests
 
-Domain: Budgets
-Entity: Budget
+Domain: {Domain}
+Entity: {Entity}
 Properties: Name, Amount, StartDate, EndDate
 ```
 
@@ -105,9 +105,9 @@ It's automatically loaded and applied to every conversation in your AI tool.
 ### Just work naturally:
 
 ```
-"Create a new Budget entity with CQRS handlers"
-"Add API endpoints for Commodity"
-"Write unit tests for CreateDebtCommandHandler"
+"Create a new {Entity} entity with CQRS handlers"
+"Add API endpoints for {Entity}"
+"Write unit tests for Create{ChildEntity}CommandHandler"
 ```
 
 The AI will automatically follow all patterns, conventions, and rules defined in AGENTS.md.
@@ -127,16 +127,16 @@ The AI will automatically follow all patterns, conventions, and rules defined in
 
 ### When agents are spawned automatically:
 
-- **Complex exploration** - "Find all usages of Budget entity across the codebase"
+- **Complex exploration** - "Find all usages of {Entity} entity across the codebase"
   - → Spawns `Explore` agent
 
-- **Multi-step implementations** - "Implement complete CQRS for Budget domain"
+- **Multi-step implementations** - "Implement complete CQRS for {Entity} domain"
   - → Spawns `general-purpose` agent
 
 - **Parallel work** - "Review code AND run tests AND update docs"
   - → Spawns multiple agents in parallel
 
-- **Large refactoring** - "Refactor all handlers in the Budgets domain"
+- **Large refactoring** - "Refactor all handlers in the {Domain} domain"
   - → Spawns task-specific agents
 
 - **Research tasks** - "How is authentication currently implemented?"
@@ -147,7 +147,7 @@ The AI will automatically follow all patterns, conventions, and rules defined in
 The AI will transparently inform you when spawning agents:
 
 ```
-"I'll use an Explore agent to search the codebase for Budget entity usages..."
+"I'll use an Explore agent to search the codebase for {Entity} entity usages..."
 "Spawning a general-purpose agent to implement the CQRS handlers..."
 "Creating parallel agents to handle testing and documentation..."
 ```
@@ -193,10 +193,10 @@ Three systems work together automatically:
 You: "Review this code for SOLID principles"
 AI: [Recognizes code review → invokes code-reviewer skill]
 
-You: "Write unit tests for CreateBudgetCommandHandler"
+You: "Write unit tests for Create{Entity}CommandHandler"
 AI: [Recognizes testing → invokes unit-tester skill]
 
-You: "Implement CQRS handlers for Budget"
+You: "Implement CQRS handlers for {Entity}"
 AI: [Recognizes .NET development → invokes dotnet-engineer skill]
 
 You: "Grill me on my API design"
@@ -223,7 +223,7 @@ These are different from skills — they're autonomous workers for complex tasks
 **Context files from `.ai/` are loaded based on Work-Type Context Mapping:**
 
 ```
-Your request: "Implement CQRS for Budget"
+Your request: "Implement CQRS for {Entity}"
 
 AI automatically loads:
 - .ai/skills/dotnet-engineer/SKILL.md
@@ -235,7 +235,7 @@ AI automatically loads:
 ### Complete Decision Flow Example
 
 ```
-You: "Add Budget entity with CQRS handlers and unit tests"
+You: "Add {Entity} entity with CQRS handlers and unit tests"
 
 AI process:
 1. Recognize work type: CQRS Implementation + Testing
@@ -289,7 +289,7 @@ The template maintains a learning record in `.ai/session-context.md`:
 2026-04-19
 
 ## Project Patterns Discovered
-- Budget entity uses soft delete pattern (DeletedAt timestamp)
+- {Entity} entity uses soft delete pattern (DeletedAt timestamp)
 - All monetary amounts use decimal(18,2) precision
 - Date ranges validated: EndDate must be > StartDate
 
@@ -418,6 +418,22 @@ Once pytest is installed, VS Code's Test Explorer panel shows every suite as a c
 The authoritative list of suites is in `.ai/tests/run-all-tests.sh` (bash) and `.ai/tests/test_suite.py` (pytest).
 
 ---
+
+## Q8: Is there a VS Code extension for managing skills and agents?
+
+### Answer
+
+Yes. [AI Manager](https://github.com/I-Synergy/AIManager) is the companion VS Code extension for this template. It solves the problem of a full catalog being too large to copy into every project: the extension lets you choose a preset or individual skills and agents, records the selection, installs only those items, and shows drift and upstream changes. It reads the skill and agent catalog and installs the selection into `.ai/skills/` and `.ai/agents/`.
+
+Install it from the Extensions view (search **AI Manager for Visual Studio Code**) or:
+
+```bash
+code --install-extension I-Synergy.ai-manager
+```
+
+The extension keeps its selection and tooling state in `.ai/ai.json`, `.ai/ai.lock.json`, `.ai/tooling.json`, `.ai/catalog/`, `.ai/installed/`, and `*.ai-installed.json`. Those paths are gitignored: they describe the current machine's installed selection, not template content. Only `.ai/skills/` and `.ai/agents/` are committed.
+
+After installing or changing a selection, run `python .ai/scripts/sync-skills.py` so Claude Code, GitHub Copilot, and Reasonix Code see the updated junctions.
 
 ## Key Takeaways
 

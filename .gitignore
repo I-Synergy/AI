@@ -12,6 +12,15 @@ __pycache__/
 # Agent scratch folder
 .ai/tmp/
 
+# AI Manager extension state (generated locally; not template content)
+.ai/ai.json
+.ai/ai.lock.json
+.ai/tooling.json
+.ai/catalog/
+.ai/installed/
+.ai/scripts/catalog.py
+.ai/**/.ai-installed.json
+
 # Platform skill/agent junctions (recreated by sync-skills.py)
 .claude/skills/
 .claude/agents/

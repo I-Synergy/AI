@@ -1,7 +1,7 @@
 # Test Plan Template — ISO/IEC/IEEE 29119-3, 7.2 (Annex E)
 
 One test plan per vertical slice, written when the slice is generated from its blueprint and updated
-when the slice's scope changes. It goes to `docs/slices/{BC}/{Entity}.{Operation}/test-plan.md`, next
+when the slice's scope changes. It goes to `docs/slices/{Domain}/{Entity}.{Operation}/test-plan.md`, next
 to the `blueprint.json` and the `.feature` it belongs to.
 
 Sections 2, 3, 5 and 6 are derived from the blueprint — do not invent entries for them. Sections 7
@@ -9,14 +9,14 @@ and 8 are the operative content: they are what the traceability validator's advi
 against (T5, T6), so keep them concrete and runnable.
 
 ```markdown
-# Test Plan — {BC}.{Entity}.{Operation}
+# Test Plan — {Domain}.{Entity}.{Operation}
 
 | Field | Value |
 |---|---|
-| Test plan identifier | `{BC}.{Entity}.{Operation}` (the slice is the identifier) |
+| Test plan identifier | `{Domain}.{Entity}.{Operation}` (the slice is the identifier) |
 | Solution | `{ApplicationName}` |
-| Traced source | `US-{BC}-{NNN}`, `UC-{BC}-{NNN}` |
-| Blueprint | `docs/slices/{BC}/{Entity}.{Operation}/blueprint.json` |
+| Traced source | `US-{Domain}-{NNN}`, `UC-{Domain}-{NNN}` |
+| Blueprint | `docs/slices/{Domain}/{Entity}.{Operation}/blueprint.json` |
 | Author, role | [{name}, {role}] |
 | Date | {yyyy-mm-dd} |
 | Status | [Draft / Approved / Superseded] |
@@ -24,7 +24,7 @@ against (T5, T6), so keep them concrete and runnable.
 ## 1. Scope
 
 **In scope:** [the operation this slice implements, named from the blueprint's `slice`,
-`operation_type` and `entity` — e.g. creating a Budget through `CreateBudgetCommandHandler`.]
+`operation_type` and `entity` — e.g. creating a {Entity} through `Create{Entity}CommandHandler`.]
 
 **Out of scope:** [what this slice deliberately does not test, and where it is tested instead —
 adjacent slices, other levels, or a named residual risk. This line is required; an empty
@@ -34,11 +34,11 @@ out-of-scope means the plan's boundary is undefined.]
 
 | Artifact | Path |
 |---|---|
-| [Command / Query] | [{Solution}.Domain.{BC}/Features/{BC}/…/{Operation}{Entity}Command.cs] |
+| [Command / Query] | [{Solution}.Domain.{Domain}/Features/{Domain}/…/{Operation}{Entity}Command.cs] |
 | Handler | […/{Operation}{Entity}CommandHandler.cs] |
 | Endpoint *(where the slice exposes one)* | […/{Operation}{Entity}Endpoint.cs] |
-| Tests | [{Solution}.{BC}.Tests/{BC}/{Operation}{Entity}CommandHandlerTests.cs] |
-| Feature file *(where the slice is BDD-covered)* | [docs/slices/{BC}/{Entity}.{Operation}/{Entity}.{Operation}.feature] |
+| Tests | [{Solution}.{Domain}.Tests/{Domain}/{Operation}{Entity}CommandHandlerTests.cs] |
+| Feature file *(where the slice is BDD-covered)* | [docs/slices/{Domain}/{Entity}.{Operation}/{Entity}.{Operation}.feature] |
 
 [Copied from the blueprint's `files_to_create`; add the endpoint row only when the slice has one.]
 
@@ -46,8 +46,8 @@ out-of-scope means the plan's boundary is undefined.]
 
 | Criterion | Scenario | Test-side reference | Level |
 |---|---|---|---|
-| `AC-{BC}-{NNN}.{n}` | `@AC-{BC}-{NNN}.{n}` in `{Entity}.{Operation}.feature` | `[TestCategory("AC-{BC}-{NNN}.{n}")]` in `{Operation}{Entity}CommandHandlerTests` | Unit |
-| `AC-{BC}-{NNN}.{n}` | `@AC-…` | [Playwright method, where a UI path exists] | E2E |
+| `AC-{Domain}-{NNN}.{n}` | `@AC-{Domain}-{NNN}.{n}` in `{Entity}.{Operation}.feature` | `[TestCategory("AC-{Domain}-{NNN}.{n}")]` in `{Operation}{Entity}CommandHandlerTests` | Unit |
+| `AC-{Domain}-{NNN}.{n}` | `@AC-…` | [Playwright method, where a UI path exists] | E2E |
 
 [Copied from the blueprint's `source.acceptance_criteria`, one row per criterion. A criterion in the
 blueprint that is not listed here is out of this slice's scope — say so in section 1 rather than
@@ -67,7 +67,7 @@ dropping it silently. See `.ai/reference/traceability.md` for the identifier rul
 
 | Criterion | Data | Source |
 |---|---|---|
-| `AC-{BC}-{NNN}.{n}` | [values the scenario needs, including the invalid ones] | [fixture, builder, seeded row, generated in setup] |
+| `AC-{Domain}-{NNN}.{n}` | [values the scenario needs, including the invalid ones] | [fixture, builder, seeded row, generated in setup] |
 
 [State the isolation rule as well: each test creates its own data, or the suite shares a seeded
 set — and what teardown restores.]
@@ -165,7 +165,7 @@ adopted, which are omitted, and why.
 
 ## Usage
 
-1. Copy the block above to `docs/slices/{BC}/{Entity}.{Operation}/test-plan.md` when the slice is
+1. Copy the block above to `docs/slices/{Domain}/{Entity}.{Operation}/test-plan.md` when the slice is
    generated. Fill every `[bracketed]` prompt or delete the row — never leave a placeholder in the
    committed file.
 2. Keep section 3 in step with the blueprint's `source.acceptance_criteria`; a change to one is a

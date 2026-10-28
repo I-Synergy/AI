@@ -14,62 +14,62 @@ Service-Oriented Architecture is an architectural pattern where functionality is
 
 ```csharp
 // ✅ CORRECT - Well-defined service contract
-namespace {ApplicationName}.Contracts.Budgets;
+namespace {ApplicationName}.Contracts.{Entities};
 
 /// <summary>
-/// Service contract for budget management operations.
+/// Service contract for {entity} management operations.
 /// </summary>
-public interface IBudgetService
+public interface I{Entity}Service
 {
     /// <summary>
-    /// Creates a new budget.
+    /// Creates a new {entity}.
     /// </summary>
-    /// <param name="request">Budget creation request.</param>
+    /// <param name="request">{Entity} creation request.</param>
     /// <param name="ct">Cancellation token.</param>
-    /// <returns>Created budget response with ID.</returns>
-    Task<CreateBudgetResponse> CreateBudgetAsync(
-        CreateBudgetRequest request,
+    /// <returns>Created {entity} response with ID.</returns>
+    Task<Create{Entity}Response> Create{Entity}Async(
+        Create{Entity}Request request,
         CancellationToken ct = default);
 
     /// <summary>
-    /// Retrieves a budget by its identifier.
+    /// Retrieves a {entity} by its identifier.
     /// </summary>
-    /// <param name="budgetId">The budget identifier.</param>
+    /// <param name="{entity}Id">The {entity} identifier.</param>
     /// <param name="ct">Cancellation token.</param>
-    /// <returns>Budget details or null if not found.</returns>
-    Task<BudgetDto?> GetBudgetAsync(
-        Guid budgetId,
+    /// <returns>{Entity} details or null if not found.</returns>
+    Task<{Entity}Dto?> Get{Entity}Async(
+        Guid {entity}Id,
         CancellationToken ct = default);
 
     /// <summary>
-    /// Updates an existing budget.
+    /// Updates an existing {entity}.
     /// </summary>
-    /// <param name="budgetId">The budget identifier.</param>
+    /// <param name="{entity}Id">The {entity} identifier.</param>
     /// <param name="request">Update request.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>Success indicator.</returns>
-    Task<bool> UpdateBudgetAsync(
-        Guid budgetId,
-        UpdateBudgetRequest request,
+    Task<bool> Update{Entity}Async(
+        Guid {entity}Id,
+        Update{Entity}Request request,
         CancellationToken ct = default);
 
     /// <summary>
-    /// Deletes a budget.
+    /// Deletes a {entity}.
     /// </summary>
-    /// <param name="budgetId">The budget identifier.</param>
+    /// <param name="{entity}Id">The {entity} identifier.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>Success indicator.</returns>
-    Task<bool> DeleteBudgetAsync(
-        Guid budgetId,
+    Task<bool> Delete{Entity}Async(
+        Guid {entity}Id,
         CancellationToken ct = default);
 }
 
 // ❌ WRONG - Poorly defined contract
-public interface IBudgetService
+public interface I{Entity}Service
 {
     Task<object> DoSomething(Dictionary<string, object> data); // Unclear!
     Task Process(string xml); // String-based, not typed
-    Budget GetBudget(int id); // Synchronous, uses int instead of Guid
+    {Entity} Get{Entity}(int id); // Synchronous, uses int instead of Guid
 }
 ```
 
@@ -79,18 +79,18 @@ public interface IBudgetService
 
 ```csharp
 // ✅ CORRECT - Loosely coupled services
-namespace {ApplicationName}.Services.Budgets;
+namespace {ApplicationName}.Services.{Entities};
 
-public sealed class BudgetService : IBudgetService
+public sealed class {Entity}Service : I{Entity}Service
 {
-    private readonly ICommandHandler<CreateBudgetCommand, CreateBudgetResponse> _createHandler;
-    private readonly IQueryHandler<GetBudgetByIdQuery, BudgetResponse> _getHandler;
+    private readonly ICommandHandler<Create{Entity}Command, Create{Entity}Response> _createHandler;
+    private readonly IQueryHandler<Get{Entity}ByIdQuery, {Entity}Response> _getHandler;
     private readonly IMapper _mapper;
     private readonly IEventPublisher _eventPublisher; // Only depends on abstraction
 
-    public BudgetService(
-        ICommandHandler<CreateBudgetCommand, CreateBudgetResponse> createHandler,
-        IQueryHandler<GetBudgetByIdQuery, BudgetResponse> getHandler,
+    public {Entity}Service(
+        ICommandHandler<Create{Entity}Command, Create{Entity}Response> createHandler,
+        IQueryHandler<Get{Entity}ByIdQuery, {Entity}Response> getHandler,
         IMapper mapper,
         IEventPublisher eventPublisher)
     {
@@ -100,16 +100,16 @@ public sealed class BudgetService : IBudgetService
         _eventPublisher = eventPublisher;
     }
 
-    public async Task<CreateBudgetResponse> CreateBudgetAsync(
-        CreateBudgetRequest request,
+    public async Task<Create{Entity}Response> Create{Entity}Async(
+        Create{Entity}Request request,
         CancellationToken ct = default)
     {
-        var command = _mapper.Map<CreateBudgetCommand>(request);
+        var command = _mapper.Map<Create{Entity}Command>(request);
         var response = await _createHandler.HandleAsync(command, ct);
 
         // Publish event for interested services (loose coupling)
         await _eventPublisher.PublishAsync(
-            new BudgetCreatedEvent(response.BudgetId, request.Name, request.Amount),
+            new {Entity}CreatedEvent(response.{Entity}Id, request.Name, request.Amount),
             ct);
 
         return response;
@@ -117,21 +117,21 @@ public sealed class BudgetService : IBudgetService
 }
 
 // ❌ WRONG - Tightly coupled service
-public sealed class BudgetService
+public sealed class {Entity}Service
 {
-    private readonly SqlBudgetRepository _repository; // Tight coupling to specific implementation
+    private readonly Sql{Entity}Repository _repository; // Tight coupling to specific implementation
     private readonly SmtpEmailSender _emailSender; // Direct dependency
-    private readonly GoalService _goalService; // Direct service-to-service dependency
+    private readonly {ChildEntity}Service _{childEntity}Service; // Direct service-to-service dependency
 
-    public async Task CreateBudgetAsync(CreateBudgetRequest request)
+    public async Task Create{Entity}Async(Create{Entity}Request request)
     {
-        var budget = await _repository.SaveAsync(request);
+        var {entity} = await _repository.SaveAsync(request);
 
         // Tight coupling - directly calling another service
-        await _goalService.CreateDefaultGoalsAsync(budget.BudgetId);
+        await _{childEntity}Service.CreateDefault{ChildEntities}Async({entity}.{Entity}Id);
 
         // Tight coupling - directly sending email
-        await _emailSender.SendAsync("Budget created");
+        await _emailSender.SendAsync("{Entity} created");
     }
 }
 ```
@@ -142,58 +142,58 @@ public sealed class BudgetService
 
 ```csharp
 // ✅ CORRECT - Well-abstracted service
-namespace {ApplicationName}.Services.Budgets;
+namespace {ApplicationName}.Services.{Entities};
 
-public sealed class BudgetCalculationService : IBudgetCalculationService
+public sealed class {Entity}CalculationService : I{Entity}CalculationService
 {
-    private readonly IQueryHandler<GetBudgetByIdQuery, BudgetResponse> _getHandler;
-    private readonly IQueryHandler<GetGoalsByBudgetQuery, List<GoalResponse>> _getGoalsHandler;
-    private readonly ILogger<BudgetCalculationService> _logger;
+    private readonly IQueryHandler<Get{Entity}ByIdQuery, {Entity}Response> _getHandler;
+    private readonly IQueryHandler<Get{ChildEntities}By{Entity}Query, List<{ChildEntity}Response>> _get{ChildEntities}Handler;
+    private readonly ILogger<{Entity}CalculationService> _logger;
 
-    public BudgetCalculationService(
-        IQueryHandler<GetBudgetByIdQuery, BudgetResponse> getHandler,
-        IQueryHandler<GetGoalsByBudgetQuery, List<GoalResponse>> getGoalsHandler,
-        ILogger<BudgetCalculationService> logger)
+    public {Entity}CalculationService(
+        IQueryHandler<Get{Entity}ByIdQuery, {Entity}Response> getHandler,
+        IQueryHandler<Get{ChildEntities}By{Entity}Query, List<{ChildEntity}Response>> get{ChildEntities}Handler,
+        ILogger<{Entity}CalculationService> logger)
     {
         _getHandler = getHandler;
-        _getGoalsHandler = getGoalsHandler;
+        _get{ChildEntities}Handler = get{ChildEntities}Handler;
         _logger = logger;
     }
 
     /// <summary>
-    /// Calculates remaining budget amount.
-    /// Consumer doesn't need to know about goals, allocations, etc.
+    /// Calculates remaining {entity} amount.
+    /// Consumer doesn't need to know about {childEntities}, allocations, etc.
     /// </summary>
     public async Task<decimal> CalculateRemainingAsync(
-        Guid budgetId,
+        Guid {entity}Id,
         CancellationToken ct = default)
     {
-        _logger.LogDebug("Calculating remaining for budget {BudgetId}", budgetId);
+        _logger.LogDebug("Calculating remaining for {entity} {Entity}Id", {entity}Id);
 
         // Internal complexity hidden from consumer
-        var budget = await _getHandler.HandleAsync(
-            new GetBudgetByIdQuery(budgetId),
+        var {entity} = await _getHandler.HandleAsync(
+            new Get{Entity}ByIdQuery({entity}Id),
             ct);
 
-        var goals = await _getGoalsHandler.HandleAsync(
-            new GetGoalsByBudgetQuery(budgetId),
+        var {childEntities} = await _get{ChildEntities}Handler.HandleAsync(
+            new Get{ChildEntities}By{Entity}Query({entity}Id),
             ct);
 
-        var allocated = goals.Sum(g => g.TargetAmount);
-        var remaining = budget.Amount - allocated;
+        var allocated = {childEntities}.Sum(g => g.Amount);
+        var remaining = {entity}.Amount - allocated;
 
         _logger.LogDebug(
-            "Budget {BudgetId} has {Remaining} remaining",
-            budgetId, remaining);
+            "{Entity}Id has {Remaining} remaining",
+            {entity}Id, remaining);
 
         return remaining;
     }
 }
 
 // ❌ WRONG - Leaky abstraction exposing internals
-public interface IBudgetCalculationService
+public interface I{Entity}CalculationService
 {
-    Task<decimal> CalculateRemainingAsync(Guid budgetId);
+    Task<decimal> CalculateRemainingAsync(Guid {entity}Id);
 
     // Exposes internal implementation details
     Task<Dictionary<string, decimal>> GetInternalCalculationCache();
@@ -218,31 +218,31 @@ public interface IValidationService<T>
     Task<ValidationResult> ValidateAsync(T item, CancellationToken ct = default);
 }
 
-public sealed class BudgetValidationService : IValidationService<Budget>
+public sealed class {Entity}ValidationService : IValidationService<{Entity}>
 {
-    private readonly IQueryHandler<GetBudgetByIdQuery, BudgetResponse> _getHandler;
+    private readonly IQueryHandler<Get{Entity}ByIdQuery, {Entity}Response> _getHandler;
 
-    public BudgetValidationService(
-        IQueryHandler<GetBudgetByIdQuery, BudgetResponse> getHandler)
+    public {Entity}ValidationService(
+        IQueryHandler<Get{Entity}ByIdQuery, {Entity}Response> getHandler)
     {
         _getHandler = getHandler;
     }
 
     public async Task<ValidationResult> ValidateAsync(
-        Budget budget,
+        {Entity} {entity},
         CancellationToken ct = default)
     {
         var errors = new List<string>();
 
-        if (budget.Amount <= 0)
+        if ({entity}.Amount <= 0)
             errors.Add("Amount must be positive");
 
-        if (string.IsNullOrWhiteSpace(budget.Name))
+        if (string.IsNullOrWhiteSpace({entity}.Name))
             errors.Add("Name is required");
 
         // Reusable duplicate check
-        if (await IsDuplicateAsync(budget.Name, ct))
-            errors.Add("Budget name already exists");
+        if (await IsDuplicateAsync({entity}.Name, ct))
+            errors.Add("{Entity} name already exists");
 
         return errors.Count == 0
             ? ValidationResult.Success()
@@ -258,14 +258,14 @@ public sealed class BudgetValidationService : IValidationService<Budget>
 }
 
 // Reuse same pattern for other entities
-public sealed class GoalValidationService : IValidationService<Goal>
+public sealed class {ChildEntity}ValidationService : IValidationService<{ChildEntity}>
 {
-    public async Task<ValidationResult> ValidateAsync(Goal goal, CancellationToken ct = default)
+    public async Task<ValidationResult> ValidateAsync({ChildEntity} {childEntity}, CancellationToken ct = default)
     {
         // Same validation pattern, different rules
         var errors = new List<string>();
 
-        if (goal.TargetAmount <= 0)
+        if ({childEntity}.Amount <= 0)
             errors.Add("Target amount must be positive");
 
         return errors.Count == 0
@@ -281,27 +281,27 @@ public sealed class GoalValidationService : IValidationService<Goal>
 
 ```csharp
 // ✅ CORRECT - Autonomous service with own data store
-namespace {ApplicationName}.Services.Budgets;
+namespace {ApplicationName}.Services.{Entities};
 
-public sealed class BudgetService : IBudgetService
+public sealed class {Entity}Service : I{Entity}Service
 {
     private readonly DataContext _dataContext; // Own database context
     private readonly IEventPublisher _eventPublisher;
 
-    public BudgetService(DataContext dataContext, IEventPublisher eventPublisher)
+    public {Entity}Service(DataContext dataContext, IEventPublisher eventPublisher)
     {
         _dataContext = dataContext;
         _eventPublisher = eventPublisher;
     }
 
-    public async Task<CreateBudgetResponse> CreateBudgetAsync(
-        CreateBudgetRequest request,
+    public async Task<Create{Entity}Response> Create{Entity}Async(
+        Create{Entity}Request request,
         CancellationToken ct = default)
     {
-        // Full autonomy over budget creation logic
-        var budget = new Budget
+        // Full autonomy over {entity} creation logic
+        var {entity} = new {Entity}
         {
-            BudgetId = Guid.NewGuid(),
+            {Entity}Id = Guid.NewGuid(),
             Name = request.Name,
             Amount = request.Amount,
             CreatedDate = DateTimeOffset.UtcNow
@@ -312,17 +312,17 @@ public sealed class BudgetService : IBudgetService
 
         try
         {
-            _dataContext.Budgets.Add(budget);
+            _dataContext.{Entities}.Add({entity});
             await _dataContext.SaveChangesAsync(ct);
 
             await transaction.CommitAsync(ct);
 
             // Notify other services via events (maintains autonomy)
             await _eventPublisher.PublishAsync(
-                new BudgetCreatedEvent(budget.BudgetId, budget.Name, budget.Amount),
+                new {Entity}CreatedEvent({entity}.{Entity}Id, {entity}.Name, {entity}.Amount),
                 ct);
 
-            return new CreateBudgetResponse(budget.BudgetId);
+            return new Create{Entity}Response({entity}.{Entity}Id);
         }
         catch
         {
@@ -333,12 +333,12 @@ public sealed class BudgetService : IBudgetService
 }
 
 // ❌ WRONG - Lacks autonomy, depends on external coordination
-public sealed class BudgetService
+public sealed class {Entity}Service
 {
     private readonly ISharedTransactionManager _transactionManager; // External coordination
     private readonly ISharedDataStore _sharedData; // Shared data store
 
-    public async Task CreateBudgetAsync(CreateBudgetRequest request)
+    public async Task Create{Entity}Async(Create{Entity}Request request)
     {
         // Waiting for external transaction manager
         await _transactionManager.BeginTransactionAsync();
@@ -347,7 +347,7 @@ public sealed class BudgetService
         await _sharedData.SaveAsync(request);
 
         // Manually coordinating with other services
-        await _transactionManager.NotifyServicesAsync("budget.created");
+        await _transactionManager.NotifyServicesAsync("{entity}.created");
 
         await _transactionManager.CommitAsync();
     }
@@ -360,29 +360,29 @@ public sealed class BudgetService
 
 ```csharp
 // ✅ CORRECT - Stateless service
-namespace {ApplicationName}.Services.Budgets;
+namespace {ApplicationName}.Services.{Entities};
 
-public sealed class BudgetService : IBudgetService
+public sealed class {Entity}Service : I{Entity}Service
 {
-    private readonly ICommandHandler<CreateBudgetCommand, CreateBudgetResponse> _createHandler;
-    private readonly ILogger<BudgetService> _logger;
+    private readonly ICommandHandler<Create{Entity}Command, Create{Entity}Response> _createHandler;
+    private readonly ILogger<{Entity}Service> _logger;
 
-    public BudgetService(
-        ICommandHandler<CreateBudgetCommand, CreateBudgetResponse> createHandler,
-        ILogger<BudgetService> logger)
+    public {Entity}Service(
+        ICommandHandler<Create{Entity}Command, Create{Entity}Response> createHandler,
+        ILogger<{Entity}Service> logger)
     {
         _createHandler = createHandler;
         _logger = logger;
     }
 
     // Stateless - all state passed via parameters
-    public async Task<CreateBudgetResponse> CreateBudgetAsync(
-        CreateBudgetRequest request,
+    public async Task<Create{Entity}Response> Create{Entity}Async(
+        Create{Entity}Request request,
         CancellationToken ct = default)
     {
-        _logger.LogInformation("Creating budget {Name}", request.Name);
+        _logger.LogInformation("Creating {entity} {Name}", request.Name);
 
-        var command = new CreateBudgetCommand(
+        var command = new Create{Entity}Command(
             request.Name,
             request.Amount,
             request.StartDate);
@@ -391,36 +391,36 @@ public sealed class BudgetService : IBudgetService
     }
 
     // Stateless - retrieves fresh data each call
-    public async Task<BudgetDto?> GetBudgetAsync(
-        Guid budgetId,
+    public async Task<{Entity}Dto?> Get{Entity}Async(
+        Guid {entity}Id,
         CancellationToken ct = default)
     {
-        _logger.LogDebug("Retrieving budget {BudgetId}", budgetId);
+        _logger.LogDebug("Retrieving {entity} {Entity}Id", {entity}Id);
 
-        var query = new GetBudgetByIdQuery(budgetId);
+        var query = new Get{Entity}ByIdQuery({entity}Id);
         var response = await _getHandler.HandleAsync(query, ct);
 
-        return response.Budget is null ? null : new BudgetDto(response.Budget.BudgetId, response.Budget.Name, response.Budget.Amount);
+        return response.{Entity} is null ? null : new {Entity}Dto(response.{Entity}.{Entity}Id, response.{Entity}.Name, response.{Entity}.Amount);
     }
 }
 
 // ❌ WRONG - Stateful service (anti-pattern in SOA)
-public sealed class BudgetService
+public sealed class {Entity}Service
 {
-    private Budget? _currentBudget; // Instance state!
-    private readonly List<Budget> _cachedBudgets = new(); // Mutable state!
+    private {Entity}? _current{Entity}; // Instance state!
+    private readonly List<{Entity}> _cached{Entities} = new(); // Mutable state!
 
-    public async Task<CreateBudgetResponse> CreateBudgetAsync(CreateBudgetRequest request)
+    public async Task<Create{Entity}Response> Create{Entity}Async(Create{Entity}Request request)
     {
-        var budget = CreateBudget(request);
+        var {entity} = Create{Entity}(request);
 
-        _currentBudget = budget; // Storing state!
-        _cachedBudgets.Add(budget); // Mutating state!
+        _current{Entity} = {entity}; // Storing state!
+        _cached{Entities}.Add({entity}); // Mutating state!
 
-        return new CreateBudgetResponse(budget.BudgetId);
+        return new Create{Entity}Response({entity}.{Entity}Id);
     }
 
-    public Budget? GetCurrentBudget() => _currentBudget; // Returning instance state!
+    public {Entity}? GetCurrent{Entity}() => _current{Entity}; // Returning instance state!
 }
 ```
 
@@ -430,28 +430,28 @@ public sealed class BudgetService
 
 ```csharp
 // ✅ CORRECT - Discoverable service with metadata
-namespace {ApplicationName}.Services.Budgets;
+namespace {ApplicationName}.Services.{Entities};
 
 [ServiceContract(
-    Name = "BudgetService",
+    Name = "{Entity}Service",
     Version = "1.0",
-    Description = "Provides budget management operations")]
-public sealed class BudgetService : IBudgetService
+    Description = "Provides {entity} management operations")]
+public sealed class {Entity}Service : I{Entity}Service
 {
     // Service metadata for discovery
     public ServiceMetadata GetMetadata()
     {
         return new ServiceMetadata
         {
-            Name = "BudgetService",
+            Name = "{Entity}Service",
             Version = "1.0",
-            Description = "Budget management operations",
+            Description = "{Entity} management operations",
             Endpoints = new List<EndpointMetadata>
             {
-                new("CreateBudget", "POST", "/api/budgets", "Creates a new budget"),
-                new("GetBudget", "GET", "/api/budgets/{id}", "Retrieves a budget"),
-                new("UpdateBudget", "PUT", "/api/budgets/{id}", "Updates a budget"),
-                new("DeleteBudget", "DELETE", "/api/budgets/{id}", "Deletes a budget")
+                new("Create{Entity}", "POST", "/api/{entities}", "Creates a new {entity}"),
+                new("Get{Entity}", "GET", "/api/{entities}/{id}", "Retrieves a {entity}"),
+                new("Update{Entity}", "PUT", "/api/{entities}/{id}", "Updates a {entity}"),
+                new("Delete{Entity}", "DELETE", "/api/{entities}/{id}", "Deletes a {entity}")
             },
             Capabilities = new List<string>
             {
@@ -464,17 +464,17 @@ public sealed class BudgetService : IBudgetService
 // Service registration for discovery
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddBudgetService(this IServiceCollection services)
+    public static IServiceCollection Add{Entity}Service(this IServiceCollection services)
     {
-        services.AddScoped<IBudgetService, BudgetService>();
+        services.AddScoped<I{Entity}Service, {Entity}Service>();
 
         // Register for service discovery
         services.AddSingleton<IServiceRegistry>(sp =>
         {
             var registry = sp.GetRequiredService<IServiceRegistry>();
-            var budgetService = sp.GetRequiredService<IBudgetService>();
+            var {entity}Service = sp.GetRequiredService<I{Entity}Service>();
 
-            if (budgetService is BudgetService service)
+            if ({entity}Service is {Entity}Service service)
             {
                 registry.Register(service.GetMetadata());
             }
@@ -513,9 +513,9 @@ public record EndpointMetadata(
 namespace {ApplicationName}.Services.Messaging;
 
 // Message contract
-public sealed record BudgetCreatedMessage
+public sealed record {Entity}CreatedMessage
 {
-    public Guid BudgetId { get; init; }
+    public Guid {Entity}Id { get; init; }
     public string Name { get; init; } = string.Empty;
     public decimal Amount { get; init; }
     public DateTimeOffset CreatedDate { get; init; }
@@ -523,42 +523,42 @@ public sealed record BudgetCreatedMessage
 }
 
 // Publisher service
-public sealed class BudgetEventPublisher : IBudgetEventPublisher
+public sealed class {Entity}EventPublisher : I{Entity}EventPublisher
 {
     private readonly IMessageBus _messageBus;
-    private readonly ILogger<BudgetEventPublisher> _logger;
+    private readonly ILogger<{Entity}EventPublisher> _logger;
 
-    public BudgetEventPublisher(
+    public {Entity}EventPublisher(
         IMessageBus messageBus,
-        ILogger<BudgetEventPublisher> logger)
+        ILogger<{Entity}EventPublisher> logger)
     {
         _messageBus = messageBus;
         _logger = logger;
     }
 
-    public async Task PublishBudgetCreatedAsync(
-        Budget budget,
+    public async Task Publish{Entity}CreatedAsync(
+        {Entity} {entity},
         CancellationToken ct = default)
     {
-        var message = new BudgetCreatedMessage
+        var message = new {Entity}CreatedMessage
         {
-            BudgetId = budget.BudgetId,
-            Name = budget.Name,
-            Amount = budget.Amount,
-            CreatedDate = budget.CreatedDate,
-            CreatedBy = budget.CreatedBy
+            {Entity}Id = {entity}.{Entity}Id,
+            Name = {entity}.Name,
+            Amount = {entity}.Amount,
+            CreatedDate = {entity}.CreatedDate,
+            CreatedBy = {entity}.CreatedBy
         };
 
         _logger.LogInformation(
-            "Publishing BudgetCreated message for {BudgetId}",
-            budget.BudgetId);
+            "Publishing {Entity}Created message for {Entity}Id",
+            {entity}.{Entity}Id);
 
-        await _messageBus.PublishAsync("budget.created", message, ct);
+        await _messageBus.PublishAsync("{entity}.created", message, ct);
     }
 }
 
 // Subscriber service
-public sealed class NotificationService : IMessageHandler<BudgetCreatedMessage>
+public sealed class NotificationService : IMessageHandler<{Entity}CreatedMessage>
 {
     private readonly IEmailService _emailService;
     private readonly ILogger<NotificationService> _logger;
@@ -572,17 +572,17 @@ public sealed class NotificationService : IMessageHandler<BudgetCreatedMessage>
     }
 
     public async Task HandleAsync(
-        BudgetCreatedMessage message,
+        {Entity}CreatedMessage message,
         CancellationToken ct = default)
     {
         _logger.LogInformation(
-            "Handling BudgetCreated message for {BudgetId}",
-            message.BudgetId);
+            "Handling {Entity}Created message for {Entity}Id",
+            message.{Entity}Id);
 
         await _emailService.SendAsync(
             message.CreatedBy,
-            "Budget Created",
-            $"Your budget '{message.Name}' with amount {message.Amount:C} has been created.",
+            "{Entity} Created",
+            $"Your {entity} '{message.Name}' with amount {message.Amount:C} has been created.",
             ct);
     }
 }
@@ -592,76 +592,67 @@ public sealed class NotificationService : IMessageHandler<BudgetCreatedMessage>
 
 ```csharp
 // ✅ CORRECT - Request-reply pattern
-namespace {ApplicationName}.Services.Budgets;
+namespace {ApplicationName}.Services.{Entities};
 
 // Request
-public sealed record CalculateBudgetSummaryRequest
+public sealed record Calculate{Entity}SummaryRequest
 {
-    public Guid BudgetId { get; init; }
-    public bool IncludeGoals { get; init; }
-    public bool IncludeDebts { get; init; }
+    public Guid {Entity}Id { get; init; }
+    public bool Include{ChildEntities} { get; init; }
+    public bool Include{ChildEntities} { get; init; }
 }
 
 // Reply
-public sealed record CalculateBudgetSummaryReply
+public sealed record Calculate{Entity}SummaryReply
 {
-    public Guid BudgetId { get; init; }
+    public Guid {Entity}Id { get; init; }
     public string Name { get; init; } = string.Empty;
     public decimal TotalAmount { get; init; }
     public decimal AllocatedAmount { get; init; }
     public decimal RemainingAmount { get; init; }
-    public List<GoalSummary> Goals { get; init; } = new();
-    public List<DebtSummary> Debts { get; init; } = new();
+    public List<{ChildEntity}Summary> {ChildEntities} { get; init; } = new();
 }
 
 // Service implementing request-reply
-public sealed class BudgetQueryService : IBudgetQueryService
+public sealed class {Entity}QueryService : I{Entity}QueryService
 {
-    private readonly IQueryHandler<GetBudgetByIdQuery, BudgetResponse> _getBudgetHandler;
-    private readonly IQueryHandler<GetGoalsByBudgetQuery, List<GoalResponse>> _getGoalsHandler;
-    private readonly IQueryHandler<GetDebtsByBudgetQuery, List<DebtResponse>> _getDebtsHandler;
+    private readonly IQueryHandler<Get{Entity}ByIdQuery, {Entity}Response> _get{Entity}Handler;
+    private readonly IQueryHandler<Get{ChildEntities}By{Entity}Query, List<{ChildEntity}Response>> _get{ChildEntities}Handler;
 
-    public BudgetQueryService(
-        IQueryHandler<GetBudgetByIdQuery, BudgetResponse> getBudgetHandler,
-        IQueryHandler<GetGoalsByBudgetQuery, List<GoalResponse>> getGoalsHandler,
-        IQueryHandler<GetDebtsByBudgetQuery, List<DebtResponse>> getDebtsHandler)
+    public {Entity}QueryService(
+        IQueryHandler<Get{Entity}ByIdQuery, {Entity}Response> get{Entity}Handler,
+        IQueryHandler<Get{ChildEntities}By{Entity}Query, List<{ChildEntity}Response>> get{ChildEntities}Handler)
     {
-        _getBudgetHandler = getBudgetHandler;
-        _getGoalsHandler = getGoalsHandler;
-        _getDebtsHandler = getDebtsHandler;
+        _get{Entity}Handler = get{Entity}Handler;
+        _get{ChildEntities}Handler = get{ChildEntities}Handler;
     }
 
-    public async Task<CalculateBudgetSummaryReply> CalculateSummaryAsync(
-        CalculateBudgetSummaryRequest request,
+    public async Task<Calculate{Entity}SummaryReply> CalculateSummaryAsync(
+        Calculate{Entity}SummaryRequest request,
         CancellationToken ct = default)
     {
-        var budget = await _getBudgetHandler.HandleAsync(
-            new GetBudgetByIdQuery(request.BudgetId),
+        var {entity} = await _get{Entity}Handler.HandleAsync(
+            new Get{Entity}ByIdQuery(request.{Entity}Id),
             ct);
 
-        var goals = request.IncludeGoals
-            ? await _getGoalsHandler.HandleAsync(
-                new GetGoalsByBudgetQuery(request.BudgetId),
+        var {childEntities} = request.Include{ChildEntities}
+            ? await _get{ChildEntities}Handler.HandleAsync(
+                new Get{ChildEntities}By{Entity}Query(request.{Entity}Id),
                 ct)
-            : new List<GoalResponse>();
+            : new List<{ChildEntity}Response>();
 
-        var debts = request.IncludeDebts
-            ? await _getDebtsHandler.HandleAsync(
-                new GetDebtsByBudgetQuery(request.BudgetId),
-                ct)
-            : new List<DebtResponse>();
+        var allocated = {childEntities}.Sum(c => c.Amount);
 
-        var allocated = goals.Sum(g => g.TargetAmount) + debts.Sum(d => d.Amount);
-
-        return new CalculateBudgetSummaryReply
+        return new Calculate{Entity}SummaryReply
         {
-            BudgetId = budget.BudgetId,
-            Name = budget.Name,
-            TotalAmount = budget.Amount,
+            {Entity}Id = {entity}.{Entity}Id,
+            Name = {entity}.Name,
+            TotalAmount = {entity}.Amount,
             AllocatedAmount = allocated,
-            RemainingAmount = budget.Amount - allocated,
-            Goals = goals.Select(g => new GoalSummary(g.GoalId, g.Name, g.TargetAmount)).ToList(),
-            Debts = debts.Select(d => new DebtSummary(d.DebtId, d.Description, d.Amount)).ToList()
+            RemainingAmount = {entity}.Amount - allocated,
+            {ChildEntities} = {childEntities}
+                .Select(c => new {ChildEntity}Summary(c.{ChildEntity}Id, c.Name, c.Amount))
+                .ToList()
         };
     }
 }
@@ -678,95 +669,95 @@ public sealed class BudgetQueryService : IBudgetQueryService
 namespace {ApplicationName}.Services.Orchestration;
 
 /// <summary>
-/// Orchestrator for budget creation workflow.
+/// Orchestrator for {entity} creation workflow.
 /// Centralized coordination of multiple services.
 /// </summary>
-public sealed class BudgetCreationOrchestrator : IBudgetCreationOrchestrator
+public sealed class {Entity}CreationOrchestrator : I{Entity}CreationOrchestrator
 {
-    private readonly IBudgetService _budgetService;
-    private readonly IGoalService _goalService;
+    private readonly I{Entity}Service _{entity}Service;
+    private readonly I{ChildEntity}Service _{childEntity}Service;
     private readonly INotificationService _notificationService;
     private readonly IAuditService _auditService;
-    private readonly ILogger<BudgetCreationOrchestrator> _logger;
+    private readonly ILogger<{Entity}CreationOrchestrator> _logger;
 
-    public BudgetCreationOrchestrator(
-        IBudgetService budgetService,
-        IGoalService goalService,
+    public {Entity}CreationOrchestrator(
+        I{Entity}Service {entity}Service,
+        I{ChildEntity}Service {childEntity}Service,
         INotificationService notificationService,
         IAuditService auditService,
-        ILogger<BudgetCreationOrchestrator> logger)
+        ILogger<{Entity}CreationOrchestrator> logger)
     {
-        _budgetService = budgetService;
-        _goalService = goalService;
+        _{entity}Service = {entity}Service;
+        _{childEntity}Service = {childEntity}Service;
         _notificationService = notificationService;
         _auditService = auditService;
         _logger = logger;
     }
 
-    public async Task<BudgetCreationResult> CreateBudgetWithGoalsAsync(
-        CreateBudgetWithGoalsRequest request,
+    public async Task<{Entity}CreationResult> Create{Entity}With{ChildEntities}Async(
+        Create{Entity}With{ChildEntities}Request request,
         CancellationToken ct = default)
     {
         _logger.LogInformation(
-            "Starting orchestrated budget creation for {BudgetName}",
-            request.BudgetName);
+            "Starting orchestrated {entity} creation for {Entity}Name",
+            request.{Entity}Name);
 
         try
         {
-            // Step 1: Create budget
-            var budgetRequest = new CreateBudgetRequest
+            // Step 1: Create {entity}
+            var {entity}Request = new Create{Entity}Request
             {
-                Name = request.BudgetName,
+                Name = request.{Entity}Name,
                 Amount = request.Amount,
                 StartDate = request.StartDate
             };
 
-            var budgetResponse = await _budgetService.CreateBudgetAsync(budgetRequest, ct);
+            var {entity}Response = await _{entity}Service.Create{Entity}Async({entity}Request, ct);
 
-            // Step 2: Create goals (sequential orchestration)
-            var goalIds = new List<Guid>();
-            foreach (var goalRequest in request.Goals)
+            // Step 2: Create {childEntities} (sequential orchestration)
+            var {childEntity}Ids = new List<Guid>();
+            foreach (var {childEntity}Request in request.{ChildEntities})
             {
-                var goalResponse = await _goalService.CreateGoalAsync(
-                    new CreateGoalRequest
+                var {childEntity}Response = await _{childEntity}Service.Create{ChildEntity}Async(
+                    new Create{ChildEntity}Request
                     {
-                        BudgetId = budgetResponse.BudgetId,
-                        Name = goalRequest.Name,
-                        TargetAmount = goalRequest.TargetAmount
+                        {Entity}Id = {entity}Response.{Entity}Id,
+                        Name = {childEntity}Request.Name,
+                        Amount = {childEntity}Request.Amount
                     },
                     ct);
 
-                goalIds.Add(goalResponse.GoalId);
+                {childEntity}Ids.Add({childEntity}Response.{ChildEntity}Id);
             }
 
             // Step 3: Send notification
-            await _notificationService.SendBudgetCreatedNotificationAsync(
-                budgetResponse.BudgetId,
+            await _notificationService.Send{Entity}CreatedNotificationAsync(
+                {entity}Response.{Entity}Id,
                 request.CreatedBy,
                 ct);
 
             // Step 4: Audit
-            await _auditService.LogBudgetCreationAsync(
-                budgetResponse.BudgetId,
+            await _auditService.Log{Entity}CreationAsync(
+                {entity}Response.{Entity}Id,
                 request.CreatedBy,
                 ct);
 
             _logger.LogInformation(
-                "Completed orchestrated budget creation for {BudgetId}",
-                budgetResponse.BudgetId);
+                "Completed orchestrated {entity} creation for {Entity}Id",
+                {entity}Response.{Entity}Id);
 
-            return new BudgetCreationResult
+            return new {Entity}CreationResult
             {
-                BudgetId = budgetResponse.BudgetId,
-                GoalIds = goalIds,
+                {Entity}Id = {entity}Response.{Entity}Id,
+                {ChildEntity}Ids = {childEntity}Ids,
                 Success = true
             };
         }
         catch (Exception ex)
         {
             _logger.LogError(ex,
-                "Failed orchestrated budget creation for {BudgetName}",
-                request.BudgetName);
+                "Failed orchestrated {entity} creation for {Entity}Name",
+                request.{Entity}Name);
 
             throw;
         }
@@ -780,78 +771,78 @@ public sealed class BudgetCreationOrchestrator : IBudgetCreationOrchestrator
 // ✅ CORRECT - Service choreography
 namespace {ApplicationName}.Services.Events;
 
-// Budget service publishes event (doesn't know about consumers)
-public sealed class BudgetService : IBudgetService
+// {Entity} service publishes event (doesn't know about consumers)
+public sealed class {Entity}Service : I{Entity}Service
 {
     private readonly IEventPublisher _eventPublisher;
     private readonly DataContext _dataContext;
 
-    public async Task<CreateBudgetResponse> CreateBudgetAsync(
-        CreateBudgetRequest request,
+    public async Task<Create{Entity}Response> Create{Entity}Async(
+        Create{Entity}Request request,
         CancellationToken ct = default)
     {
-        var budget = new Budget
+        var {entity} = new {Entity}
         {
-            BudgetId = Guid.NewGuid(),
+            {Entity}Id = Guid.NewGuid(),
             Name = request.Name,
             Amount = request.Amount
         };
 
-        _dataContext.Budgets.Add(budget);
+        _dataContext.{Entities}.Add({entity});
         await _dataContext.SaveChangesAsync(ct);
 
         // Publish event - no knowledge of consumers
         await _eventPublisher.PublishAsync(
-            new BudgetCreatedEvent
+            new {Entity}CreatedEvent
             {
-                BudgetId = budget.BudgetId,
-                Name = budget.Name,
-                Amount = budget.Amount,
+                {Entity}Id = {entity}.{Entity}Id,
+                Name = {entity}.Name,
+                Amount = {entity}.Amount,
                 CreatedBy = request.CreatedBy
             },
             ct);
 
-        return new CreateBudgetResponse(budget.BudgetId);
+        return new Create{Entity}Response({entity}.{Entity}Id);
     }
 }
 
-// Goal service reacts to event
-public sealed class GoalEventHandler : IEventHandler<BudgetCreatedEvent>
+// {ChildEntity} service reacts to event
+public sealed class {ChildEntity}EventHandler : IEventHandler<{Entity}CreatedEvent>
 {
-    private readonly IGoalService _goalService;
+    private readonly I{ChildEntity}Service _{childEntity}Service;
 
-    public async Task HandleAsync(BudgetCreatedEvent domainEvent, CancellationToken ct)
+    public async Task HandleAsync({Entity}CreatedEvent domainEvent, CancellationToken ct)
     {
-        // React to budget creation by creating default goals
-        await _goalService.CreateDefaultGoalsAsync(domainEvent.BudgetId, ct);
+        // React to {entity} creation by creating default {childEntities}
+        await _{childEntity}Service.CreateDefault{ChildEntities}Async(domainEvent.{Entity}Id, ct);
     }
 }
 
 // Notification service reacts to event
-public sealed class NotificationEventHandler : IEventHandler<BudgetCreatedEvent>
+public sealed class NotificationEventHandler : IEventHandler<{Entity}CreatedEvent>
 {
     private readonly INotificationService _notificationService;
 
-    public async Task HandleAsync(BudgetCreatedEvent domainEvent, CancellationToken ct)
+    public async Task HandleAsync({Entity}CreatedEvent domainEvent, CancellationToken ct)
     {
-        // React to budget creation by sending notification
-        await _notificationService.SendBudgetCreatedNotificationAsync(
-            domainEvent.BudgetId,
+        // React to {entity} creation by sending notification
+        await _notificationService.Send{Entity}CreatedNotificationAsync(
+            domainEvent.{Entity}Id,
             domainEvent.CreatedBy,
             ct);
     }
 }
 
 // Audit service reacts to event
-public sealed class AuditEventHandler : IEventHandler<BudgetCreatedEvent>
+public sealed class AuditEventHandler : IEventHandler<{Entity}CreatedEvent>
 {
     private readonly IAuditService _auditService;
 
-    public async Task HandleAsync(BudgetCreatedEvent domainEvent, CancellationToken ct)
+    public async Task HandleAsync({Entity}CreatedEvent domainEvent, CancellationToken ct)
     {
-        // React to budget creation by logging audit entry
-        await _auditService.LogBudgetCreationAsync(
-            domainEvent.BudgetId,
+        // React to {entity} creation by logging audit entry
+        await _auditService.Log{Entity}CreationAsync(
+            domainEvent.{Entity}Id,
             domainEvent.CreatedBy,
             ct);
     }
@@ -866,66 +857,66 @@ public sealed class AuditEventHandler : IEventHandler<BudgetCreatedEvent>
 
 ```csharp
 // ✅ CORRECT - URL versioning
-namespace {ApplicationName}.Services.Budgets.V1;
+namespace {ApplicationName}.Services.{Entities}.V1;
 
-public static class BudgetEndpointsV1
+public static class {Entity}EndpointsV1
 {
-    public static void MapBudgetEndpointsV1(
+    public static void Map{Entity}EndpointsV1(
         this IEndpointRouteBuilder app,
         ApiVersionSet versionSet)
     {
-        var group = app.MapGroup("/v1/budgets")
+        var group = app.MapGroup("/v1/{entities}")
             .WithApiVersionSet(versionSet)
             .HasApiVersion(1.0)
-            .WithTags("Budgets V1");
+            .WithTags("{Entities} V1");
 
-        group.MapPost("/", CreateBudgetV1);
-        group.MapGet("/{id:guid}", GetBudgetV1);
+        group.MapPost("/", Create{Entity}V1);
+        group.MapGet("/{id:guid}", Get{Entity}V1);
     }
 
-    private static async Task<IResult> CreateBudgetV1(
-        CreateBudgetRequestV1 request,
-        IBudgetService budgetService,
+    private static async Task<IResult> Create{Entity}V1(
+        Create{Entity}RequestV1 request,
+        I{Entity}Service {entity}Service,
         CancellationToken ct)
     {
-        var response = await budgetService.CreateBudgetAsync(request, ct);
-        return Results.Created($"/v1/budgets/{response.BudgetId}", response);
+        var response = await {entity}Service.Create{Entity}Async(request, ct);
+        return Results.Created($"/v1/{entities}/{response.{Entity}Id}", response);
     }
 
-    private static async Task<IResult> GetBudgetV1(
+    private static async Task<IResult> Get{Entity}V1(
         Guid id,
-        IBudgetService budgetService,
+        I{Entity}Service {entity}Service,
         CancellationToken ct)
     {
-        var budget = await budgetService.GetBudgetAsync(id, ct);
-        return budget is not null ? Results.Ok(budget) : Results.NotFound();
+        var {entity} = await {entity}Service.Get{Entity}Async(id, ct);
+        return {entity} is not null ? Results.Ok({entity}) : Results.NotFound();
     }
 }
 
-namespace {ApplicationName}.Services.Budgets.V2;
+namespace {ApplicationName}.Services.{Entities}.V2;
 
-public static class BudgetEndpointsV2
+public static class {Entity}EndpointsV2
 {
-    public static void MapBudgetEndpointsV2(
+    public static void Map{Entity}EndpointsV2(
         this IEndpointRouteBuilder app,
         ApiVersionSet versionSet)
     {
-        var group = app.MapGroup("/v2/budgets")
+        var group = app.MapGroup("/v2/{entities}")
             .WithApiVersionSet(versionSet)
             .HasApiVersion(2.0)
-            .WithTags("Budgets V2");
+            .WithTags("{Entities} V2");
 
-        group.MapPost("/", CreateBudgetV2); // Enhanced version
-        group.MapGet("/{id:guid}", GetBudgetV2); // Enhanced version
+        group.MapPost("/", Create{Entity}V2); // Enhanced version
+        group.MapGet("/{id:guid}", Get{Entity}V2); // Enhanced version
     }
 
-    private static async Task<IResult> CreateBudgetV2(
-        CreateBudgetRequestV2 request, // New request model
-        IBudgetServiceV2 budgetService, // V2 service
+    private static async Task<IResult> Create{Entity}V2(
+        Create{Entity}RequestV2 request, // New request model
+        I{Entity}ServiceV2 {entity}Service, // V2 service
         CancellationToken ct)
     {
-        var response = await budgetService.CreateBudgetAsync(request, ct);
-        return Results.Created($"/v2/budgets/{response.BudgetId}", response);
+        var response = await {entity}Service.Create{Entity}Async(request, ct);
+        return Results.Created($"/v2/{entities}/{response.{Entity}Id}", response);
     }
 }
 ```
@@ -960,20 +951,20 @@ public sealed class ApiVersionMiddleware
 }
 
 // Service implementation with version awareness
-public sealed class BudgetService : IBudgetService
+public sealed class {Entity}Service : I{Entity}Service
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public async Task<CreateBudgetResponse> CreateBudgetAsync(
-        CreateBudgetRequest request,
+    public async Task<Create{Entity}Response> Create{Entity}Async(
+        Create{Entity}Request request,
         CancellationToken ct = default)
     {
         var apiVersion = _httpContextAccessor.HttpContext?.Items["ApiVersion"]?.ToString();
 
         return apiVersion switch
         {
-            "2.0" => await CreateBudgetV2Async(request, ct),
-            _ => await CreateBudgetV1Async(request, ct)
+            "2.0" => await Create{Entity}V2Async(request, ct),
+            _ => await Create{Entity}V1Async(request, ct)
         };
     }
 }
@@ -985,16 +976,16 @@ public sealed class BudgetService : IBudgetService
 
 ```csharp
 // ✅ CORRECT - Idempotent service operations
-namespace {ApplicationName}.Services.Budgets;
+namespace {ApplicationName}.Services.{Entities};
 
-public sealed class BudgetService : IBudgetService
+public sealed class {Entity}Service : I{Entity}Service
 {
     private readonly DataContext _dataContext;
     private readonly IDistributedCache _cache;
-    private readonly ILogger<BudgetService> _logger;
+    private readonly ILogger<{Entity}Service> _logger;
 
-    public async Task<CreateBudgetResponse> CreateBudgetAsync(
-        CreateBudgetRequest request,
+    public async Task<Create{Entity}Response> Create{Entity}Async(
+        Create{Entity}Request request,
         CancellationToken ct = default)
     {
         // Use idempotency key to prevent duplicate creation
@@ -1009,21 +1000,21 @@ public sealed class BudgetService : IBudgetService
                 "Request already processed, returning cached response for key {IdempotencyKey}",
                 idempotencyKey);
 
-            return JsonSerializer.Deserialize<CreateBudgetResponse>(cached)!;
+            return JsonSerializer.Deserialize<Create{Entity}Response>(cached)!;
         }
 
         // Process request
-        var budget = new Budget
+        var {entity} = new {Entity}
         {
-            BudgetId = Guid.NewGuid(),
+            {Entity}Id = Guid.NewGuid(),
             Name = request.Name,
             Amount = request.Amount
         };
 
-        _dataContext.Budgets.Add(budget);
+        _dataContext.{Entities}.Add({entity});
         await _dataContext.SaveChangesAsync(ct);
 
-        var response = new CreateBudgetResponse(budget.BudgetId);
+        var response = new Create{Entity}Response({entity}.{Entity}Id);
 
         // Cache response for idempotency
         await _cache.SetStringAsync(
@@ -1039,7 +1030,7 @@ public sealed class BudgetService : IBudgetService
     }
 }
 
-public sealed record CreateBudgetRequest
+public sealed record Create{Entity}Request
 {
     public string IdempotencyKey { get; init; } = string.Empty;
     public string Name { get; init; } = string.Empty;
@@ -1057,97 +1048,97 @@ public sealed record CreateBudgetRequest
 // ✅ CORRECT - Saga pattern for distributed transactions
 namespace {ApplicationName}.Services.Sagas;
 
-public sealed class BudgetCreationSaga : ISaga
+public sealed class {Entity}CreationSaga : ISaga
 {
-    private readonly IBudgetService _budgetService;
-    private readonly IGoalService _goalService;
+    private readonly I{Entity}Service _{entity}Service;
+    private readonly I{ChildEntity}Service _{childEntity}Service;
     private readonly INotificationService _notificationService;
-    private readonly ILogger<BudgetCreationSaga> _logger;
+    private readonly ILogger<{Entity}CreationSaga> _logger;
 
     public async Task<SagaResult> ExecuteAsync(
-        BudgetCreationSagaData data,
+        {Entity}CreationSagaData data,
         CancellationToken ct = default)
     {
-        Guid? budgetId = null;
-        var goalIds = new List<Guid>();
+        Guid? {entity}Id = null;
+        var {childEntity}Ids = new List<Guid>();
 
         try
         {
-            // Step 1: Create budget
-            var budgetResponse = await _budgetService.CreateBudgetAsync(
-                new CreateBudgetRequest
+            // Step 1: Create {entity}
+            var {entity}Response = await _{entity}Service.Create{Entity}Async(
+                new Create{Entity}Request
                 {
-                    Name = data.BudgetName,
+                    Name = data.{Entity}Name,
                     Amount = data.Amount
                 },
                 ct);
 
-            budgetId = budgetResponse.BudgetId;
+            {entity}Id = {entity}Response.{Entity}Id;
 
-            // Step 2: Create goals
-            foreach (var goalData in data.Goals)
+            // Step 2: Create {childEntities}
+            foreach (var {childEntity}Data in data.{ChildEntities})
             {
-                var goalResponse = await _goalService.CreateGoalAsync(
-                    new CreateGoalRequest
+                var {childEntity}Response = await _{childEntity}Service.Create{ChildEntity}Async(
+                    new Create{ChildEntity}Request
                     {
-                        BudgetId = budgetId.Value,
-                        Name = goalData.Name,
-                        TargetAmount = goalData.TargetAmount
+                        {Entity}Id = {entity}Id.Value,
+                        Name = {childEntity}Data.Name,
+                        Amount = {childEntity}Data.Amount
                     },
                     ct);
 
-                goalIds.Add(goalResponse.GoalId);
+                {childEntity}Ids.Add({childEntity}Response.{ChildEntity}Id);
             }
 
             // Step 3: Send notification
-            await _notificationService.SendBudgetCreatedNotificationAsync(
-                budgetId.Value,
+            await _notificationService.Send{Entity}CreatedNotificationAsync(
+                {entity}Id.Value,
                 data.CreatedBy,
                 ct);
 
-            return SagaResult.Success(budgetId.Value, goalIds);
+            return SagaResult.Success({entity}Id.Value, {childEntity}Ids);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Saga failed, initiating compensation");
 
             // Compensating transactions (rollback)
-            await CompensateAsync(budgetId, goalIds, ct);
+            await CompensateAsync({entity}Id, {childEntity}Ids, ct);
 
             return SagaResult.Failed(ex.Message);
         }
     }
 
     private async Task CompensateAsync(
-        Guid? budgetId,
-        List<Guid> goalIds,
+        Guid? {entity}Id,
+        List<Guid> {childEntity}Ids,
         CancellationToken ct)
     {
         // Reverse operations in opposite order
 
-        // Remove goals
-        foreach (var goalId in goalIds)
+        // Remove {childEntities}
+        foreach (var {childEntity}Id in {childEntity}Ids)
         {
             try
             {
-                await _goalService.DeleteGoalAsync(goalId, ct);
+                await _{childEntity}Service.Delete{ChildEntity}Async({childEntity}Id, ct);
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Failed to compensate goal {GoalId}", goalId);
+                _logger.LogWarning(ex, "Failed to compensate {childEntity} {ChildEntity}Id", {childEntity}Id);
             }
         }
 
-        // Remove budget
-        if (budgetId.HasValue)
+        // Remove {entity}
+        if ({entity}Id.HasValue)
         {
             try
             {
-                await _budgetService.DeleteBudgetAsync(budgetId.Value, ct);
+                await _{entity}Service.Delete{Entity}Async({entity}Id.Value, ct);
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Failed to compensate budget {BudgetId}", budgetId);
+                _logger.LogWarning(ex, "Failed to compensate {entity} {Entity}Id", {entity}Id);
             }
         }
     }
@@ -1176,21 +1167,21 @@ public sealed class BudgetCreationSaga : ISaga
 
 ```csharp
 // ❌ WRONG - Multiple service calls for related data
-public async Task<BudgetSummary> GetBudgetSummaryAsync(Guid budgetId)
+public async Task<{Entity}Summary> Get{Entity}SummaryAsync(Guid {entity}Id)
 {
-    var budget = await _budgetService.GetBudgetAsync(budgetId);
-    var goals = await _goalService.GetGoalsByBudgetIdAsync(budgetId); // Separate call
-    var debts = await _debtService.GetDebtsByBudgetIdAsync(budgetId); // Separate call
+    var {entity} = await _{entity}Service.Get{Entity}Async({entity}Id);
+    var {childEntities} = await _{childEntity}Service.Get{ChildEntities}By{Entity}IdAsync({entity}Id); // Separate call
+    var {childEntities} = await _{childEntity}Service.Get{ChildEntities}By{Entity}IdAsync({entity}Id); // Separate call
 
     // Multiple network roundtrips!
-    return new BudgetSummary(budget, goals, debts);
+    return new {Entity}Summary({entity}, {childEntities}, {childEntities});
 }
 
 // ✅ CORRECT - Single call with composite data
-public async Task<BudgetSummary> GetBudgetSummaryAsync(Guid budgetId)
+public async Task<{Entity}Summary> Get{Entity}SummaryAsync(Guid {entity}Id)
 {
     // Single service call returns all related data
-    return await _budgetQueryService.GetBudgetSummaryAsync(budgetId);
+    return await _{entity}QueryService.Get{Entity}SummaryAsync({entity}Id);
 }
 ```
 
@@ -1198,22 +1189,22 @@ public async Task<BudgetSummary> GetBudgetSummaryAsync(Guid budgetId)
 
 ```csharp
 // ❌ WRONG - Direct service-to-service calls
-public async Task CreateBudgetAsync(CreateBudgetRequest request)
+public async Task Create{Entity}Async(Create{Entity}Request request)
 {
-    var budget = await SaveBudgetAsync(request);
+    var {entity} = await Save{Entity}Async(request);
 
     // Direct coupling to other services
-    await _goalService.CreateDefaultGoalsAsync(budget.BudgetId);
-    await _notificationService.NotifyAsync(budget);
+    await _{childEntity}Service.CreateDefault{ChildEntities}Async({entity}.{Entity}Id);
+    await _notificationService.NotifyAsync({entity});
 }
 
 // ✅ CORRECT - Event-based decoupling
-public async Task CreateBudgetAsync(CreateBudgetRequest request)
+public async Task Create{Entity}Async(Create{Entity}Request request)
 {
-    var budget = await SaveBudgetAsync(request);
+    var {entity} = await Save{Entity}Async(request);
 
     // Publish event - services react independently
-    await _eventPublisher.PublishAsync(new BudgetCreatedEvent(budget));
+    await _eventPublisher.PublishAsync(new {Entity}CreatedEvent({entity}));
 }
 ```
 

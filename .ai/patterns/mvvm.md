@@ -97,9 +97,9 @@ The **View** is the user interface layer. It displays data and captures user int
 
         <!-- {Entity} List -->
         <CollectionView Grid.Row="1"
-                       ItemsSource="{Binding {Entities}}"
+                       ItemsSource="{Binding {Entities}"
                        SelectionMode="Single"
-                       SelectedItem="{Binding Selected{Entity}}"
+                       SelectedItem="{Binding Selected{Entity}"
                        SelectionChangedCommand="{Binding SelectionChangedCommand}">
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="vm:{Entity}ItemViewModel">
@@ -799,7 +799,7 @@ public sealed partial class {Entity}DetailViewModel : ObservableObject
     // Status indicator
     public string StatusColor => Remaining > 0 ? "Green" : "Red";
 
-    public string StatusText => Remaining > 0 ? "Under Budget" : "Over Budget";
+    public string StatusText => Remaining > 0 ? "Within Limit" : "Over Limit";
 
     // Visibility logic
     public bool ShowWarning => Remaining < (Amount * 0.1m);
@@ -1021,7 +1021,7 @@ public sealed partial class {Entity}ListViewModel : ObservableObject
                           VerticalOptions="Center" />
 
         <!-- Content (hidden when loading) -->
-        <CollectionView ItemsSource="{Binding {Entities}}"
+        <CollectionView ItemsSource="{Binding {Entities}"
                        IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
 
         <!-- Error Message -->

@@ -14,27 +14,27 @@ Object-Oriented Programming is a programming paradigm based on the concept of "o
 
 ```csharp
 // ✅ CORRECT - Single responsibility
-public sealed class BudgetRepository
+public sealed class {Entity}Repository
 {
     private readonly DataContext _dataContext;
 
-    public BudgetRepository(DataContext dataContext)
+    public {Entity}Repository(DataContext dataContext)
     {
         _dataContext = dataContext;
     }
 
-    public async Task<Budget> GetByIdAsync(Guid id, CancellationToken ct)
+    public async Task<{Entity}> GetByIdAsync(Guid id, CancellationToken ct)
     {
-        return await _dataContext.Budgets.FirstOrDefaultAsync(e => e.BudgetId == id, ct);
+        return await _dataContext.{Entities}.FirstOrDefaultAsync(e => e.{Entity}Id == id, ct);
     }
 }
 
-public sealed class BudgetValidator
+public sealed class {Entity}Validator
 {
-    public ValidationResult Validate(Budget budget)
+    public ValidationResult Validate({Entity} {entity})
     {
         // Only validation logic
-        if (budget.Amount <= 0)
+        if ({entity}.Amount <= 0)
             return ValidationResult.Fail("Amount must be positive");
 
         return ValidationResult.Success();
@@ -42,16 +42,16 @@ public sealed class BudgetValidator
 }
 
 // ❌ WRONG - Multiple responsibilities
-public sealed class BudgetManager
+public sealed class {Entity}Manager
 {
     // Data access
-    public async Task<Budget> GetByIdAsync(Guid id) { /* ... */ }
+    public async Task<{Entity}> GetByIdAsync(Guid id) { /* ... */ }
 
     // Validation
-    public bool IsValid(Budget budget) { /* ... */ }
+    public bool IsValid({Entity} {entity}) { /* ... */ }
 
     // Email sending
-    public async Task SendNotificationAsync(Budget budget) { /* ... */ }
+    public async Task SendNotificationAsync({Entity} {entity}) { /* ... */ }
 
     // Logging
     public void LogActivity(string message) { /* ... */ }
@@ -204,57 +204,57 @@ public interface IDeletable
 }
 
 // Read-only repository only implements what it needs
-public sealed class ReadOnlyBudgetRepository : IReadable<Budget>
+public sealed class ReadOnly{Entity}Repository : IReadable<{Entity}>
 {
     private readonly DataContext _dataContext;
 
-    public ReadOnlyBudgetRepository(DataContext dataContext)
+    public ReadOnly{Entity}Repository(DataContext dataContext)
     {
         _dataContext = dataContext;
     }
 
-    public async Task<Budget> GetByIdAsync(Guid id, CancellationToken ct)
+    public async Task<{Entity}> GetByIdAsync(Guid id, CancellationToken ct)
     {
-        return await _dataContext.Budgets.FirstOrDefaultAsync(e => e.BudgetId == id, ct);
+        return await _dataContext.{Entities}.FirstOrDefaultAsync(e => e.{Entity}Id == id, ct);
     }
 
-    public async Task<List<Budget>> GetAllAsync(CancellationToken ct)
+    public async Task<List<{Entity}>> GetAllAsync(CancellationToken ct)
     {
-        return await _dataContext.Set<Budget>().ToListAsync(ct);
+        return await _dataContext.Set<{Entity}>().ToListAsync(ct);
     }
 }
 
 // Full repository implements all interfaces
-public sealed class BudgetRepository : IReadable<Budget>, IWritable<Budget>, IDeletable
+public sealed class {Entity}Repository : IReadable<{Entity}>, IWritable<{Entity}>, IDeletable
 {
     private readonly DataContext _dataContext;
 
-    public BudgetRepository(DataContext dataContext)
+    public {Entity}Repository(DataContext dataContext)
     {
         _dataContext = dataContext;
     }
 
-    public async Task<Budget> GetByIdAsync(Guid id, CancellationToken ct)
+    public async Task<{Entity}> GetByIdAsync(Guid id, CancellationToken ct)
     {
-        return await _dataContext.Budgets.FirstOrDefaultAsync(e => e.BudgetId == id, ct);
+        return await _dataContext.{Entities}.FirstOrDefaultAsync(e => e.{Entity}Id == id, ct);
     }
 
-    public async Task<List<Budget>> GetAllAsync(CancellationToken ct)
+    public async Task<List<{Entity}>> GetAllAsync(CancellationToken ct)
     {
-        return await _dataContext.Set<Budget>().ToListAsync(ct);
+        return await _dataContext.Set<{Entity}>().ToListAsync(ct);
     }
 
-    public async Task<Guid> CreateAsync(Budget item, CancellationToken ct)
+    public async Task<Guid> CreateAsync({Entity} item, CancellationToken ct)
     {
-        _dataContext.Budgets.Add(item);
+        _dataContext.{Entities}.Add(item);
         await _dataContext.SaveChangesAsync(ct);
-        return item.BudgetId;
+        return item.{Entity}Id;
     }
 
-    public async Task UpdateAsync(Budget item, CancellationToken ct)
+    public async Task UpdateAsync({Entity} item, CancellationToken ct)
     {
-        var entity = await _dataContext.Budgets.FirstOrDefaultAsync(b => b.BudgetId == item.BudgetId, ct);
-        if (entity is null) throw new InvalidOperationException($"Budget {item.BudgetId} not found");
+        var entity = await _dataContext.{Entities}.FirstOrDefaultAsync(b => b.{Entity}Id == item.{Entity}Id, ct);
+        if (entity is null) throw new InvalidOperationException($"{Entity} {item.{Entity}Id} not found");
         entity.Name = item.Name;
         entity.Amount = item.Amount;
         await _dataContext.SaveChangesAsync(ct);
@@ -262,9 +262,9 @@ public sealed class BudgetRepository : IReadable<Budget>, IWritable<Budget>, IDe
 
     public async Task DeleteAsync(Guid id, CancellationToken ct)
     {
-        var entity = await _dataContext.Budgets.FirstOrDefaultAsync(e => e.BudgetId == id, ct);
-        if (entity is null) throw new InvalidOperationException($"Budget {id} not found");
-        _dataContext.Budgets.Remove(entity);
+        var entity = await _dataContext.{Entities}.FirstOrDefaultAsync(e => e.{Entity}Id == id, ct);
+        if (entity is null) throw new InvalidOperationException($"{Entity} {id} not found");
+        _dataContext.{Entities}.Remove(entity);
         await _dataContext.SaveChangesAsync(ct);
     }
 }
@@ -283,14 +283,14 @@ public interface IRepository<T>
 }
 
 // Read-only repository forced to implement write operations
-public sealed class ReadOnlyRepository : IRepository<Budget>
+public sealed class ReadOnlyRepository : IRepository<{Entity}>
 {
-    public async Task<Guid> CreateAsync(Budget item, CancellationToken ct)
+    public async Task<Guid> CreateAsync({Entity} item, CancellationToken ct)
     {
         throw new NotSupportedException(); // Forced to implement!
     }
 
-    public async Task UpdateAsync(Budget item, CancellationToken ct)
+    public async Task UpdateAsync({Entity} item, CancellationToken ct)
     {
         throw new NotSupportedException(); // Forced to implement!
     }
@@ -324,41 +324,41 @@ public sealed class SmtpEmailService : IEmailService
     }
 }
 
-public sealed class BudgetCreatedHandler : IEventHandler<BudgetCreatedEvent>
+public sealed class {Entity}CreatedHandler : IEventHandler<{Entity}CreatedEvent>
 {
     private readonly IEmailService _emailService; // Depends on abstraction
 
-    public BudgetCreatedHandler(IEmailService emailService)
+    public {Entity}CreatedHandler(IEmailService emailService)
     {
         _emailService = emailService;
     }
 
-    public async Task HandleAsync(BudgetCreatedEvent domainEvent, CancellationToken ct)
+    public async Task HandleAsync({Entity}CreatedEvent domainEvent, CancellationToken ct)
     {
         await _emailService.SendAsync(
             "user@example.com",
-            "Budget Created",
-            $"Budget {domainEvent.Name} was created",
+            "{Entity} Created",
+            $"{Entity} {domainEvent.Name} was created",
             ct);
     }
 }
 
 // ❌ WRONG - Depends on concrete implementation
-public sealed class BudgetCreatedHandler
+public sealed class {Entity}CreatedHandler
 {
     private readonly SmtpEmailService _emailService; // Concrete dependency!
 
-    public BudgetCreatedHandler()
+    public {Entity}CreatedHandler()
     {
         _emailService = new SmtpEmailService(); // Creates dependency directly
     }
 
-    public async Task HandleAsync(BudgetCreatedEvent domainEvent)
+    public async Task HandleAsync({Entity}CreatedEvent domainEvent)
     {
         await _emailService.SendAsync(
             "user@example.com",
-            "Budget Created",
-            $"Budget {domainEvent.Name} was created");
+            "{Entity} Created",
+            $"{Entity} {domainEvent.Name} was created");
     }
 }
 ```
@@ -373,12 +373,12 @@ public sealed class BudgetCreatedHandler
 
 ```csharp
 // ✅ CORRECT - Properly encapsulated
-public sealed class Budget
+public sealed class {Entity}
 {
     private decimal _amount;
-    private readonly List<Goal> _goals = new();
+    private readonly List<{ChildEntity}> _{childEntities} = new();
 
-    public Guid BudgetId { get; init; }
+    public Guid {Entity}Id { get; init; }
     public string Name { get; init; } = string.Empty;
 
     public decimal Amount
@@ -392,35 +392,35 @@ public sealed class Budget
         }
     }
 
-    public IReadOnlyCollection<Goal> Goals => _goals.AsReadOnly();
+    public IReadOnlyCollection<{ChildEntity}> {ChildEntities} => _{childEntities}.AsReadOnly();
 
-    public void AddGoal(Goal goal)
+    public void Add{ChildEntity}({ChildEntity} {childEntity})
     {
-        ArgumentNullException.ThrowIfNull(goal);
+        ArgumentNullException.ThrowIfNull({childEntity});
 
-        if (_goals.Any(g => g.GoalId == goal.GoalId))
-            throw new InvalidOperationException("Goal already exists");
+        if (_{childEntities}.Any(g => g.{ChildEntity}Id == {childEntity}.{ChildEntity}Id))
+            throw new InvalidOperationException("{ChildEntity} already exists");
 
-        _goals.Add(goal);
+        _{childEntities}.Add({childEntity});
     }
 
-    public void RemoveGoal(Guid goalId)
+    public void Remove{ChildEntity}(Guid {childEntity}Id)
     {
-        var goal = _goals.FirstOrDefault(g => g.GoalId == goalId);
-        if (goal is null)
-            throw new InvalidOperationException("Goal not found");
+        var {childEntity} = _{childEntities}.FirstOrDefault(g => g.{ChildEntity}Id == {childEntity}Id);
+        if ({childEntity} is null)
+            throw new InvalidOperationException("{ChildEntity} not found");
 
-        _goals.Remove(goal);
+        _{childEntities}.Remove({childEntity});
     }
 }
 
 // ❌ WRONG - Poor encapsulation
-public sealed class Budget
+public sealed class {Entity}
 {
-    public Guid BudgetId { get; set; }
+    public Guid {Entity}Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public decimal Amount { get; set; } // No validation!
-    public List<Goal> Goals { get; set; } = new(); // Direct access to mutable collection!
+    public List<{ChildEntity}> {ChildEntities} { get; set; } = new(); // Direct access to mutable collection!
 }
 ```
 
@@ -449,7 +449,7 @@ public abstract class AuditableEntity : Entity
     public string? ChangedBy { get; set; }
 }
 
-public sealed class Budget : AuditableEntity
+public sealed class {Entity} : AuditableEntity
 {
     public string Name { get; init; } = string.Empty;
     public decimal Amount { get; init; }
@@ -458,9 +458,9 @@ public sealed class Budget : AuditableEntity
 }
 
 // ✅ CORRECT - Composition over inheritance (often preferred)
-public sealed class Budget
+public sealed class {Entity}
 {
-    public Guid BudgetId { get; init; }
+    public Guid {Entity}Id { get; init; }
     public string Name { get; init; } = string.Empty;
     public decimal Amount { get; init; }
     public AuditInfo AuditInfo { get; init; } = new(); // Composition
@@ -479,7 +479,7 @@ public class BaseEntity { }
 public class AuditableEntity : BaseEntity { }
 public class VersionedEntity : AuditableEntity { }
 public class SoftDeletableEntity : VersionedEntity { }
-public class Budget : SoftDeletableEntity { } // Too many levels!
+public class {Entity} : SoftDeletableEntity { } // Too many levels!
 ```
 
 ### Polymorphism
@@ -490,12 +490,12 @@ public class Budget : SoftDeletableEntity { } // Too many levels!
 // ✅ CORRECT - Polymorphism via interfaces
 public interface IDocumentGenerator
 {
-    Task<byte[]> GenerateAsync(Budget budget, CancellationToken ct);
+    Task<byte[]> GenerateAsync({Entity} {entity}, CancellationToken ct);
 }
 
 public sealed class PdfDocumentGenerator : IDocumentGenerator
 {
-    public async Task<byte[]> GenerateAsync(Budget budget, CancellationToken ct)
+    public async Task<byte[]> GenerateAsync({Entity} {entity}, CancellationToken ct)
     {
         // PDF-specific generation
         await Task.CompletedTask;
@@ -505,7 +505,7 @@ public sealed class PdfDocumentGenerator : IDocumentGenerator
 
 public sealed class ExcelDocumentGenerator : IDocumentGenerator
 {
-    public async Task<byte[]> GenerateAsync(Budget budget, CancellationToken ct)
+    public async Task<byte[]> GenerateAsync({Entity} {entity}, CancellationToken ct)
     {
         // Excel-specific generation
         await Task.CompletedTask;
@@ -516,12 +516,12 @@ public sealed class ExcelDocumentGenerator : IDocumentGenerator
 public sealed class DocumentService
 {
     public async Task<byte[]> GenerateDocumentAsync(
-        Budget budget,
+        {Entity} {entity},
         IDocumentGenerator generator,
         CancellationToken ct)
     {
         // Polymorphic call - works with any IDocumentGenerator
-        return await generator.GenerateAsync(budget, ct);
+        return await generator.GenerateAsync({entity}, ct);
     }
 }
 
@@ -573,60 +573,60 @@ public sealed class SmsNotificationSender : NotificationSender
 
 ```csharp
 // ✅ CORRECT - Clean abstraction
-public interface IBudgetCalculator
+public interface I{Entity}Calculator
 {
-    decimal CalculateRemaining(Budget budget);
-    decimal CalculateAllocated(Budget budget);
-    bool IsOverBudget(Budget budget);
+    decimal CalculateRemaining({Entity} {entity});
+    decimal CalculateAllocated({Entity} {entity});
+    bool IsOver{Entity}({Entity} {entity});
 }
 
-public sealed class BudgetCalculator : IBudgetCalculator
+public sealed class {Entity}Calculator : I{Entity}Calculator
 {
-    public decimal CalculateRemaining(Budget budget)
+    public decimal CalculateRemaining({Entity} {entity})
     {
-        ArgumentNullException.ThrowIfNull(budget);
+        ArgumentNullException.ThrowIfNull({entity});
 
-        var allocated = CalculateAllocated(budget);
-        return budget.Amount - allocated;
+        var allocated = CalculateAllocated({entity});
+        return {entity}.Amount - allocated;
     }
 
-    public decimal CalculateAllocated(Budget budget)
+    public decimal CalculateAllocated({Entity} {entity})
     {
-        ArgumentNullException.ThrowIfNull(budget);
+        ArgumentNullException.ThrowIfNull({entity});
 
-        return budget.Goals.Sum(g => g.TargetAmount);
+        return {entity}.{ChildEntities}.Sum(g => g.Amount);
     }
 
-    public bool IsOverBudget(Budget budget)
+    public bool IsOver{Entity}({Entity} {entity})
     {
-        ArgumentNullException.ThrowIfNull(budget);
+        ArgumentNullException.ThrowIfNull({entity});
 
-        return CalculateRemaining(budget) < 0;
+        return CalculateRemaining({entity}) < 0;
     }
 }
 
 // Consumer doesn't need to know implementation details
-public sealed class BudgetService
+public sealed class {Entity}Service
 {
-    private readonly IBudgetCalculator _calculator;
+    private readonly I{Entity}Calculator _calculator;
 
-    public BudgetService(IBudgetCalculator calculator)
+    public {Entity}Service(I{Entity}Calculator calculator)
     {
         _calculator = calculator;
     }
 
-    public async Task<BudgetSummary> GetSummaryAsync(Budget budget, CancellationToken ct)
+    public async Task<{Entity}Summary> GetSummaryAsync({Entity} {entity}, CancellationToken ct)
     {
-        return new BudgetSummary(
-            budget.BudgetId,
-            budget.Name,
-            _calculator.CalculateRemaining(budget),
-            _calculator.IsOverBudget(budget));
+        return new {Entity}Summary(
+            {entity}.{Entity}Id,
+            {entity}.Name,
+            _calculator.CalculateRemaining({entity}),
+            _calculator.IsOver{Entity}({entity}));
     }
 }
 
 // ❌ WRONG - Leaky abstraction
-public interface IBudgetCalculator
+public interface I{Entity}Calculator
 {
     // Exposes internal implementation details
     Dictionary<string, decimal> GetInternalCalculationCache();
@@ -687,63 +687,63 @@ public enum PaymentMethod
 
 ```csharp
 // ✅ CORRECT - Builder pattern
-public sealed class BudgetBuilder
+public sealed class {Entity}Builder
 {
     private string _name = string.Empty;
     private decimal _amount;
     private DateTimeOffset _startDate = DateTimeOffset.UtcNow;
-    private readonly List<Goal> _goals = new();
+    private readonly List<{ChildEntity}> _{childEntities} = new();
 
-    public BudgetBuilder WithName(string name)
+    public {Entity}Builder WithName(string name)
     {
         _name = name;
         return this;
     }
 
-    public BudgetBuilder WithAmount(decimal amount)
+    public {Entity}Builder WithAmount(decimal amount)
     {
         _amount = amount;
         return this;
     }
 
-    public BudgetBuilder WithStartDate(DateTimeOffset startDate)
+    public {Entity}Builder WithStartDate(DateTimeOffset startDate)
     {
         _startDate = startDate;
         return this;
     }
 
-    public BudgetBuilder AddGoal(Goal goal)
+    public {Entity}Builder Add{ChildEntity}({ChildEntity} {childEntity})
     {
-        _goals.Add(goal);
+        _{childEntities}.Add({childEntity});
         return this;
     }
 
-    public Budget Build()
+    public {Entity} Build()
     {
-        var budget = new Budget
+        var {entity} = new {Entity}
         {
-            BudgetId = Guid.NewGuid(),
+            {Entity}Id = Guid.NewGuid(),
             Name = _name,
             Amount = _amount,
             StartDate = _startDate,
             CreatedDate = DateTimeOffset.UtcNow
         };
 
-        foreach (var goal in _goals)
+        foreach (var {childEntity} in _{childEntities})
         {
-            budget.AddGoal(goal);
+            {entity}.Add{ChildEntity}({childEntity});
         }
 
-        return budget;
+        return {entity};
     }
 }
 
 // Usage
-var budget = new BudgetBuilder()
-    .WithName("2025 Q1")
+var {entity} = new {Entity}Builder()
+    .WithName("Example")
     .WithAmount(50000m)
     .WithStartDate(new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero))
-    .AddGoal(new Goal { Name = "Savings", TargetAmount = 10000m })
+    .Add{ChildEntity}(new {ChildEntity} { Name = "Example", Amount = 10000m })
     .Build();
 ```
 
@@ -801,62 +801,62 @@ public interface ICloneable<T>
     T Clone();
 }
 
-public sealed class BudgetTemplate : ICloneable<BudgetTemplate>
+public sealed class {Entity}Template : ICloneable<{Entity}Template>
 {
     public string Name { get; init; } = string.Empty;
     public decimal Amount { get; init; }
-    public List<GoalTemplate> Goals { get; init; } = new();
+    public List<{ChildEntity}Template> {ChildEntities} { get; init; } = new();
 
-    public BudgetTemplate Clone()
+    public {Entity}Template Clone()
     {
-        return new BudgetTemplate
+        return new {Entity}Template
         {
             Name = Name,
             Amount = Amount,
-            Goals = Goals.Select(g => g.Clone()).ToList()
+            {ChildEntities} = {ChildEntities}.Select(child => child.Clone()).ToList()
         };
     }
 
-    public Budget CreateBudget()
+    public {Entity} Create{Entity}()
     {
-        var budget = new Budget
+        var {entity} = new {Entity}
         {
-            BudgetId = Guid.NewGuid(),
+            {Entity}Id = Guid.NewGuid(),
             Name = Name,
             Amount = Amount,
             CreatedDate = DateTimeOffset.UtcNow
         };
 
-        foreach (var goalTemplate in Goals)
+        foreach (var {childEntity}Template in {ChildEntities})
         {
-            budget.AddGoal(goalTemplate.CreateGoal());
+            {entity}.Add{ChildEntity}({childEntity}Template.Create{ChildEntity}());
         }
 
-        return budget;
+        return {entity};
     }
 }
 
-public sealed class GoalTemplate : ICloneable<GoalTemplate>
+public sealed class {ChildEntity}Template : ICloneable<{ChildEntity}Template>
 {
     public string Name { get; init; } = string.Empty;
-    public decimal TargetAmount { get; init; }
+    public decimal Amount { get; init; }
 
-    public GoalTemplate Clone()
+    public {ChildEntity}Template Clone()
     {
-        return new GoalTemplate
+        return new {ChildEntity}Template
         {
             Name = Name,
-            TargetAmount = TargetAmount
+            Amount = Amount
         };
     }
 
-    public Goal CreateGoal()
+    public {ChildEntity} Create{ChildEntity}()
     {
-        return new Goal
+        return new {ChildEntity}
         {
-            GoalId = Guid.NewGuid(),
+            {ChildEntity}Id = Guid.NewGuid(),
             Name = Name,
-            TargetAmount = TargetAmount,
+            Amount = Amount,
             CreatedDate = DateTimeOffset.UtcNow
         };
     }
@@ -872,41 +872,41 @@ public sealed class GoalTemplate : ICloneable<GoalTemplate>
 ```csharp
 // ✅ CORRECT - Adapter pattern
 // Legacy system interface
-public interface ILegacyBudgetSystem
+public interface ILegacy{Entity}System
 {
-    string GetBudgetData(int budgetId);
+    string Get{Entity}Data(int {entity}Id);
 }
 
 // New system interface
-public interface IBudgetService
+public interface I{Entity}Service
 {
-    Task<Budget> GetBudgetAsync(Guid budgetId, CancellationToken ct);
+    Task<{Entity}> Get{Entity}Async(Guid {entity}Id, CancellationToken ct);
 }
 
 // Adapter
-public sealed class LegacyBudgetAdapter : IBudgetService
+public sealed class Legacy{Entity}Adapter : I{Entity}Service
 {
-    private readonly ILegacyBudgetSystem _legacySystem;
+    private readonly ILegacy{Entity}System _legacySystem;
 
-    public LegacyBudgetAdapter(ILegacyBudgetSystem legacySystem)
+    public Legacy{Entity}Adapter(ILegacy{Entity}System legacySystem)
     {
         _legacySystem = legacySystem;
     }
 
-    public async Task<Budget> GetBudgetAsync(Guid budgetId, CancellationToken ct)
+    public async Task<{Entity}> Get{Entity}Async(Guid {entity}Id, CancellationToken ct)
     {
         // Convert Guid to int for legacy system
-        var legacyId = Math.Abs(budgetId.GetHashCode());
+        var legacyId = Math.Abs({entity}Id.GetHashCode());
 
         // Call legacy system
-        var legacyData = _legacySystem.GetBudgetData(legacyId);
+        var legacyData = _legacySystem.Get{Entity}Data(legacyId);
 
         // Parse and adapt to new format
         var parts = legacyData.Split('|');
 
-        return await Task.FromResult(new Budget
+        return await Task.FromResult(new {Entity}
         {
-            BudgetId = budgetId,
+            {Entity}Id = {entity}Id,
             Name = parts[0],
             Amount = decimal.Parse(parts[1]),
             CreatedDate = DateTimeOffset.Parse(parts[2])
@@ -921,72 +921,72 @@ public sealed class LegacyBudgetAdapter : IBudgetService
 
 ```csharp
 // ✅ CORRECT - Decorator pattern
-public interface IBudgetCalculator
+public interface I{Entity}Calculator
 {
-    decimal CalculateRemaining(Budget budget);
+    decimal CalculateRemaining({Entity} {entity});
 }
 
 // Base implementation
-public sealed class SimpleBudgetCalculator : IBudgetCalculator
+public sealed class Simple{Entity}Calculator : I{Entity}Calculator
 {
-    public decimal CalculateRemaining(Budget budget)
+    public decimal CalculateRemaining({Entity} {entity})
     {
-        var allocated = budget.Goals.Sum(g => g.TargetAmount);
-        return budget.Amount - allocated;
+        var allocated = {entity}.{ChildEntities}.Sum(g => g.Amount);
+        return {entity}.Amount - allocated;
     }
 }
 
 // Decorator: Add logging
-public sealed class LoggingBudgetCalculatorDecorator : IBudgetCalculator
+public sealed class Logging{Entity}CalculatorDecorator : I{Entity}Calculator
 {
-    private readonly IBudgetCalculator _inner;
-    private readonly ILogger<LoggingBudgetCalculatorDecorator> _logger;
+    private readonly I{Entity}Calculator _inner;
+    private readonly ILogger<Logging{Entity}CalculatorDecorator> _logger;
 
-    public LoggingBudgetCalculatorDecorator(
-        IBudgetCalculator inner,
-        ILogger<LoggingBudgetCalculatorDecorator> logger)
+    public Logging{Entity}CalculatorDecorator(
+        I{Entity}Calculator inner,
+        ILogger<Logging{Entity}CalculatorDecorator> logger)
     {
         _inner = inner;
         _logger = logger;
     }
 
-    public decimal CalculateRemaining(Budget budget)
+    public decimal CalculateRemaining({Entity} {entity})
     {
-        _logger.LogDebug("Calculating remaining for budget {BudgetId}", budget.BudgetId);
+        _logger.LogDebug("Calculating remaining for {entity} {Entity}Id", {entity}.{Entity}Id);
 
-        var result = _inner.CalculateRemaining(budget);
+        var result = _inner.CalculateRemaining({entity});
 
         _logger.LogDebug(
-            "Budget {BudgetId} has {Remaining} remaining",
-            budget.BudgetId, result);
+            "{Entity}Id has {Remaining} remaining",
+            {entity}.{Entity}Id, result);
 
         return result;
     }
 }
 
 // Decorator: Add caching
-public sealed class CachingBudgetCalculatorDecorator : IBudgetCalculator
+public sealed class Caching{Entity}CalculatorDecorator : I{Entity}Calculator
 {
-    private readonly IBudgetCalculator _inner;
+    private readonly I{Entity}Calculator _inner;
     private readonly IDistributedCache _cache;
 
-    public CachingBudgetCalculatorDecorator(
-        IBudgetCalculator inner,
+    public Caching{Entity}CalculatorDecorator(
+        I{Entity}Calculator inner,
         IDistributedCache cache)
     {
         _inner = inner;
         _cache = cache;
     }
 
-    public decimal CalculateRemaining(Budget budget)
+    public decimal CalculateRemaining({Entity} {entity})
     {
-        var cacheKey = $"budget:remaining:{budget.BudgetId}";
+        var cacheKey = $"{entity}:remaining:{entity}.{Entity}Id}";
         var cached = _cache.GetString(cacheKey);
 
         if (cached is not null)
             return decimal.Parse(cached);
 
-        var result = _inner.CalculateRemaining(budget);
+        var result = _inner.CalculateRemaining({entity});
 
         _cache.SetString(cacheKey, result.ToString(), new DistributedCacheEntryOptions
         {
@@ -998,16 +998,16 @@ public sealed class CachingBudgetCalculatorDecorator : IBudgetCalculator
 }
 
 // Registration with multiple decorators
-services.AddScoped<SimpleBudgetCalculator>();
-services.AddScoped<IBudgetCalculator>(sp =>
+services.AddScoped<Simple{Entity}Calculator>();
+services.AddScoped<I{Entity}Calculator>(sp =>
 {
-    var simple = sp.GetRequiredService<SimpleBudgetCalculator>();
-    var logger = sp.GetRequiredService<ILogger<LoggingBudgetCalculatorDecorator>>();
+    var simple = sp.GetRequiredService<Simple{Entity}Calculator>();
+    var logger = sp.GetRequiredService<ILogger<Logging{Entity}CalculatorDecorator>>();
     var cache = sp.GetRequiredService<IDistributedCache>();
 
     // Wrap with logging, then caching
-    var withLogging = new LoggingBudgetCalculatorDecorator(simple, logger);
-    return new CachingBudgetCalculatorDecorator(withLogging, cache);
+    var withLogging = new Logging{Entity}CalculatorDecorator(simple, logger);
+    return new Caching{Entity}CalculatorDecorator(withLogging, cache);
 });
 ```
 
@@ -1017,82 +1017,82 @@ services.AddScoped<IBudgetCalculator>(sp =>
 
 ```csharp
 // ✅ CORRECT - Facade pattern
-public interface IBudgetManagementFacade
+public interface I{Entity}ManagementFacade
 {
-    Task<BudgetSummary> CreateBudgetWithGoalsAsync(
-        string budgetName,
-        decimal budgetAmount,
-        List<GoalData> goals,
+    Task<{Entity}Summary> Create{Entity}With{ChildEntities}Async(
+        string {entity}Name,
+        decimal {entity}Amount,
+        List<{ChildEntity}Data> {childEntities},
         CancellationToken ct);
 }
 
-public sealed class BudgetManagementFacade : IBudgetManagementFacade
+public sealed class {Entity}ManagementFacade : I{Entity}ManagementFacade
 {
-    private readonly ICommandHandler<CreateBudgetCommand, CreateBudgetResponse> _createBudgetHandler;
-    private readonly ICommandHandler<CreateGoalCommand, CreateGoalResponse> _createGoalHandler;
-    private readonly IQueryHandler<GetBudgetByIdQuery, BudgetResponse> _getBudgetHandler;
-    private readonly IBudgetCalculator _calculator;
-    private readonly ILogger<BudgetManagementFacade> _logger;
+    private readonly ICommandHandler<Create{Entity}Command, Create{Entity}Response> _create{Entity}Handler;
+    private readonly ICommandHandler<Create{ChildEntity}Command, Create{ChildEntity}Response> _create{ChildEntity}Handler;
+    private readonly IQueryHandler<Get{Entity}ByIdQuery, {Entity}Response> _get{Entity}Handler;
+    private readonly I{Entity}Calculator _calculator;
+    private readonly ILogger<{Entity}ManagementFacade> _logger;
 
-    public BudgetManagementFacade(
-        ICommandHandler<CreateBudgetCommand, CreateBudgetResponse> createBudgetHandler,
-        ICommandHandler<CreateGoalCommand, CreateGoalResponse> createGoalHandler,
-        IQueryHandler<GetBudgetByIdQuery, BudgetResponse> getBudgetHandler,
-        IBudgetCalculator calculator,
-        ILogger<BudgetManagementFacade> logger)
+    public {Entity}ManagementFacade(
+        ICommandHandler<Create{Entity}Command, Create{Entity}Response> create{Entity}Handler,
+        ICommandHandler<Create{ChildEntity}Command, Create{ChildEntity}Response> create{ChildEntity}Handler,
+        IQueryHandler<Get{Entity}ByIdQuery, {Entity}Response> get{Entity}Handler,
+        I{Entity}Calculator calculator,
+        ILogger<{Entity}ManagementFacade> logger)
     {
-        _createBudgetHandler = createBudgetHandler;
-        _createGoalHandler = createGoalHandler;
-        _getBudgetHandler = getBudgetHandler;
+        _create{Entity}Handler = create{Entity}Handler;
+        _create{ChildEntity}Handler = create{ChildEntity}Handler;
+        _get{Entity}Handler = get{Entity}Handler;
         _calculator = calculator;
         _logger = logger;
     }
 
-    public async Task<BudgetSummary> CreateBudgetWithGoalsAsync(
-        string budgetName,
-        decimal budgetAmount,
-        List<GoalData> goals,
+    public async Task<{Entity}Summary> Create{Entity}With{ChildEntities}Async(
+        string {entity}Name,
+        decimal {entity}Amount,
+        List<{ChildEntity}Data> {childEntities},
         CancellationToken ct)
     {
-        _logger.LogInformation("Creating budget {BudgetName} with {GoalCount} goals",
-            budgetName, goals.Count);
+        _logger.LogInformation("Creating {entity} {Entity}Name with {ChildEntity}Count {childEntities}",
+            {entity}Name, {childEntities}.Count);
 
-        // Step 1: Create budget
-        var createBudgetCommand = new CreateBudgetCommand(
-            budgetName,
-            budgetAmount,
+        // Step 1: Create {entity}
+        var create{Entity}Command = new Create{Entity}Command(
+            {entity}Name,
+            {entity}Amount,
             DateTimeOffset.UtcNow);
 
-        var budgetResponse = await _createBudgetHandler.HandleAsync(createBudgetCommand, ct);
+        var {entity}Response = await _create{Entity}Handler.HandleAsync(create{Entity}Command, ct);
 
-        // Step 2: Create all goals
-        foreach (var goalData in goals)
+        // Step 2: Create all {childEntities}
+        foreach (var {childEntity}Data in {childEntities})
         {
-            var createGoalCommand = new CreateGoalCommand(
-                budgetResponse.BudgetId,
-                goalData.Name,
-                goalData.TargetAmount,
-                goalData.TargetDate);
+            var create{ChildEntity}Command = new Create{ChildEntity}Command(
+                {entity}Response.{Entity}Id,
+                {childEntity}Data.Name,
+                {childEntity}Data.Amount,
+                {childEntity}Data.TargetDate);
 
-            await _createGoalHandler.HandleAsync(createGoalCommand, ct);
+            await _create{ChildEntity}Handler.HandleAsync(create{ChildEntity}Command, ct);
         }
 
-        // Step 3: Get budget details
-        var getBudgetQuery = new GetBudgetByIdQuery(budgetResponse.BudgetId);
-        var budget = await _getBudgetHandler.HandleAsync(getBudgetQuery, ct);
+        // Step 3: Get {entity} details
+        var get{Entity}Query = new Get{Entity}ByIdQuery({entity}Response.{Entity}Id);
+        var {entity} = await _get{Entity}Handler.HandleAsync(get{Entity}Query, ct);
 
         // Step 4: Calculate summary
-        return new BudgetSummary(
-            budget.BudgetId,
-            budget.Name,
-            budget.Amount,
-            goals.Sum(g => g.TargetAmount),
-            budget.Amount - goals.Sum(g => g.TargetAmount));
+        return new {Entity}Summary(
+            {entity}.{Entity}Id,
+            {entity}.Name,
+            {entity}.Amount,
+            {childEntities}.Sum(g => g.Amount),
+            {entity}.Amount - {childEntities}.Sum(g => g.Amount));
     }
 }
 
-public record GoalData(string Name, decimal TargetAmount, DateTimeOffset TargetDate);
-public record BudgetSummary(Guid BudgetId, string Name, decimal Total, decimal Allocated, decimal Remaining);
+public record {ChildEntity}Data(string Name, decimal Amount, DateTimeOffset TargetDate);
+public record {Entity}Summary(Guid {Entity}Id, string Name, decimal Total, decimal Allocated, decimal Remaining);
 ```
 
 #### Proxy Pattern
@@ -1101,61 +1101,61 @@ public record BudgetSummary(Guid BudgetId, string Name, decimal Total, decimal A
 
 ```csharp
 // ✅ CORRECT - Proxy pattern (caching proxy)
-public interface IBudgetService
+public interface I{Entity}Service
 {
-    Task<Budget> GetBudgetAsync(Guid budgetId, CancellationToken ct);
+    Task<{Entity}> Get{Entity}Async(Guid {entity}Id, CancellationToken ct);
 }
 
-public sealed class BudgetService : IBudgetService
+public sealed class {Entity}Service : I{Entity}Service
 {
     private readonly DataContext _dataContext;
 
-    public BudgetService(DataContext dataContext)
+    public {Entity}Service(DataContext dataContext)
     {
         _dataContext = dataContext;
     }
 
-    public async Task<Budget> GetBudgetAsync(Guid budgetId, CancellationToken ct)
+    public async Task<{Entity}> Get{Entity}Async(Guid {entity}Id, CancellationToken ct)
     {
-        return await _dataContext.Budgets.FirstOrDefaultAsync(e => e.BudgetId == budgetId, ct);
+        return await _dataContext.{Entities}.FirstOrDefaultAsync(e => e.{Entity}Id == {entity}Id, ct);
     }
 }
 
-public sealed class CachingBudgetServiceProxy : IBudgetService
+public sealed class Caching{Entity}ServiceProxy : I{Entity}Service
 {
-    private readonly IBudgetService _realService;
+    private readonly I{Entity}Service _realService;
     private readonly IDistributedCache _cache;
 
-    public CachingBudgetServiceProxy(
-        IBudgetService realService,
+    public Caching{Entity}ServiceProxy(
+        I{Entity}Service realService,
         IDistributedCache cache)
     {
         _realService = realService;
         _cache = cache;
     }
 
-    public async Task<Budget> GetBudgetAsync(Guid budgetId, CancellationToken ct)
+    public async Task<{Entity}> Get{Entity}Async(Guid {entity}Id, CancellationToken ct)
     {
-        var cacheKey = $"budget:{budgetId}";
+        var cacheKey = $"{entity}:{entity}Id";
         var cached = await _cache.GetStringAsync(cacheKey, ct);
 
         if (cached is not null)
         {
-            return JsonSerializer.Deserialize<Budget>(cached)!;
+            return JsonSerializer.Deserialize<{Entity}>(cached)!;
         }
 
-        var budget = await _realService.GetBudgetAsync(budgetId, ct);
+        var {entity} = await _realService.Get{Entity}Async({entity}Id, ct);
 
         await _cache.SetStringAsync(
             cacheKey,
-            JsonSerializer.Serialize(budget),
+            JsonSerializer.Serialize({entity}),
             new DistributedCacheEntryOptions
             {
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
             },
             ct);
 
-        return budget;
+        return {entity};
     }
 }
 ```
@@ -1168,48 +1168,48 @@ public sealed class CachingBudgetServiceProxy : IBudgetService
 
 ```csharp
 // ✅ CORRECT - Strategy pattern
-public interface IBudgetAllocationStrategy
+public interface I{Entity}AllocationStrategy
 {
-    List<GoalAllocation> Allocate(decimal totalAmount, List<Goal> goals);
+    List<{ChildEntity}Allocation> Allocate(decimal totalAmount, List<{ChildEntity}> {childEntities});
 }
 
-public sealed class EqualAllocationStrategy : IBudgetAllocationStrategy
+public sealed class EqualAllocationStrategy : I{Entity}AllocationStrategy
 {
-    public List<GoalAllocation> Allocate(decimal totalAmount, List<Goal> goals)
+    public List<{ChildEntity}Allocation> Allocate(decimal totalAmount, List<{ChildEntity}> {childEntities})
     {
-        var amountPerGoal = totalAmount / goals.Count;
+        var amountPer{ChildEntity} = totalAmount / {childEntities}.Count;
 
-        return goals.Select(g => new GoalAllocation(
-            g.GoalId,
+        return {childEntities}.Select(g => new {ChildEntity}Allocation(
+            g.{ChildEntity}Id,
             g.Name,
-            amountPerGoal)).ToList();
+            amountPer{ChildEntity})).ToList();
     }
 }
 
-public sealed class ProportionalAllocationStrategy : IBudgetAllocationStrategy
+public sealed class ProportionalAllocationStrategy : I{Entity}AllocationStrategy
 {
-    public List<GoalAllocation> Allocate(decimal totalAmount, List<Goal> goals)
+    public List<{ChildEntity}Allocation> Allocate(decimal totalAmount, List<{ChildEntity}> {childEntities})
     {
-        var totalTarget = goals.Sum(g => g.TargetAmount);
+        var totalTarget = {childEntities}.Sum(g => g.Amount);
 
-        return goals.Select(g => new GoalAllocation(
-            g.GoalId,
+        return {childEntities}.Select(g => new {ChildEntity}Allocation(
+            g.{ChildEntity}Id,
             g.Name,
-            totalAmount * (g.TargetAmount / totalTarget))).ToList();
+            totalAmount * (g.Amount / totalTarget))).ToList();
     }
 }
 
-public sealed class PriorityAllocationStrategy : IBudgetAllocationStrategy
+public sealed class PriorityAllocationStrategy : I{Entity}AllocationStrategy
 {
-    public List<GoalAllocation> Allocate(decimal totalAmount, List<Goal> goals)
+    public List<{ChildEntity}Allocation> Allocate(decimal totalAmount, List<{ChildEntity}> {childEntities})
     {
-        var allocations = new List<GoalAllocation>();
+        var allocations = new List<{ChildEntity}Allocation>();
         var remaining = totalAmount;
 
-        foreach (var goal in goals.OrderByDescending(g => g.Priority))
+        foreach (var {childEntity} in {childEntities}.OrderByDescending(g => g.Priority))
         {
-            var allocation = Math.Min(remaining, goal.TargetAmount);
-            allocations.Add(new GoalAllocation(goal.GoalId, goal.Name, allocation));
+            var allocation = Math.Min(remaining, {childEntity}.Amount);
+            allocations.Add(new {ChildEntity}Allocation({childEntity}.{ChildEntity}Id, {childEntity}.Name, allocation));
             remaining -= allocation;
 
             if (remaining <= 0)
@@ -1220,22 +1220,22 @@ public sealed class PriorityAllocationStrategy : IBudgetAllocationStrategy
     }
 }
 
-public sealed class BudgetAllocator
+public sealed class {Entity}Allocator
 {
-    private readonly IBudgetAllocationStrategy _strategy;
+    private readonly I{Entity}AllocationStrategy _strategy;
 
-    public BudgetAllocator(IBudgetAllocationStrategy strategy)
+    public {Entity}Allocator(I{Entity}AllocationStrategy strategy)
     {
         _strategy = strategy;
     }
 
-    public List<GoalAllocation> AllocateBudget(decimal totalAmount, List<Goal> goals)
+    public List<{ChildEntity}Allocation> Allocate{Entity}(decimal totalAmount, List<{ChildEntity}> {childEntities})
     {
-        return _strategy.Allocate(totalAmount, goals);
+        return _strategy.Allocate(totalAmount, {childEntities});
     }
 }
 
-public record GoalAllocation(Guid GoalId, string Name, decimal Amount);
+public record {ChildEntity}Allocation(Guid {ChildEntity}Id, string Name, decimal Amount);
 ```
 
 #### Observer Pattern
@@ -1244,71 +1244,71 @@ public record GoalAllocation(Guid GoalId, string Name, decimal Amount);
 
 ```csharp
 // ✅ CORRECT - Observer pattern (domain events)
-public interface IBudgetObserver
+public interface I{Entity}Observer
 {
-    Task OnBudgetChangedAsync(Budget budget, CancellationToken ct);
+    Task On{Entity}ChangedAsync({Entity} {entity}, CancellationToken ct);
 }
 
-public sealed class BudgetAlertObserver : IBudgetObserver
+public sealed class {Entity}AlertObserver : I{Entity}Observer
 {
-    private readonly ILogger<BudgetAlertObserver> _logger;
+    private readonly ILogger<{Entity}AlertObserver> _logger;
 
-    public BudgetAlertObserver(ILogger<BudgetAlertObserver> logger)
+    public {Entity}AlertObserver(ILogger<{Entity}AlertObserver> logger)
     {
         _logger = logger;
     }
 
-    public async Task OnBudgetChangedAsync(Budget budget, CancellationToken ct)
+    public async Task On{Entity}ChangedAsync({Entity} {entity}, CancellationToken ct)
     {
-        var allocated = budget.Goals.Sum(g => g.TargetAmount);
-        var remaining = budget.Amount - allocated;
+        var allocated = {entity}.{ChildEntities}.Sum(g => g.Amount);
+        var remaining = {entity}.Amount - allocated;
 
         if (remaining < 0)
         {
             _logger.LogWarning(
-                "Budget {BudgetId} is over budget by {Amount}",
-                budget.BudgetId, Math.Abs(remaining));
+                "{Entity}Id is over its limit by {Amount}",
+                {entity}.{Entity}Id, Math.Abs(remaining));
         }
 
         await Task.CompletedTask;
     }
 }
 
-public sealed class BudgetCacheInvalidationObserver : IBudgetObserver
+public sealed class {Entity}CacheInvalidationObserver : I{Entity}Observer
 {
     private readonly IDistributedCache _cache;
 
-    public BudgetCacheInvalidationObserver(IDistributedCache cache)
+    public {Entity}CacheInvalidationObserver(IDistributedCache cache)
     {
         _cache = cache;
     }
 
-    public async Task OnBudgetChangedAsync(Budget budget, CancellationToken ct)
+    public async Task On{Entity}ChangedAsync({Entity} {entity}, CancellationToken ct)
     {
-        var cacheKey = $"budget:{budget.BudgetId}";
+        var cacheKey = $"{entity}:{entity}.{Entity}Id}";
         await _cache.RemoveAsync(cacheKey, ct);
     }
 }
 
-public sealed class BudgetSubject
+public sealed class {Entity}Subject
 {
-    private readonly List<IBudgetObserver> _observers = new();
+    private readonly List<I{Entity}Observer> _observers = new();
 
-    public void Attach(IBudgetObserver observer)
+    public void Attach(I{Entity}Observer observer)
     {
         _observers.Add(observer);
     }
 
-    public void Detach(IBudgetObserver observer)
+    public void Detach(I{Entity}Observer observer)
     {
         _observers.Remove(observer);
     }
 
-    public async Task NotifyAsync(Budget budget, CancellationToken ct)
+    public async Task NotifyAsync({Entity} {entity}, CancellationToken ct)
     {
         foreach (var observer in _observers)
         {
-            await observer.OnBudgetChangedAsync(budget, ct);
+            await observer.On{Entity}ChangedAsync({entity}, ct);
         }
     }
 }
@@ -1330,44 +1330,44 @@ public interface ICommandHandler<TCommand, TResponse>
     Task<TResponse> HandleAsync(TCommand command, CancellationToken ct);
 }
 
-public sealed record CreateBudgetCommand(
+public sealed record Create{Entity}Command(
     string Name,
     decimal Amount,
     DateTimeOffset StartDate
-) : ICommand<CreateBudgetResponse>;
+) : ICommand<Create{Entity}Response>;
 
-public sealed record CreateBudgetResponse(Guid BudgetId);
+public sealed record Create{Entity}Response(Guid {Entity}Id);
 
-public sealed class CreateBudgetCommandHandler : ICommandHandler<CreateBudgetCommand, CreateBudgetResponse>
+public sealed class Create{Entity}CommandHandler : ICommandHandler<Create{Entity}Command, Create{Entity}Response>
 {
     private readonly DataContext _dataContext;
-    private readonly ILogger<CreateBudgetCommandHandler> _logger;
+    private readonly ILogger<Create{Entity}CommandHandler> _logger;
 
-    public CreateBudgetCommandHandler(DataContext dataContext, ILogger<CreateBudgetCommandHandler> logger)
+    public Create{Entity}CommandHandler(DataContext dataContext, ILogger<Create{Entity}CommandHandler> logger)
     {
         _dataContext = dataContext;
         _logger = logger;
     }
 
-    public async Task<CreateBudgetResponse> HandleAsync(
-        CreateBudgetCommand command,
+    public async Task<Create{Entity}Response> HandleAsync(
+        Create{Entity}Command command,
         CancellationToken ct)
     {
-        _logger.LogInformation("Creating budget {Name}", command.Name);
+        _logger.LogInformation("Creating {entity} {Name}", command.Name);
 
-        var budget = new Budget
+        var {entity} = new {Entity}
         {
-            BudgetId = Guid.NewGuid(),
+            {Entity}Id = Guid.NewGuid(),
             Name = command.Name,
             Amount = command.Amount,
             StartDate = command.StartDate,
             CreatedDate = DateTimeOffset.UtcNow
         };
 
-        _dataContext.Budgets.Add(budget);
+        _dataContext.{Entities}.Add({entity});
         await _dataContext.SaveChangesAsync(ct);
 
-        return new CreateBudgetResponse(budget.BudgetId);
+        return new Create{Entity}Response({entity}.{Entity}Id);
     }
 }
 ```
@@ -1380,26 +1380,26 @@ public sealed class CreateBudgetCommandHandler : ICommandHandler<CreateBudgetCom
 // ✅ CORRECT - Template method pattern
 public abstract class ReportGenerator
 {
-    public async Task<byte[]> GenerateReportAsync(Guid budgetId, CancellationToken ct)
+    public async Task<byte[]> GenerateReportAsync(Guid {entity}Id, CancellationToken ct)
     {
         // Template method defining the algorithm
-        var data = await FetchDataAsync(budgetId, ct);
+        var data = await FetchDataAsync({entity}Id, ct);
         var processedData = ProcessData(data);
         ValidateData(processedData);
         var formatted = FormatData(processedData);
         return await RenderAsync(formatted, ct);
     }
 
-    protected abstract Task<BudgetData> FetchDataAsync(Guid budgetId, CancellationToken ct);
-    protected abstract ProcessedBudgetData ProcessData(BudgetData data);
-    protected abstract string FormatData(ProcessedBudgetData data);
+    protected abstract Task<{Entity}Data> FetchDataAsync(Guid {entity}Id, CancellationToken ct);
+    protected abstract Processed{Entity}Data ProcessData({Entity}Data data);
+    protected abstract string FormatData(Processed{Entity}Data data);
     protected abstract Task<byte[]> RenderAsync(string formatted, CancellationToken ct);
 
-    protected virtual void ValidateData(ProcessedBudgetData data)
+    protected virtual void ValidateData(Processed{Entity}Data data)
     {
         // Default validation (can be overridden)
         if (data.TotalAmount <= 0)
-            throw new InvalidOperationException("Invalid budget data");
+            throw new InvalidOperationException("Invalid {entity} data");
     }
 }
 
@@ -1412,20 +1412,20 @@ public sealed class PdfReportGenerator : ReportGenerator
         _dataContext = dataContext;
     }
 
-    protected override async Task<BudgetData> FetchDataAsync(Guid budgetId, CancellationToken ct)
+    protected override async Task<{Entity}Data> FetchDataAsync(Guid {entity}Id, CancellationToken ct)
     {
-        var budget = await _dataContext.Budgets.FirstOrDefaultAsync(e => e.BudgetId == budgetId, ct);
-        return new BudgetData(budget.Name, budget.Amount);
+        var {entity} = await _dataContext.{Entities}.FirstOrDefaultAsync(e => e.{Entity}Id == {entity}Id, ct);
+        return new {Entity}Data({entity}.Name, {entity}.Amount);
     }
 
-    protected override ProcessedBudgetData ProcessData(BudgetData data)
+    protected override Processed{Entity}Data ProcessData({Entity}Data data)
     {
-        return new ProcessedBudgetData(data.Name, data.Amount, DateTimeOffset.UtcNow);
+        return new Processed{Entity}Data(data.Name, data.Amount, DateTimeOffset.UtcNow);
     }
 
-    protected override string FormatData(ProcessedBudgetData data)
+    protected override string FormatData(Processed{Entity}Data data)
     {
-        return $"Budget Report: {data.Name}\nAmount: {data.TotalAmount:C}\nGenerated: {data.GeneratedAt}";
+        return $"{Entity} Report: {data.Name}\nAmount: {data.TotalAmount:C}\nGenerated: {data.GeneratedAt}";
     }
 
     protected override async Task<byte[]> RenderAsync(string formatted, CancellationToken ct)
@@ -1436,8 +1436,8 @@ public sealed class PdfReportGenerator : ReportGenerator
     }
 }
 
-public record BudgetData(string Name, decimal Amount);
-public record ProcessedBudgetData(string Name, decimal TotalAmount, DateTimeOffset GeneratedAt);
+public record {Entity}Data(string Name, decimal Amount);
+public record Processed{Entity}Data(string Name, decimal TotalAmount, DateTimeOffset GeneratedAt);
 ```
 
 ---
@@ -1448,61 +1448,61 @@ public record ProcessedBudgetData(string Name, decimal TotalAmount, DateTimeOffs
 
 ```csharp
 // ✅ CORRECT - Using records for immutable data
-public sealed record BudgetSummary(
-    Guid BudgetId,
+public sealed record {Entity}Summary(
+    Guid {Entity}Id,
     string Name,
     decimal TotalAmount,
     decimal AllocatedAmount)
 {
     public decimal RemainingAmount => TotalAmount - AllocatedAmount;
-    public bool IsOverBudget => RemainingAmount < 0;
+    public bool IsOver{Entity} => RemainingAmount < 0;
 }
 
 // With expressions for non-destructive mutation
-var original = new BudgetSummary(Guid.NewGuid(), "Q1 Budget", 50000m, 30000m);
+var original = new {Entity}Summary(Guid.NewGuid(), "Example {Entity}", 50000m, 30000m);
 var updated = original with { AllocatedAmount = 35000m };
 
 // Value equality
-var budget1 = new BudgetSummary(Guid.NewGuid(), "Test", 1000m, 500m);
-var budget2 = new BudgetSummary(budget1.BudgetId, "Test", 1000m, 500m);
-var areEqual = budget1 == budget2; // True - value equality
+var {entity}1 = new {Entity}Summary(Guid.NewGuid(), "Test", 1000m, 500m);
+var {entity}2 = new {Entity}Summary({entity}1.{Entity}Id, "Test", 1000m, 500m);
+var areEqual = {entity}1 == {entity}2; // True - value equality
 ```
 
 ### Init-Only Properties
 
 ```csharp
 // ✅ CORRECT - Init-only properties for immutability
-public sealed class Budget
+public sealed class {Entity}
 {
-    public Guid BudgetId { get; init; }
+    public Guid {Entity}Id { get; init; }
     public string Name { get; init; } = string.Empty;
     public decimal Amount { get; init; }
     public DateTimeOffset CreatedDate { get; init; }
 
     // Can only be set during object initialization
-    public Budget()
+    public {Entity}()
     {
-        BudgetId = Guid.NewGuid();
+        {Entity}Id = Guid.NewGuid();
         CreatedDate = DateTimeOffset.UtcNow;
     }
 }
 
 // Usage
-var budget = new Budget
+var {entity} = new {Entity}
 {
-    Name = "Q1 Budget",
+    Name = "Example {Entity}",
     Amount = 50000m
-    // BudgetId and CreatedDate set by constructor
+    // {Entity}Id and CreatedDate set by constructor
 };
 
-// budget.Name = "New Name"; // Compile error!
+// {entity}.Name = "New Name"; // Compile error!
 ```
 
 ### Required Members (C# 11+)
 
 ```csharp
 // ✅ CORRECT - Required members
-public sealed class CreateBudgetRequest
+public sealed class Create{Entity}Request
 {
     public required string Name { get; init; }
     public required decimal Amount { get; init; }
@@ -1510,42 +1510,42 @@ public sealed class CreateBudgetRequest
 }
 
 // Usage
-var request = new CreateBudgetRequest
+var request = new Create{Entity}Request
 {
-    Name = "Q1 Budget",
+    Name = "Example {Entity}",
     Amount = 50000m
     // StartDate is optional
 };
 
-// var invalid = new CreateBudgetRequest { Amount = 1000m }; // Compile error - Name required!
+// var invalid = new Create{Entity}Request { Amount = 1000m }; // Compile error - Name required!
 ```
 
 ### Pattern Matching
 
 ```csharp
 // ✅ CORRECT - Advanced pattern matching
-public sealed class BudgetStatusCalculator
+public sealed class {Entity}StatusCalculator
 {
-    public string GetStatus(Budget budget)
+    public string GetStatus({Entity} {entity})
     {
-        var remaining = budget.Amount - budget.Goals.Sum(g => g.TargetAmount);
+        var remaining = {entity}.Amount - {entity}.{ChildEntities}.Sum(g => g.Amount);
 
-        return budget switch
+        return {entity} switch
         {
             { Amount: <= 0 } => "Invalid",
-            _ when remaining < 0 => "Over Budget",
+            _ when remaining < 0 => "Over Limit",
             _ when remaining == 0 => "Fully Allocated",
-            _ when remaining < budget.Amount * 0.1m => "Nearly Allocated",
+            _ when remaining < {entity}.Amount * 0.1m => "Nearly Allocated",
             _ => "Available"
         };
     }
 
-    public decimal CalculateFee(Budget budget) => budget.Amount switch
+    public decimal CalculateFee({Entity} {entity}) => {entity}.Amount switch
     {
         < 1000m => 0m,
-        >= 1000m and < 10000m => budget.Amount * 0.01m,
-        >= 10000m and < 100000m => budget.Amount * 0.005m,
-        _ => budget.Amount * 0.001m
+        >= 1000m and < 10000m => {entity}.Amount * 0.01m,
+        >= 10000m and < 100000m => {entity}.Amount * 0.005m,
+        _ => {entity}.Amount * 0.001m
     };
 }
 ```
@@ -1558,99 +1558,99 @@ public sealed class BudgetStatusCalculator
 
 ```csharp
 // ❌ WRONG - God object doing everything
-public sealed class BudgetManager
+public sealed class {Entity}Manager
 {
     // Data access
-    public async Task<Budget> GetBudgetAsync(Guid id) { /* ... */ }
-    public async Task SaveBudgetAsync(Budget budget) { /* ... */ }
+    public async Task<{Entity}> Get{Entity}Async(Guid id) { /* ... */ }
+    public async Task Save{Entity}Async({Entity} {entity}) { /* ... */ }
 
     // Validation
-    public bool ValidateBudget(Budget budget) { /* ... */ }
+    public bool Validate{Entity}({Entity} {entity}) { /* ... */ }
 
     // Calculations
-    public decimal CalculateRemaining(Budget budget) { /* ... */ }
-    public decimal CalculateAllocated(Budget budget) { /* ... */ }
+    public decimal CalculateRemaining({Entity} {entity}) { /* ... */ }
+    public decimal CalculateAllocated({Entity} {entity}) { /* ... */ }
 
     // Notifications
-    public async Task SendEmailAsync(Budget budget) { /* ... */ }
-    public async Task SendSmsAsync(Budget budget) { /* ... */ }
+    public async Task SendEmailAsync({Entity} {entity}) { /* ... */ }
+    public async Task SendSmsAsync({Entity} {entity}) { /* ... */ }
 
     // Reporting
-    public async Task<byte[]> GeneratePdfAsync(Budget budget) { /* ... */ }
-    public async Task<byte[]> GenerateExcelAsync(Budget budget) { /* ... */ }
+    public async Task<byte[]> GeneratePdfAsync({Entity} {entity}) { /* ... */ }
+    public async Task<byte[]> GenerateExcelAsync({Entity} {entity}) { /* ... */ }
 
     // Caching
-    public void CacheBudget(Budget budget) { /* ... */ }
-    public Budget? GetCachedBudget(Guid id) { /* ... */ }
+    public void Cache{Entity}({Entity} {entity}) { /* ... */ }
+    public {Entity}? GetCached{Entity}(Guid id) { /* ... */ }
 }
 
 // ✅ CORRECT - Separated responsibilities
-public sealed class BudgetRepository { /* Data access only */ }
-public sealed class BudgetValidator { /* Validation only */ }
-public sealed class BudgetCalculator { /* Calculations only */ }
-public sealed class BudgetNotificationService { /* Notifications only */ }
-public sealed class BudgetReportGenerator { /* Reporting only */ }
-public sealed class BudgetCacheService { /* Caching only */ }
+public sealed class {Entity}Repository { /* Data access only */ }
+public sealed class {Entity}Validator { /* Validation only */ }
+public sealed class {Entity}Calculator { /* Calculations only */ }
+public sealed class {Entity}NotificationService { /* Notifications only */ }
+public sealed class {Entity}ReportGenerator { /* Reporting only */ }
+public sealed class {Entity}CacheService { /* Caching only */ }
 ```
 
 ### Anemic Domain Model
 
 ```csharp
 // ❌ WRONG - Anemic domain model (data bag with no behavior)
-public sealed class Budget
+public sealed class {Entity}
 {
-    public Guid BudgetId { get; set; }
+    public Guid {Entity}Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public decimal Amount { get; set; }
-    public List<Goal> Goals { get; set; } = new();
+    public List<{ChildEntity}> {ChildEntities} { get; set; } = new();
 }
 
-public sealed class BudgetService
+public sealed class {Entity}Service
 {
-    public decimal CalculateRemaining(Budget budget)
+    public decimal CalculateRemaining({Entity} {entity})
     {
-        return budget.Amount - budget.Goals.Sum(g => g.TargetAmount);
+        return {entity}.Amount - {entity}.{ChildEntities}.Sum(g => g.Amount);
     }
 
-    public bool CanAddGoal(Budget budget, Goal goal)
+    public bool CanAdd{ChildEntity}({Entity} {entity}, {ChildEntity} {childEntity})
     {
-        var remaining = CalculateRemaining(budget);
-        return remaining >= goal.TargetAmount;
+        var remaining = CalculateRemaining({entity});
+        return remaining >= {childEntity}.Amount;
     }
 }
 
 // ✅ CORRECT - Rich domain model with behavior
-public sealed class Budget
+public sealed class {Entity}
 {
-    private readonly List<Goal> _goals = new();
+    private readonly List<{ChildEntity}> _{childEntities} = new();
 
-    public Guid BudgetId { get; init; }
+    public Guid {Entity}Id { get; init; }
     public string Name { get; init; } = string.Empty;
     public decimal Amount { get; init; }
-    public IReadOnlyCollection<Goal> Goals => _goals.AsReadOnly();
+    public IReadOnlyCollection<{ChildEntity}> {ChildEntities} => _{childEntities}.AsReadOnly();
 
     public decimal CalculateRemaining()
     {
-        return Amount - _goals.Sum(g => g.TargetAmount);
+        return Amount - _{childEntities}.Sum(g => g.Amount);
     }
 
-    public bool CanAddGoal(Goal goal)
+    public bool CanAdd{ChildEntity}({ChildEntity} {childEntity})
     {
-        ArgumentNullException.ThrowIfNull(goal);
-        return CalculateRemaining() >= goal.TargetAmount;
+        ArgumentNullException.ThrowIfNull({childEntity});
+        return CalculateRemaining() >= {childEntity}.Amount;
     }
 
-    public void AddGoal(Goal goal)
+    public void Add{ChildEntity}({ChildEntity} {childEntity})
     {
-        ArgumentNullException.ThrowIfNull(goal);
+        ArgumentNullException.ThrowIfNull({childEntity});
 
-        if (!CanAddGoal(goal))
-            throw new InvalidOperationException("Insufficient budget for goal");
+        if (!CanAdd{ChildEntity}({childEntity}))
+            throw new InvalidOperationException("Insufficient {entity} for {childEntity}");
 
-        if (_goals.Any(g => g.GoalId == goal.GoalId))
-            throw new InvalidOperationException("Goal already exists");
+        if (_{childEntities}.Any(g => g.{ChildEntity}Id == {childEntity}.{ChildEntity}Id))
+            throw new InvalidOperationException("{ChildEntity} already exists");
 
-        _goals.Add(goal);
+        _{childEntities}.Add({childEntity});
     }
 }
 ```
@@ -1663,29 +1663,29 @@ public sealed class Budget
 
 ```csharp
 // ❌ WRONG - Direct access to mutable collection
-public sealed class Budget
+public sealed class {Entity}
 {
-    public List<Goal> Goals { get; set; } = new();
+    public List<{ChildEntity}> {ChildEntities} { get; set; } = new();
 }
 
 // Client can bypass business rules
-budget.Goals.Add(invalidGoal); // No validation!
+{entity}.{ChildEntities}.Add(invalid{ChildEntity}); // No validation!
 
 // ✅ CORRECT - Controlled access through methods
-public sealed class Budget
+public sealed class {Entity}
 {
-    private readonly List<Goal> _goals = new();
-    public IReadOnlyCollection<Goal> Goals => _goals.AsReadOnly();
+    private readonly List<{ChildEntity}> _{childEntities} = new();
+    public IReadOnlyCollection<{ChildEntity}> {ChildEntities} => _{childEntities}.AsReadOnly();
 
-    public void AddGoal(Goal goal)
+    public void Add{ChildEntity}({ChildEntity} {childEntity})
     {
         // Validation and business rules enforced
-        ArgumentNullException.ThrowIfNull(goal);
+        ArgumentNullException.ThrowIfNull({childEntity});
 
-        if (!CanAddGoal(goal))
-            throw new InvalidOperationException("Cannot add goal");
+        if (!CanAdd{ChildEntity}({childEntity}))
+            throw new InvalidOperationException("Cannot add {childEntity}");
 
-        _goals.Add(goal);
+        _{childEntities}.Add({childEntity});
     }
 }
 ```
@@ -1696,12 +1696,12 @@ public sealed class Budget
 // ❌ WRONG - Derived type throws unexpected exception
 public abstract class DocumentGenerator
 {
-    public abstract Task<byte[]> GenerateAsync(Budget budget);
+    public abstract Task<byte[]> GenerateAsync({Entity} {entity});
 }
 
 public sealed class ReadOnlyDocumentGenerator : DocumentGenerator
 {
-    public override Task<byte[]> GenerateAsync(Budget budget)
+    public override Task<byte[]> GenerateAsync({Entity} {entity})
     {
         throw new NotSupportedException(); // Violates LSP!
     }
@@ -1710,7 +1710,7 @@ public sealed class ReadOnlyDocumentGenerator : DocumentGenerator
 // ✅ CORRECT - Don't inherit if contract can't be honored
 public interface IDocumentGenerator
 {
-    Task<byte[]> GenerateAsync(Budget budget);
+    Task<byte[]> GenerateAsync({Entity} {entity});
 }
 
 public interface IReadOnlyDocument
@@ -1725,22 +1725,22 @@ public interface IReadOnlyDocument
 
 ```csharp
 // ❌ WRONG - Tight coupling to concrete implementation
-public sealed class BudgetService
+public sealed class {Entity}Service
 {
-    private readonly SqlBudgetRepository _repository; // Concrete!
+    private readonly Sql{Entity}Repository _repository; // Concrete!
 
-    public BudgetService()
+    public {Entity}Service()
     {
-        _repository = new SqlBudgetRepository(); // Direct instantiation!
+        _repository = new Sql{Entity}Repository(); // Direct instantiation!
     }
 }
 
 // ✅ CORRECT - Loose coupling via abstraction
-public sealed class BudgetService
+public sealed class {Entity}Service
 {
-    private readonly IBudgetRepository _repository; // Abstraction!
+    private readonly I{Entity}Repository _repository; // Abstraction!
 
-    public BudgetService(IBudgetRepository repository) // DI!
+    public {Entity}Service(I{Entity}Repository repository) // DI!
     {
         _repository = repository;
     }

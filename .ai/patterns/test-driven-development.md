@@ -24,28 +24,28 @@ graph LR
 Write a test for the next bit of functionality you want to add. The test should fail because the functionality doesn't exist yet.
 
 ```csharp
-// File: tests/{ApplicationName}.{Domain}.Tests/Handlers/CreateBudgetCommandHandlerTests.cs
+// File: tests/{ApplicationName}.{Domain}.Tests/Handlers/Create{Entity}CommandHandlerTests.cs
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 [TestClass]
-public sealed class CreateBudgetCommandHandlerTests
+public sealed class Create{Entity}CommandHandlerTests
 {
     [TestMethod]
-    public async Task HandleAsync_ValidCommand_CreatesBudget()
+    public async Task HandleAsync_ValidCommand_Creates{Entity}()
     {
-        // This test will FAIL because CreateBudgetCommandHandler doesn't exist yet
-        var handler = new CreateBudgetCommandHandler();
-        var command = new CreateBudgetCommand("Test Budget", 1000m, DateTimeOffset.UtcNow);
+        // This test will FAIL because Create{Entity}CommandHandler doesn't exist yet
+        var handler = new Create{Entity}CommandHandler();
+        var command = new Create{Entity}Command("Test {Entity}", 1000m, DateTimeOffset.UtcNow);
 
         var result = await handler.HandleAsync(command);
 
         Assert.IsNotNull(result);
-        Assert.AreNotEqual(Guid.Empty, result.BudgetId);
+        Assert.AreNotEqual(Guid.Empty, result.{Entity}Id);
     }
 }
 
-// ❌ RED: Test fails - CreateBudgetCommandHandler doesn't exist
+// ❌ RED: Test fails - Create{Entity}CommandHandler doesn't exist
 ```
 
 ### 2. GREEN - Make the Test Pass
@@ -53,31 +53,31 @@ public sealed class CreateBudgetCommandHandlerTests
 Write the minimum amount of code necessary to make the test pass. Don't worry about perfect code yet.
 
 ```csharp
-// File: {ApplicationName}.Domain.{Domain}/Features/Budget/Commands/CreateBudgetCommand.cs
+// File: {ApplicationName}.Domain.{Domain}/Features/{Entity}/Commands/Create{Entity}Command.cs
 
-public sealed record CreateBudgetCommand(
+public sealed record Create{Entity}Command(
     string Name,
     decimal Amount,
     DateTimeOffset StartDate
-) : ICommand<CreateBudgetResponse>;
+) : ICommand<Create{Entity}Response>;
 
-public sealed record CreateBudgetResponse(Guid BudgetId);
+public sealed record Create{Entity}Response(Guid {Entity}Id);
 
-// File: {ApplicationName}.Domain.{Domain}/Features/Budget/Commands/CreateBudgetCommandHandler.cs
+// File: {ApplicationName}.Domain.{Domain}/Features/{Entity}/Commands/Create{Entity}CommandHandler.cs
 
-public sealed class CreateBudgetCommandHandler : ICommandHandler<CreateBudgetCommand, CreateBudgetResponse>
+public sealed class Create{Entity}CommandHandler : ICommandHandler<Create{Entity}Command, Create{Entity}Response>
 {
-    public async Task<CreateBudgetResponse> HandleAsync(
-        CreateBudgetCommand command,
+    public async Task<Create{Entity}Response> HandleAsync(
+        Create{Entity}Command command,
         CancellationToken cancellationToken = default)
     {
         // Minimum code to make test pass
-        var budgetId = Guid.NewGuid();
-        return new CreateBudgetResponse(budgetId);
+        var {entity}Id = Guid.NewGuid();
+        return new Create{Entity}Response({entity}Id);
     }
 }
 
-// ✅ GREEN: Test passes - handler returns a BudgetId
+// ✅ GREEN: Test passes - handler returns an identifier
 ```
 
 ### 3. REFACTOR - Improve the Code
@@ -85,15 +85,15 @@ public sealed class CreateBudgetCommandHandler : ICommandHandler<CreateBudgetCom
 Now that the test passes, refactor the code to improve its design without changing its behavior.
 
 ```csharp
-// File: {ApplicationName}.Domain.{Domain}/Features/Budget/Commands/CreateBudgetCommandHandler.cs
+// File: {ApplicationName}.Domain.{Domain}/Features/{Entity}/Commands/Create{Entity}CommandHandler.cs
 
-public sealed class CreateBudgetCommandHandler(
+public sealed class Create{Entity}CommandHandler(
     DataContext dataContext,
-    ILogger<CreateBudgetCommandHandler> logger
-) : ICommandHandler<CreateBudgetCommand, CreateBudgetResponse>
+    ILogger<Create{Entity}CommandHandler> logger
+) : ICommandHandler<Create{Entity}Command, Create{Entity}Response>
 {
-    public async Task<CreateBudgetResponse> HandleAsync(
-        CreateBudgetCommand command,
+    public async Task<Create{Entity}Response> HandleAsync(
+        Create{Entity}Command command,
         CancellationToken cancellationToken = default)
     {
         // Refactored: Proper implementation with validation, logging, persistence
@@ -105,27 +105,27 @@ public sealed class CreateBudgetCommandHandler(
 
         logger.LogInformation(
             "Creating {EntityType} with Name: {Name}",
-            nameof(Budget), command.Name);
+            nameof({Entity}), command.Name);
 
-        var entity = new Entities.Budgets.Budget
+        var entity = new Entities.{Entities}.{Entity}
         {
-            BudgetId = Guid.NewGuid(),
+            {Entity}Id = Guid.NewGuid(),
             Name = command.Name,
             Amount = command.Amount,
             StartDate = command.StartDate
         };
 
-        dataContext.Budgets.Add(entity);
+        dataContext.{Entities}.Add(entity);
         var rowsAffected = await dataContext.SaveChangesAsync(cancellationToken);
 
         if (rowsAffected == 0)
-            throw new InvalidOperationException("Failed to create budget");
+            throw new InvalidOperationException("Failed to create {entity}");
 
         logger.LogInformation(
             "Created {EntityType} with ID: {EntityId}",
-            nameof(Budget), entity.BudgetId);
+            nameof({Entity}), entity.{Entity}Id);
 
-        return new CreateBudgetResponse(entity.BudgetId);
+        return new Create{Entity}Response(entity.{Entity}Id);
     }
 }
 
@@ -145,9 +145,9 @@ public sealed class CreateBudgetCommandHandler(
 5. **Refactor** the code (REFACTOR)
 6. **Repeat** for the next requirement
 
-### Example: Implementing Budget Validation
+### Example: Implementing {Entity} Validation
 
-**Requirement:** Budget name must be between 3 and 100 characters.
+**Requirement:** {Entity} name must be between 3 and 100 characters.
 
 **Step 1: Write Test for Empty Name**
 ```csharp
@@ -157,7 +157,7 @@ public async Task HandleAsync_EmptyName_ThrowsArgumentException()
 {
     // Arrange
     var handler = CreateHandler();
-    var command = new CreateBudgetCommand("", 1000m, DateTimeOffset.UtcNow);
+    var command = new Create{Entity}Command("", 1000m, DateTimeOffset.UtcNow);
 
     // Act
     await handler.HandleAsync(command);
@@ -168,8 +168,8 @@ public async Task HandleAsync_EmptyName_ThrowsArgumentException()
 
 **Step 2: Make Test Pass**
 ```csharp
-public async Task<CreateBudgetResponse> HandleAsync(
-    CreateBudgetCommand command,
+public async Task<Create{Entity}Response> HandleAsync(
+    Create{Entity}Command command,
     CancellationToken cancellationToken = default)
 {
     ArgumentException.ThrowIfNullOrWhiteSpace(command.Name, nameof(command.Name));
@@ -186,7 +186,7 @@ public async Task HandleAsync_NameTooShort_ThrowsArgumentException()
 {
     // Arrange
     var handler = CreateHandler();
-    var command = new CreateBudgetCommand("AB", 1000m, DateTimeOffset.UtcNow);
+    var command = new Create{Entity}Command("AB", 1000m, DateTimeOffset.UtcNow);
 
     // Act
     await handler.HandleAsync(command);
@@ -197,8 +197,8 @@ public async Task HandleAsync_NameTooShort_ThrowsArgumentException()
 
 **Step 4: Implement Validation**
 ```csharp
-public async Task<CreateBudgetResponse> HandleAsync(
-    CreateBudgetCommand command,
+public async Task<Create{Entity}Response> HandleAsync(
+    Create{Entity}Command command,
     CancellationToken cancellationToken = default)
 {
     ArgumentException.ThrowIfNullOrWhiteSpace(command.Name, nameof(command.Name));
@@ -226,17 +226,17 @@ Every test should be organized into three clear sections:
 
 ```csharp
 [TestMethod]
-public async Task HandleAsync_ValidCommand_CreatesBudget()
+public async Task HandleAsync_ValidCommand_Creates{Entity}()
 {
     // ARRANGE - Set up test data and mocks
     var dataContextMock = new Mock<DataContext>();
-    var loggerMock = new Mock<ILogger<CreateBudgetCommandHandler>>();
-    var handler = new CreateBudgetCommandHandler(
+    var loggerMock = new Mock<ILogger<Create{Entity}CommandHandler>>();
+    var handler = new Create{Entity}CommandHandler(
         dataContextMock.Object,
         loggerMock.Object);
 
-    var command = new CreateBudgetCommand(
-        Name: "Test Budget",
+    var command = new Create{Entity}Command(
+        Name: "Test {Entity}",
         Amount: 1000m,
         StartDate: DateTimeOffset.UtcNow);
 
@@ -245,7 +245,7 @@ public async Task HandleAsync_ValidCommand_CreatesBudget()
 
     // ASSERT - Verify the results
     Assert.IsNotNull(result);
-    Assert.AreNotEqual(Guid.Empty, result.BudgetId);
+    Assert.AreNotEqual(Guid.Empty, result.{Entity}Id);
 
     dataContextMock.Verify(
         x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
@@ -259,13 +259,13 @@ An alternative structure popular in Behavior-Driven Development:
 
 ```csharp
 [TestMethod]
-public async Task CreateBudget_WhenNameIsTooShort_ThenThrowsException()
+public async Task Create{Entity}_WhenNameIsTooShort_ThenThrowsException()
 {
-    // GIVEN a budget with name too short
+    // GIVEN a {entity} with name too short
     var handler = CreateHandler();
-    var command = new CreateBudgetCommand("AB", 1000m, DateTimeOffset.UtcNow);
+    var command = new Create{Entity}Command("AB", 1000m, DateTimeOffset.UtcNow);
 
-    // WHEN creating the budget
+    // WHEN creating the {entity}
     var act = async () => await handler.HandleAsync(command);
 
     // THEN it should throw ArgumentException
@@ -288,47 +288,47 @@ public async Task CreateBudget_WhenNameIsTooShort_ThenThrowsException()
 ### Unit Test Example with Mocking
 
 ```csharp
-// File: tests/{ApplicationName}.{Domain}.Tests/Handlers/UpdateBudgetCommandHandlerTests.cs
+// File: tests/{ApplicationName}.{Domain}.Tests/Handlers/Update{Entity}CommandHandlerTests.cs
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
 [TestClass]
-public sealed class UpdateBudgetCommandHandlerTests
+public sealed class Update{Entity}CommandHandlerTests
 {
     private Mock<DataContext> _dataContextMock;
-    private Mock<ILogger<UpdateBudgetCommandHandler>> _loggerMock;
-    private UpdateBudgetCommandHandler _handler;
+    private Mock<ILogger<Update{Entity}CommandHandler>> _loggerMock;
+    private Update{Entity}CommandHandler _handler;
 
     [TestInitialize]
     public void Setup()
     {
         _dataContextMock = new Mock<DataContext>();
-        _loggerMock = new Mock<ILogger<UpdateBudgetCommandHandler>>();
-        _handler = new UpdateBudgetCommandHandler(
+        _loggerMock = new Mock<ILogger<Update{Entity}CommandHandler>>();
+        _handler = new Update{Entity}CommandHandler(
             _dataContextMock.Object,
             _loggerMock.Object);
     }
 
     [TestMethod]
-    public async Task HandleAsync_ValidCommand_UpdatesBudget()
+    public async Task HandleAsync_ValidCommand_Updates{Entity}()
     {
         // Arrange
-        var budgetId = Guid.NewGuid();
-        var existingBudget = new Budget
+        var {entity}Id = Guid.NewGuid();
+        var existing{Entity} = new {Entity}
         {
-            BudgetId = budgetId,
+            {Entity}Id = {entity}Id,
             Name = "Old Name",
             Amount = 500m,
             StartDate = DateTimeOffset.UtcNow
         };
 
-        var budgetsMock = new[] { existingBudget }.AsQueryable().BuildMockDbSet();
+        var {entities}Mock = new[] { existing{Entity} }.AsQueryable().BuildMockDbSet();
         _dataContextMock
-            .Setup(x => x.Budgets)
-            .Returns(budgetsMock.Object);
+            .Setup(x => x.{Entities})
+            .Returns({entities}Mock.Object);
 
-        var command = new UpdateBudgetCommand(budgetId, "New Name", 1000m);
+        var command = new Update{Entity}Command({entity}Id, "New Name", 1000m);
 
         // Act
         var result = await _handler.HandleAsync(command);
@@ -345,7 +345,7 @@ public sealed class UpdateBudgetCommandHandlerTests
     public async Task HandleAsync_NegativeAmount_ThrowsArgumentException()
     {
         // Arrange
-        var command = new UpdateBudgetCommand(Guid.NewGuid(), "Budget", -100m);
+        var command = new Update{Entity}Command(Guid.NewGuid(), "{Entity}", -100m);
 
         // Act & Assert
         await Assert.ThrowsExceptionAsync<ArgumentException>(
@@ -353,17 +353,17 @@ public sealed class UpdateBudgetCommandHandlerTests
     }
 
     [TestMethod]
-    public async Task HandleAsync_NonExistentBudget_ThrowsNotFoundException()
+    public async Task HandleAsync_NonExistent{Entity}_ThrowsNotFoundException()
     {
         // Arrange
-        var budgetId = Guid.NewGuid();
+        var {entity}Id = Guid.NewGuid();
 
-        var budgetsMock = new List<Budget>().AsQueryable().BuildMockDbSet();
+        var {entities}Mock = new List<{Entity}>().AsQueryable().BuildMockDbSet();
         _dataContextMock
-            .Setup(x => x.Budgets)
-            .Returns(budgetsMock.Object);
+            .Setup(x => x.{Entities})
+            .Returns({entities}Mock.Object);
 
-        var command = new UpdateBudgetCommand(budgetId, "Budget", 1000m);
+        var command = new Update{Entity}Command({entity}Id, "{Entity}", 1000m);
 
         // Act & Assert
         await Assert.ThrowsExceptionAsync<NotFoundException>(
@@ -386,14 +386,14 @@ public sealed class UpdateBudgetCommandHandlerTests
 ### Integration Test Example
 
 ```csharp
-// File: tests/{ApplicationName}.{Domain}.Tests/Integration/BudgetEndpointsTests.cs
+// File: tests/{ApplicationName}.{Domain}.Tests/Integration/{Entity}EndpointsTests.cs
 
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 [TestClass]
-public sealed class BudgetEndpointsTests
+public sealed class {Entity}EndpointsTests
 {
     private WebApplicationFactory<Program> _factory;
     private HttpClient _client;
@@ -438,76 +438,76 @@ public sealed class BudgetEndpointsTests
     }
 
     [TestMethod]
-    public async Task POST_Budget_ReturnsCreatedBudget()
+    public async Task POST_{Entity}_ReturnsCreated{Entity}()
     {
         // Arrange
         var request = new
         {
-            Name = "Test Budget",
+            Name = "Test {Entity}",
             Amount = 1000m,
             StartDate = DateTimeOffset.UtcNow
         };
 
         // Act
-        var response = await _client.PostAsJsonAsync("/api/budgets", request);
+        var response = await _client.PostAsJsonAsync("/api/{entities}", request);
 
         // Assert
         Assert.AreEqual(HttpStatusCode.Created, response.StatusCode);
 
-        var result = await response.Content.ReadFromJsonAsync<CreateBudgetResponse>();
+        var result = await response.Content.ReadFromJsonAsync<Create{Entity}Response>();
         Assert.IsNotNull(result);
-        Assert.AreNotEqual(Guid.Empty, result.BudgetId);
+        Assert.AreNotEqual(Guid.Empty, result.{Entity}Id);
     }
 
     [TestMethod]
-    public async Task GET_BudgetById_ReturnsCorrectBudget()
+    public async Task GET_{Entity}ById_ReturnsCorrect{Entity}()
     {
-        // Arrange - Create a budget first
+        // Arrange - Create a {entity} first
         var createRequest = new
         {
-            Name = "Test Budget",
+            Name = "Test {Entity}",
             Amount = 1000m,
             StartDate = DateTimeOffset.UtcNow
         };
 
-        var createResponse = await _client.PostAsJsonAsync("/api/budgets", createRequest);
-        var createdBudget = await createResponse.Content.ReadFromJsonAsync<CreateBudgetResponse>();
+        var createResponse = await _client.PostAsJsonAsync("/api/{entities}", createRequest);
+        var created{Entity} = await createResponse.Content.ReadFromJsonAsync<Create{Entity}Response>();
 
         // Act
-        var getResponse = await _client.GetAsync($"/api/budgets/{createdBudget.BudgetId}");
+        var getResponse = await _client.GetAsync($"/api/{entities}/{created{Entity}.{Entity}Id}");
 
         // Assert
         Assert.AreEqual(HttpStatusCode.OK, getResponse.StatusCode);
 
-        var budget = await getResponse.Content.ReadFromJsonAsync<BudgetResponse>();
-        Assert.IsNotNull(budget);
-        Assert.AreEqual(createdBudget.BudgetId, budget.BudgetId);
-        Assert.AreEqual("Test Budget", budget.Name);
-        Assert.AreEqual(1000m, budget.Amount);
+        var {entity} = await getResponse.Content.ReadFromJsonAsync<{Entity}Response>();
+        Assert.IsNotNull({entity});
+        Assert.AreEqual(created{Entity}.{Entity}Id, {entity}.{Entity}Id);
+        Assert.AreEqual("Test {Entity}", {entity}.Name);
+        Assert.AreEqual(1000m, {entity}.Amount);
     }
 
     [TestMethod]
-    public async Task DELETE_Budget_RemovesBudget()
+    public async Task DELETE_{Entity}_Removes{Entity}()
     {
-        // Arrange - Create a budget
+        // Arrange - Create a {entity}
         var createRequest = new
         {
-            Name = "Test Budget",
+            Name = "Test {Entity}",
             Amount = 1000m,
             StartDate = DateTimeOffset.UtcNow
         };
 
-        var createResponse = await _client.PostAsJsonAsync("/api/budgets", createRequest);
-        var createdBudget = await createResponse.Content.ReadFromJsonAsync<CreateBudgetResponse>();
+        var createResponse = await _client.PostAsJsonAsync("/api/{entities}", createRequest);
+        var created{Entity} = await createResponse.Content.ReadFromJsonAsync<Create{Entity}Response>();
 
-        // Act - Delete the budget
-        var deleteResponse = await _client.DeleteAsync($"/api/budgets/{createdBudget.BudgetId}");
+        // Act - Delete the {entity}
+        var deleteResponse = await _client.DeleteAsync($"/api/{entities}/{created{Entity}.{Entity}Id}");
 
         // Assert - Delete succeeded
         Assert.AreEqual(HttpStatusCode.NoContent, deleteResponse.StatusCode);
 
-        // Verify budget is gone
-        var getResponse = await _client.GetAsync($"/api/budgets/{createdBudget.BudgetId}");
+        // Verify {entity} is gone
+        var getResponse = await _client.GetAsync($"/api/{entities}/{created{Entity}.{Entity}Id}");
         Assert.AreEqual(HttpStatusCode.NotFound, getResponse.StatusCode);
     }
 }
@@ -522,84 +522,84 @@ public sealed class BudgetEndpointsTests
 Gherkin provides a business-readable syntax for defining behavior.
 
 ```gherkin
-# File: tests/{ApplicationName}.{Domain}.Tests/Features/BudgetManagement.feature
+# File: tests/{ApplicationName}.{Domain}.Tests/Features/{Entity}Management.feature
 
-Feature: Budget Management
+Feature: {Entity} Management
   As a user
-  I want to manage my budgets
-  So that I can track my financial planning
+  I want to manage my {entities}
+  So that I can manage my {entities}
 
   Background:
     Given I am an authenticated user
 
-  Scenario: Create a new budget
-    When I create a budget with the following details:
+  Scenario: Create a new {entity}
+    When I create a {entity} with the following details:
       | Name         | Amount | StartDate  |
-      | Q1 2025      | 10000  | 2025-01-01 |
-    Then the budget should be created successfully
-    And the budget should have a unique identifier
-    And the budget should be retrievable by its identifier
+      | Example      | 10000  | 2025-01-01 |
+    Then the {entity} should be created successfully
+    And the {entity} should have a unique identifier
+    And the {entity} should be retrievable by its identifier
 
-  Scenario: Cannot create budget with negative amount
-    When I attempt to create a budget with amount -1000
+  Scenario: Cannot create {entity} with negative amount
+    When I attempt to create a {entity} with amount -1000
     Then the creation should fail with a validation error
     And the error message should indicate the amount must be positive
 
-  Scenario: Update budget name and amount
-    Given a budget exists with name "Original Budget" and amount 5000
-    When I update the budget name to "Updated Budget" and amount to 7000
-    Then the budget should be updated successfully
-    And the budget name should be "Updated Budget"
-    And the budget amount should be 7000
+  Scenario: Update {entity} name and amount
+    Given a {entity} exists with name "Original {Entity}" and amount 5000
+    When I update the {entity} name to "Updated {Entity}" and amount to 7000
+    Then the {entity} should be updated successfully
+    And the {entity} name should be "Updated {Entity}"
+    And the {entity} amount should be 7000
 
-  Scenario: Delete a budget
-    Given a budget exists with name "Old Budget"
-    When I delete the budget
-    Then the budget should be deleted successfully
-    And the budget should no longer be retrievable
+  Scenario: Delete a {entity}
+    Given a {entity} exists with name "Old {Entity}"
+    When I delete the {entity}
+    Then the {entity} should be deleted successfully
+    And the {entity} should no longer be retrievable
 
-  Scenario: Get list of budgets with pagination
-    Given the following budgets exist:
+  Scenario: Get list of {entities} with pagination
+    Given the following {entities} exist:
       | Name      | Amount |
-      | Budget 1  | 1000   |
-      | Budget 2  | 2000   |
-      | Budget 3  | 3000   |
-      | Budget 4  | 4000   |
-      | Budget 5  | 5000   |
+      | {Entity} 1  | 1000   |
+      | {Entity} 2  | 2000   |
+      | {Entity} 3  | 3000   |
+      | {Entity} 4  | 4000   |
+      | {Entity} 5  | 5000   |
     When I request page 1 with page size 3
-    Then I should receive 3 budgets
-    And the budgets should be ordered by creation date descending
+    Then I should receive 3 {entities}
+    And the {entities} should be ordered by creation date descending
 
-  Scenario: Search budgets by name
-    Given the following budgets exist:
+  Scenario: Search {entities} by name
+    Given the following {entities} exist:
       | Name            | Amount |
-      | 2025 Q1 Budget  | 10000  |
-      | 2025 Q2 Budget  | 12000  |
-      | Marketing Fund  | 5000   |
-    When I search for budgets with term "2025"
-    Then I should receive 2 budgets
-    And all budget names should contain "2025"
+      | Example 1  | 10000  |
+      | Example 2  | 12000  |
+      | Example 3  | 5000   |
+    When I search for {entities} with term "Example"
+    Then I should receive 3 {entities}
+    And all {entity} names should contain "2025"
 ```
 
 ### Step Definitions
 
 ```csharp
-// File: tests/{ApplicationName}.{Domain}.Tests/Steps/BudgetManagementSteps.cs
+// File: tests/{ApplicationName}.{Domain}.Tests/Steps/{Entity}ManagementSteps.cs
 
 using Reqnroll;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 [Binding]
-public sealed class BudgetManagementSteps
+public sealed class {Entity}ManagementSteps
 {
     private readonly ScenarioContext _scenarioContext;
     private readonly HttpClient _client;
     private HttpResponseMessage? _response;
-    private CreateBudgetResponse? _createdBudget;
-    private BudgetResponse? _retrievedBudget;
-    private List<BudgetResponse>? _budgetList;
+    private Create{Entity}Response? _created{Entity};
+    private {Entity}Response? _retrieved{Entity};
+    private List<{Entity}Response>? _{entity}List;
 
-    public BudgetManagementSteps(
+    public {Entity}ManagementSteps(
         ScenarioContext scenarioContext,
         HttpClient client)
     {
@@ -615,8 +615,8 @@ public sealed class BudgetManagementSteps
             new AuthenticationHeaderValue("Bearer", "test-token");
     }
 
-    [When(@"I create a budget with the following details:")]
-    public async Task WhenICreateBudgetWithDetails(Table table)
+    [When(@"I create a {entity} with the following details:")]
+    public async Task WhenICreate{Entity}WithDetails(Table table)
     {
         var row = table.Rows[0];
         var request = new
@@ -626,53 +626,53 @@ public sealed class BudgetManagementSteps
             StartDate = DateTimeOffset.Parse(row["StartDate"])
         };
 
-        _response = await _client.PostAsJsonAsync("/api/budgets", request);
+        _response = await _client.PostAsJsonAsync("/api/{entities}", request);
 
         if (_response.IsSuccessStatusCode)
         {
-            _createdBudget = await _response.Content.ReadFromJsonAsync<CreateBudgetResponse>();
-            _scenarioContext["CreatedBudgetId"] = _createdBudget!.BudgetId;
+            _created{Entity} = await _response.Content.ReadFromJsonAsync<Create{Entity}Response>();
+            _scenarioContext["Created{Entity}Id"] = _created{Entity}!.{Entity}Id;
         }
     }
 
-    [When(@"I attempt to create a budget with amount (.*)")]
-    public async Task WhenIAttemptToCreateBudgetWithAmount(decimal amount)
+    [When(@"I attempt to create a {entity} with amount (.*)")]
+    public async Task WhenIAttemptToCreate{Entity}WithAmount(decimal amount)
     {
         var request = new
         {
-            Name = "Test Budget",
+            Name = "Test {Entity}",
             Amount = amount,
             StartDate = DateTimeOffset.UtcNow
         };
 
-        _response = await _client.PostAsJsonAsync("/api/budgets", request);
+        _response = await _client.PostAsJsonAsync("/api/{entities}", request);
     }
 
-    [Then(@"the budget should be created successfully")]
-    public void ThenBudgetShouldBeCreatedSuccessfully()
+    [Then(@"the {entity} should be created successfully")]
+    public void Then{Entity}ShouldBeCreatedSuccessfully()
     {
         Assert.AreEqual(HttpStatusCode.Created, _response!.StatusCode);
-        Assert.IsNotNull(_createdBudget);
+        Assert.IsNotNull(_created{Entity});
     }
 
-    [Then(@"the budget should have a unique identifier")]
-    public void ThenBudgetShouldHaveUniqueIdentifier()
+    [Then(@"the {entity} should have a unique identifier")]
+    public void Then{Entity}ShouldHaveUniqueIdentifier()
     {
-        Assert.IsNotNull(_createdBudget);
-        Assert.AreNotEqual(Guid.Empty, _createdBudget.BudgetId);
+        Assert.IsNotNull(_created{Entity});
+        Assert.AreNotEqual(Guid.Empty, _created{Entity}.{Entity}Id);
     }
 
-    [Then(@"the budget should be retrievable by its identifier")]
-    public async Task ThenBudgetShouldBeRetrievable()
+    [Then(@"the {entity} should be retrievable by its identifier")]
+    public async Task Then{Entity}ShouldBeRetrievable()
     {
-        var budgetId = _scenarioContext.Get<Guid>("CreatedBudgetId");
-        var getResponse = await _client.GetAsync($"/api/budgets/{budgetId}");
+        var {entity}Id = _scenarioContext.Get<Guid>("Created{Entity}Id");
+        var getResponse = await _client.GetAsync($"/api/{entities}/{entity}Id");
 
         Assert.AreEqual(HttpStatusCode.OK, getResponse.StatusCode);
 
-        _retrievedBudget = await getResponse.Content.ReadFromJsonAsync<BudgetResponse>();
-        Assert.IsNotNull(_retrievedBudget);
-        Assert.AreEqual(budgetId, _retrievedBudget.BudgetId);
+        _retrieved{Entity} = await getResponse.Content.ReadFromJsonAsync<{Entity}Response>();
+        Assert.IsNotNull(_retrieved{Entity});
+        Assert.AreEqual({entity}Id, _retrieved{Entity}.{Entity}Id);
     }
 
     [Then(@"the creation should fail with a validation error")]
@@ -688,8 +688,8 @@ public sealed class BudgetManagementSteps
         Assert.IsTrue(error.Contains("positive", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Given(@"a budget exists with name ""(.*)"" and amount (.*)")]
-    public async Task GivenBudgetExistsWithNameAndAmount(string name, decimal amount)
+    [Given(@"a {entity} exists with name ""(.*)"" and amount (.*)")]
+    public async Task Given{Entity}ExistsWithNameAndAmount(string name, decimal amount)
     {
         var request = new
         {
@@ -698,81 +698,81 @@ public sealed class BudgetManagementSteps
             StartDate = DateTimeOffset.UtcNow
         };
 
-        var response = await _client.PostAsJsonAsync("/api/budgets", request);
-        var created = await response.Content.ReadFromJsonAsync<CreateBudgetResponse>();
+        var response = await _client.PostAsJsonAsync("/api/{entities}", request);
+        var created = await response.Content.ReadFromJsonAsync<Create{Entity}Response>();
 
-        _scenarioContext["BudgetId"] = created!.BudgetId;
+        _scenarioContext["{Entity}Id"] = created!.{Entity}Id;
     }
 
-    [When(@"I update the budget name to ""(.*)"" and amount to (.*)")]
-    public async Task WhenIUpdateBudgetNameAndAmount(string newName, decimal newAmount)
+    [When(@"I update the {entity} name to ""(.*)"" and amount to (.*)")]
+    public async Task WhenIUpdate{Entity}NameAndAmount(string newName, decimal newAmount)
     {
-        var budgetId = _scenarioContext.Get<Guid>("BudgetId");
+        var {entity}Id = _scenarioContext.Get<Guid>("{Entity}Id");
         var request = new
         {
             Name = newName,
             Amount = newAmount
         };
 
-        _response = await _client.PutAsJsonAsync($"/api/budgets/{budgetId}", request);
+        _response = await _client.PutAsJsonAsync($"/api/{entities}/{entity}Id", request);
     }
 
-    [Then(@"the budget should be updated successfully")]
-    public void ThenBudgetShouldBeUpdatedSuccessfully()
+    [Then(@"the {entity} should be updated successfully")]
+    public void Then{Entity}ShouldBeUpdatedSuccessfully()
     {
         Assert.AreEqual(HttpStatusCode.OK, _response!.StatusCode);
     }
 
-    [Then(@"the budget name should be ""(.*)""")]
-    public async Task ThenBudgetNameShouldBe(string expectedName)
+    [Then(@"the {entity} name should be ""(.*)""")]
+    public async Task Then{Entity}NameShouldBe(string expectedName)
     {
-        var budgetId = _scenarioContext.Get<Guid>("BudgetId");
-        var getResponse = await _client.GetAsync($"/api/budgets/{budgetId}");
-        var budget = await getResponse.Content.ReadFromJsonAsync<BudgetResponse>();
+        var {entity}Id = _scenarioContext.Get<Guid>("{Entity}Id");
+        var getResponse = await _client.GetAsync($"/api/{entities}/{entity}Id");
+        var {entity} = await getResponse.Content.ReadFromJsonAsync<{Entity}Response>();
 
-        Assert.AreEqual(expectedName, budget!.Name);
+        Assert.AreEqual(expectedName, {entity}!.Name);
     }
 
-    [Then(@"the budget amount should be (.*)")]
-    public async Task ThenBudgetAmountShouldBe(decimal expectedAmount)
+    [Then(@"the {entity} amount should be (.*)")]
+    public async Task Then{Entity}AmountShouldBe(decimal expectedAmount)
     {
-        var budgetId = _scenarioContext.Get<Guid>("BudgetId");
-        var getResponse = await _client.GetAsync($"/api/budgets/{budgetId}");
-        var budget = await getResponse.Content.ReadFromJsonAsync<BudgetResponse>();
+        var {entity}Id = _scenarioContext.Get<Guid>("{Entity}Id");
+        var getResponse = await _client.GetAsync($"/api/{entities}/{entity}Id");
+        var {entity} = await getResponse.Content.ReadFromJsonAsync<{Entity}Response>();
 
-        Assert.AreEqual(expectedAmount, budget!.Amount);
+        Assert.AreEqual(expectedAmount, {entity}!.Amount);
     }
 
-    [Given(@"a budget exists with name ""(.*)""")]
-    public async Task GivenBudgetExistsWithName(string name)
+    [Given(@"a {entity} exists with name ""(.*)""")]
+    public async Task Given{Entity}ExistsWithName(string name)
     {
-        await GivenBudgetExistsWithNameAndAmount(name, 1000m);
+        await Given{Entity}ExistsWithNameAndAmount(name, 1000m);
     }
 
-    [When(@"I delete the budget")]
-    public async Task WhenIDeleteBudget()
+    [When(@"I delete the {entity}")]
+    public async Task WhenIDelete{Entity}()
     {
-        var budgetId = _scenarioContext.Get<Guid>("BudgetId");
-        _response = await _client.DeleteAsync($"/api/budgets/{budgetId}");
+        var {entity}Id = _scenarioContext.Get<Guid>("{Entity}Id");
+        _response = await _client.DeleteAsync($"/api/{entities}/{entity}Id");
     }
 
-    [Then(@"the budget should be deleted successfully")]
-    public void ThenBudgetShouldBeDeletedSuccessfully()
+    [Then(@"the {entity} should be deleted successfully")]
+    public void Then{Entity}ShouldBeDeletedSuccessfully()
     {
         Assert.AreEqual(HttpStatusCode.NoContent, _response!.StatusCode);
     }
 
-    [Then(@"the budget should no longer be retrievable")]
-    public async Task ThenBudgetShouldNoLongerBeRetrievable()
+    [Then(@"the {entity} should no longer be retrievable")]
+    public async Task Then{Entity}ShouldNoLongerBeRetrievable()
     {
-        var budgetId = _scenarioContext.Get<Guid>("BudgetId");
-        var getResponse = await _client.GetAsync($"/api/budgets/{budgetId}");
+        var {entity}Id = _scenarioContext.Get<Guid>("{Entity}Id");
+        var getResponse = await _client.GetAsync($"/api/{entities}/{entity}Id");
 
         Assert.AreEqual(HttpStatusCode.NotFound, getResponse.StatusCode);
     }
 
-    [Given(@"the following budgets exist:")]
-    public async Task GivenFollowingBudgetsExist(Table table)
+    [Given(@"the following {entities} exist:")]
+    public async Task GivenFollowing{Entities}Exist(Table table)
     {
         foreach (var row in table.Rows)
         {
@@ -783,7 +783,7 @@ public sealed class BudgetManagementSteps
                 StartDate = DateTimeOffset.UtcNow
             };
 
-            await _client.PostAsJsonAsync("/api/budgets", request);
+            await _client.PostAsJsonAsync("/api/{entities}", request);
             await Task.Delay(100); // Ensure different creation times
         }
     }
@@ -792,48 +792,48 @@ public sealed class BudgetManagementSteps
     public async Task WhenIRequestPageWithSize(int pageNumber, int pageSize)
     {
         var response = await _client.GetAsync(
-            $"/api/budgets?pageNumber={pageNumber}&pageSize={pageSize}");
+            $"/api/{entities}?pageNumber={pageNumber}&pageSize={pageSize}");
 
-        _budgetList = await response.Content.ReadFromJsonAsync<List<BudgetResponse>>();
+        _{entity}List = await response.Content.ReadFromJsonAsync<List<{Entity}Response>>();
     }
 
-    [Then(@"I should receive (.*) budgets")]
-    public void ThenIShouldReceiveBudgets(int expectedCount)
+    [Then(@"I should receive (.*) {entities}")]
+    public void ThenIShouldReceive{Entities}(int expectedCount)
     {
-        Assert.IsNotNull(_budgetList);
-        Assert.AreEqual(expectedCount, _budgetList.Count);
+        Assert.IsNotNull(_{entity}List);
+        Assert.AreEqual(expectedCount, _{entity}List.Count);
     }
 
-    [Then(@"the budgets should be ordered by creation date descending")]
-    public void ThenBudgetsShouldBeOrderedByCreationDate()
+    [Then(@"the {entities} should be ordered by creation date descending")]
+    public void Then{Entities}ShouldBeOrderedByCreationDate()
     {
-        Assert.IsNotNull(_budgetList);
+        Assert.IsNotNull(_{entity}List);
 
-        for (int i = 0; i < _budgetList.Count - 1; i++)
+        for (int i = 0; i < _{entity}List.Count - 1; i++)
         {
-            Assert.IsTrue(_budgetList[i].CreatedDate >= _budgetList[i + 1].CreatedDate);
+            Assert.IsTrue(_{entity}List[i].CreatedDate >= _{entity}List[i + 1].CreatedDate);
         }
     }
 
-    [When(@"I search for budgets with term ""(.*)""")]
-    public async Task WhenISearchForBudgetsWithTerm(string searchTerm)
+    [When(@"I search for {entities} with term ""(.*)""")]
+    public async Task WhenISearchFor{Entities}WithTerm(string searchTerm)
     {
         var response = await _client.GetAsync(
-            $"/api/budgets?searchTerm={searchTerm}");
+            $"/api/{entities}?searchTerm={searchTerm}");
 
-        _budgetList = await response.Content.ReadFromJsonAsync<List<BudgetResponse>>();
+        _{entity}List = await response.Content.ReadFromJsonAsync<List<{Entity}Response>>();
     }
 
-    [Then(@"all budget names should contain ""(.*)""")]
-    public void ThenAllBudgetNamesShouldContain(string term)
+    [Then(@"all {entity} names should contain ""(.*)""")]
+    public void ThenAll{Entity}NamesShouldContain(string term)
     {
-        Assert.IsNotNull(_budgetList);
+        Assert.IsNotNull(_{entity}List);
 
-        foreach (var budget in _budgetList)
+        foreach (var {entity} in _{entity}List)
         {
             Assert.IsTrue(
-                budget.Name.Contains(term, StringComparison.OrdinalIgnoreCase),
-                $"Budget '{budget.Name}' does not contain '{term}'");
+                {entity}.Name.Contains(term, StringComparison.OrdinalIgnoreCase),
+                $"{Entity} '{entity}.Name}' does not contain '{term}'");
         }
     }
 }
@@ -850,11 +850,11 @@ public sealed class BudgetManagementSteps
 var dataContextMock = new Mock<DataContext>();
 
 // Setup a DbSet to return a value
-var budgetsMock = new[] { new Budget { BudgetId = Guid.NewGuid(), Name = "Test" } }
+var {entities}Mock = new[] { new {Entity} { {Entity}Id = Guid.NewGuid(), Name = "Test" } }
     .AsQueryable().BuildMockDbSet();
 dataContextMock
-    .Setup(x => x.Budgets)
-    .Returns(budgetsMock.Object);
+    .Setup(x => x.{Entities})
+    .Returns({entities}Mock.Object);
 
 // Verify SaveChangesAsync was called
 dataContextMock.Verify(
@@ -866,16 +866,16 @@ dataContextMock.Verify(
 
 ```csharp
 // Setup with specific argument matching — pre-populate DbSet with known entities
-var budgets = new List<Budget>
+var {entities} = new List<{Entity}>
 {
-    new() { BudgetId = Guid.NewGuid(), Name = "Expected Name", Amount = 100m }
+    new() { {Entity}Id = Guid.NewGuid(), Name = "Expected Name", Amount = 100m }
 };
-var budgetsMock = budgets.AsQueryable().BuildMockDbSet();
-dataContextMock.Setup(x => x.Budgets).Returns(budgetsMock.Object);
+var {entities}Mock = {entities}.AsQueryable().BuildMockDbSet();
+dataContextMock.Setup(x => x.{Entities}).Returns({entities}Mock.Object);
 
 // Setup to throw exception when entity is not found
-var emptyBudgetsMock = new List<Budget>().AsQueryable().BuildMockDbSet();
-dataContextMock.Setup(x => x.Budgets).Returns(emptyBudgetsMock.Object);
+var empty{Entities}Mock = new List<{Entity}>().AsQueryable().BuildMockDbSet();
+dataContextMock.Setup(x => x.{Entities}).Returns(empty{Entities}Mock.Object);
 
 // Verify SaveChangesAsync was called
 dataContextMock.Verify(
@@ -912,7 +912,7 @@ reportgenerator -reports:coverage.opencover.xml -targetdir:coveragereport
 public async Task TestHandler()
 {
     // This test achieves 100% code coverage but doesn't verify anything meaningful
-    var handler = new CreateBudgetCommandHandler(null, null);
+    var handler = new Create{Entity}CommandHandler(null, null);
     try
     {
         await handler.HandleAsync(null!);
@@ -927,23 +927,23 @@ public async Task TestHandler()
 ✅ **CORRECT - Meaningful tests:**
 ```csharp
 [TestMethod]
-public async Task HandleAsync_ValidCommand_CreatesBudgetWithCorrectProperties()
+public async Task HandleAsync_ValidCommand_Creates{Entity}WithCorrectProperties()
 {
     // Arrange
     var dataContextMock = new Mock<DataContext>();
-    var loggerMock = new Mock<ILogger<CreateBudgetCommandHandler>>();
-    var handler = new CreateBudgetCommandHandler(
+    var loggerMock = new Mock<ILogger<Create{Entity}CommandHandler>>();
+    var handler = new Create{Entity}CommandHandler(
         dataContextMock.Object,
         loggerMock.Object);
 
-    var command = new CreateBudgetCommand("Test Budget", 1000m, DateTimeOffset.UtcNow);
+    var command = new Create{Entity}Command("Test {Entity}", 1000m, DateTimeOffset.UtcNow);
 
     // Act
     var result = await handler.HandleAsync(command);
 
     // Assert - Verify behavior, not just code execution
     Assert.IsNotNull(result);
-    Assert.AreNotEqual(Guid.Empty, result.BudgetId);
+    Assert.AreNotEqual(Guid.Empty, result.{Entity}Id);
 
     dataContextMock.Verify(
         x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
@@ -971,10 +971,10 @@ public async Task HandleAsync_EmptyName_ThrowsArgumentException()
 
 ```csharp
 [TestClass]
-public sealed class CreateBudgetCommandHandlerTests
+public sealed class Create{Entity}CommandHandlerTests
 {
     private Mock<DataContext> _dataContextMock;
-    private CreateBudgetCommandHandler _handler;
+    private Create{Entity}CommandHandler _handler;
 
     // Runs once before all tests in the class
     [ClassInitialize]
@@ -988,7 +988,7 @@ public sealed class CreateBudgetCommandHandlerTests
     public void TestSetup()
     {
         _dataContextMock = new Mock<DataContext>();
-        _handler = new CreateBudgetCommandHandler(_dataContextMock.Object, null!);
+        _handler = new Create{Entity}CommandHandler(_dataContextMock.Object, null!);
     }
 
     // Runs after each test
@@ -1056,11 +1056,11 @@ public sealed class CreateBudgetCommandHandlerTests
 ### Scenario Outline Example
 
 ```gherkin
-Scenario Outline: Create budgets with different amounts
-  When I create a budget with name "<name>" and amount <amount>
-  Then the budget should be created successfully
-  And the budget name should be "<name>"
-  And the budget amount should be <amount>
+Scenario Outline: Create {entities} with different amounts
+  When I create a {entity} with name "<name>" and amount <amount>
+  Then the {entity} should be created successfully
+  And the {entity} name should be "<name>"
+  And the {entity} amount should be <amount>
 
   Examples:
     | name        | amount |
@@ -1076,7 +1076,7 @@ Scenario Outline: Create budgets with different amounts
 
 ### Example 1: Adding Validation
 
-**Requirement:** Budget amount must be greater than zero.
+**Requirement:** {Entity} amount must be greater than zero.
 
 ```csharp
 // STEP 1: Write failing test (RED)
@@ -1085,7 +1085,7 @@ Scenario Outline: Create budgets with different amounts
 public async Task HandleAsync_ZeroAmount_ThrowsArgumentException()
 {
     var handler = CreateHandler();
-    var command = new CreateBudgetCommand("Test", 0m, DateTimeOffset.UtcNow);
+    var command = new Create{Entity}Command("Test", 0m, DateTimeOffset.UtcNow);
 
     await handler.HandleAsync(command);
 }
@@ -1093,8 +1093,8 @@ public async Task HandleAsync_ZeroAmount_ThrowsArgumentException()
 // Test fails - no validation exists yet
 
 // STEP 2: Make test pass (GREEN)
-public async Task<CreateBudgetResponse> HandleAsync(
-    CreateBudgetCommand command,
+public async Task<Create{Entity}Response> HandleAsync(
+    Create{Entity}Command command,
     CancellationToken cancellationToken = default)
 {
     if (command.Amount <= 0)
@@ -1111,20 +1111,20 @@ public async Task<CreateBudgetResponse> HandleAsync(
 
 ### Example 2: Adding Business Logic
 
-**Requirement:** Calculate remaining budget amount.
+**Requirement:** Calculate remaining {entity} amount.
 
 ```csharp
 // STEP 1: Write failing test (RED)
 [TestMethod]
 public void CalculateRemaining_WithSpending_ReturnsCorrectAmount()
 {
-    var budget = new Budget
+    var {entity} = new {Entity}
     {
-        BudgetId = Guid.NewGuid(),
+        {Entity}Id = Guid.NewGuid(),
         TotalAmount = 1000m
     };
 
-    var remaining = budget.CalculateRemaining(spent: 300m);
+    var remaining = {entity}.CalculateRemaining(spent: 300m);
 
     Assert.AreEqual(700m, remaining);
 }
@@ -1132,9 +1132,9 @@ public void CalculateRemaining_WithSpending_ReturnsCorrectAmount()
 // Test fails - method doesn't exist
 
 // STEP 2: Make test pass (GREEN)
-public sealed class Budget
+public sealed class {Entity}
 {
-    public Guid BudgetId { get; init; }
+    public Guid {Entity}Id { get; init; }
     public decimal TotalAmount { get; init; }
 
     public decimal CalculateRemaining(decimal spent)
@@ -1147,10 +1147,10 @@ public sealed class Budget
 
 // STEP 3: Add edge case tests and refactor
 [TestMethod]
-public void CalculateRemaining_WhenSpentExceedsBudget_ReturnsNegative()
+public void CalculateRemaining_WhenSpentExceeds{Entity}_ReturnsNegative()
 {
-    var budget = new Budget { TotalAmount = 1000m };
-    var remaining = budget.CalculateRemaining(spent: 1200m);
+    var {entity} = new {Entity} { TotalAmount = 1000m };
+    var remaining = {entity}.CalculateRemaining(spent: 1200m);
 
     Assert.AreEqual(-200m, remaining);
 }
@@ -1166,8 +1166,8 @@ Tests act as a safety net during refactoring. If tests pass after refactoring, b
 
 **Before Refactoring:**
 ```csharp
-public async Task<CreateBudgetResponse> HandleAsync(
-    CreateBudgetCommand command,
+public async Task<Create{Entity}Response> HandleAsync(
+    Create{Entity}Command command,
     CancellationToken cancellationToken = default)
 {
     if (command == null)
@@ -1185,50 +1185,50 @@ public async Task<CreateBudgetResponse> HandleAsync(
     if (command.Amount <= 0)
         throw new ArgumentException("Amount must be positive", nameof(command.Amount));
 
-    var entity = new Entities.Budgets.Budget
+    var entity = new Entities.{Entities}.{Entity}
     {
-        BudgetId = Guid.NewGuid(),
+        {Entity}Id = Guid.NewGuid(),
         Name = command.Name,
         Amount = command.Amount,
         StartDate = command.StartDate
     };
 
-    dataContext.Budgets.Add(entity);
+    dataContext.{Entities}.Add(entity);
     var rowsAffected = await dataContext.SaveChangesAsync(cancellationToken);
 
     if (rowsAffected == 0)
-        throw new InvalidOperationException("Failed to create budget");
+        throw new InvalidOperationException("Failed to create {entity}");
 
-    return new CreateBudgetResponse(entity.BudgetId);
+    return new Create{Entity}Response(entity.{Entity}Id);
 }
 ```
 
 **After Refactoring:**
 ```csharp
-public async Task<CreateBudgetResponse> HandleAsync(
-    CreateBudgetCommand command,
+public async Task<Create{Entity}Response> HandleAsync(
+    Create{Entity}Command command,
     CancellationToken cancellationToken = default)
 {
     ValidateCommand(command);
 
-    var entity = new Entities.Budgets.Budget
+    var entity = new Entities.{Entities}.{Entity}
     {
-        BudgetId = Guid.NewGuid(),
+        {Entity}Id = Guid.NewGuid(),
         Name = command.Name,
         Amount = command.Amount,
         StartDate = command.StartDate
     };
 
-    dataContext.Budgets.Add(entity);
+    dataContext.{Entities}.Add(entity);
     var rowsAffected = await dataContext.SaveChangesAsync(cancellationToken);
 
     if (rowsAffected == 0)
-        throw new InvalidOperationException("Failed to create budget");
+        throw new InvalidOperationException("Failed to create {entity}");
 
-    return new CreateBudgetResponse(entity.BudgetId);
+    return new Create{Entity}Response(entity.{Entity}Id);
 }
 
-private static void ValidateCommand(CreateBudgetCommand command)
+private static void ValidateCommand(Create{Entity}Command command)
 {
     ArgumentNullException.ThrowIfNull(command);
     ArgumentException.ThrowIfNullOrWhiteSpace(command.Name, nameof(command.Name));
@@ -1254,27 +1254,27 @@ private static void ValidateCommand(CreateBudgetCommand command)
 ### Command Handler TDD Example
 
 ```csharp
-// File: tests/{ApplicationName}.{Domain}.Tests/Handlers/DeleteBudgetCommandHandlerTests.cs
+// File: tests/{ApplicationName}.{Domain}.Tests/Handlers/Delete{Entity}CommandHandlerTests.cs
 
 [TestClass]
-public sealed class DeleteBudgetCommandHandlerTests
+public sealed class Delete{Entity}CommandHandlerTests
 {
     [TestMethod]
-    public async Task HandleAsync_ExistingBudget_DeletesSuccessfully()
+    public async Task HandleAsync_Existing{Entity}_DeletesSuccessfully()
     {
         // Arrange
-        var budgetId = Guid.NewGuid();
+        var {entity}Id = Guid.NewGuid();
         var dataContextMock = new Mock<DataContext>();
-        var loggerMock = new Mock<ILogger<DeleteBudgetCommandHandler>>();
-        var handler = new DeleteBudgetCommandHandler(
+        var loggerMock = new Mock<ILogger<Delete{Entity}CommandHandler>>();
+        var handler = new Delete{Entity}CommandHandler(
             dataContextMock.Object,
             loggerMock.Object);
 
-        var command = new DeleteBudgetCommand(budgetId);
+        var command = new Delete{Entity}Command({entity}Id);
 
-        var budgetsMock = new[] { new Budget { BudgetId = budgetId, Name = "Test", Amount = 100m } }
+        var {entities}Mock = new[] { new {Entity} { {Entity}Id = {entity}Id, Name = "Test", Amount = 100m } }
             .AsQueryable().BuildMockDbSet();
-        dataContextMock.Setup(x => x.Budgets).Returns(budgetsMock.Object);
+        dataContextMock.Setup(x => x.{Entities}).Returns({entities}Mock.Object);
 
         // Act
         var result = await handler.HandleAsync(command);
@@ -1297,18 +1297,18 @@ public sealed class DeleteBudgetCommandHandlerTests
 
     [TestMethod]
     [ExpectedException(typeof(NotFoundException))]
-    public async Task HandleAsync_NonExistentBudget_ThrowsNotFoundException()
+    public async Task HandleAsync_NonExistent{Entity}_ThrowsNotFoundException()
     {
-        var budgetId = Guid.NewGuid();
+        var {entity}Id = Guid.NewGuid();
         var dataContextMock = new Mock<DataContext>();
 
-        var budgetsMock = new List<Budget>().AsQueryable().BuildMockDbSet();
+        var {entities}Mock = new List<{Entity}>().AsQueryable().BuildMockDbSet();
         dataContextMock
-            .Setup(x => x.Budgets)
-            .Returns(budgetsMock.Object);
+            .Setup(x => x.{Entities})
+            .Returns({entities}Mock.Object);
 
-        var handler = new DeleteBudgetCommandHandler(dataContextMock.Object, null!);
-        var command = new DeleteBudgetCommand(budgetId);
+        var handler = new Delete{Entity}CommandHandler(dataContextMock.Object, null!);
+        var command = new Delete{Entity}Command({entity}Id);
 
         await handler.HandleAsync(command);
     }
@@ -1318,24 +1318,24 @@ public sealed class DeleteBudgetCommandHandlerTests
 ### Query Handler TDD Example
 
 ```csharp
-// File: tests/{ApplicationName}.{Domain}.Tests/Handlers/GetBudgetsListQueryHandlerTests.cs
+// File: tests/{ApplicationName}.{Domain}.Tests/Handlers/Get{Entities}ListQueryHandlerTests.cs
 
 [TestClass]
-public sealed class GetBudgetsListQueryHandlerTests
+public sealed class Get{Entities}ListQueryHandlerTests
 {
     [TestMethod]
     public async Task HandleAsync_WithPagination_ReturnsCorrectPage()
     {
         // Arrange
-        var budgets = CreateTestBudgets(25);
+        var {entities} = CreateTest{Entities}(25);
         var dataContextMock = new Mock<DataContext>();
 
         dataContextMock
-            .Setup(x => x.Set<Budget>())
-            .Returns(budgets.AsQueryable().BuildMockDbSet().Object);
+            .Setup(x => x.Set<{Entity}>())
+            .Returns({entities}.AsQueryable().BuildMockDbSet().Object);
 
-        var handler = new GetBudgetsListQueryHandler(dataContextMock.Object, null!);
-        var query = new GetBudgetsListQuery(PageNumber: 2, PageSize: 10);
+        var handler = new Get{Entities}ListQueryHandler(dataContextMock.Object, null!);
+        var query = new Get{Entities}ListQuery(PageNumber: 2, PageSize: 10);
 
         // Act
         var result = await handler.HandleAsync(query);
@@ -1349,20 +1349,20 @@ public sealed class GetBudgetsListQueryHandlerTests
     public async Task HandleAsync_WithSearchTerm_ReturnsFilteredResults()
     {
         // Arrange
-        var budgets = new List<Budget>
+        var {entities} = new List<{Entity}>
         {
-            new() { Name = "2025 Q1 Budget", Amount = 1000m },
-            new() { Name = "2025 Q2 Budget", Amount = 2000m },
+            new() { Name = "Example {Entity}", Amount = 1000m },
+            new() { Name = "2025 Q2 {Entity}", Amount = 2000m },
             new() { Name = "Marketing", Amount = 3000m }
         };
 
         var dataContextMock = new Mock<DataContext>();
         dataContextMock
-            .Setup(x => x.Set<Budget>())
-            .Returns(budgets.AsQueryable().BuildMockDbSet().Object);
+            .Setup(x => x.Set<{Entity}>())
+            .Returns({entities}.AsQueryable().BuildMockDbSet().Object);
 
-        var handler = new GetBudgetsListQueryHandler(dataContextMock.Object, null!);
-        var query = new GetBudgetsListQuery(SearchTerm: "2025");
+        var handler = new Get{Entities}ListQueryHandler(dataContextMock.Object, null!);
+        var query = new Get{Entities}ListQuery(SearchTerm: "2025");
 
         // Act
         var result = await handler.HandleAsync(query);
@@ -1383,37 +1383,37 @@ public sealed class GetBudgetsListQueryHandlerTests
 ```csharp
 // STEP 1: Write test for endpoint (RED)
 [TestMethod]
-public async Task POST_Budget_WithValidData_Returns201Created()
+public async Task POST_{Entity}_WithValidData_Returns201Created()
 {
     // Arrange
     var request = new
     {
-        Name = "Test Budget",
+        Name = "Test {Entity}",
         Amount = 1000m,
         StartDate = DateTimeOffset.UtcNow
     };
 
     // Act
-    var response = await _client.PostAsJsonAsync("/api/budgets", request);
+    var response = await _client.PostAsJsonAsync("/api/{entities}", request);
 
     // Assert
     Assert.AreEqual(HttpStatusCode.Created, response.StatusCode);
     Assert.IsNotNull(response.Headers.Location);
 
-    var result = await response.Content.ReadFromJsonAsync<CreateBudgetResponse>();
+    var result = await response.Content.ReadFromJsonAsync<Create{Entity}Response>();
     Assert.IsNotNull(result);
-    Assert.AreNotEqual(Guid.Empty, result.BudgetId);
+    Assert.AreNotEqual(Guid.Empty, result.{Entity}Id);
 }
 
 // STEP 2: Implement endpoint (GREEN)
-app.MapPost("/api/budgets", async (
-    BudgetModel model,
-    ICommandHandler<CreateBudgetCommand, CreateBudgetResponse> handler) =>
+app.MapPost("/api/{entities}", async (
+    {Entity}Model model,
+    ICommandHandler<Create{Entity}Command, Create{Entity}Response> handler) =>
 {
-    var command = new CreateBudgetCommand(model.Name, model.Amount, model.StartDate);
+    var command = new Create{Entity}Command(model.Name, model.Amount, model.StartDate);
     var result = await handler.HandleAsync(command);
 
-    return Results.Created($"/api/budgets/{result.BudgetId}", result);
+    return Results.Created($"/api/{entities}/{result.{Entity}Id}", result);
 });
 
 // STEP 3: Refactor (extract to endpoint class)
@@ -1431,12 +1431,12 @@ Avoid testing HOW the handler works internally — e.g. verifying exact construc
 
 ```csharp
 [TestMethod]
-public async Task HandleAsync_ValidCommand_PersistsBudgetWithCorrectData()
+public async Task HandleAsync_ValidCommand_Persists{Entity}WithCorrectData()
 {
     // ✅ Testing WHAT it does - the observable behavior
     var dataContextMock = new Mock<DataContext>();
-    var handler = new CreateBudgetCommandHandler(dataContextMock.Object, null!);
-    var command = new CreateBudgetCommand("Test Budget", 1000m, DateTimeOffset.UtcNow);
+    var handler = new Create{Entity}CommandHandler(dataContextMock.Object, null!);
+    var command = new Create{Entity}Command("Test {Entity}", 1000m, DateTimeOffset.UtcNow);
 
     await handler.HandleAsync(command);
 
@@ -1453,13 +1453,13 @@ public async Task HandleAsync_ValidCommand_PersistsBudgetWithCorrectData()
 public async Task HandleAsync_LogsSpecificMessage()
 {
     // ❌ Testing exact log message - very fragile
-    var loggerMock = new Mock<ILogger<CreateBudgetCommandHandler>>();
-    var handler = new CreateBudgetCommandHandler(null!, loggerMock.Object);
+    var loggerMock = new Mock<ILogger<Create{Entity}CommandHandler>>();
+    var handler = new Create{Entity}CommandHandler(null!, loggerMock.Object);
 
-    await handler.HandleAsync(new CreateBudgetCommand("Test", 1000m, DateTimeOffset.UtcNow));
+    await handler.HandleAsync(new Create{Entity}Command("Test", 1000m, DateTimeOffset.UtcNow));
 
     loggerMock.Verify(
-        x => x.LogInformation("Creating Budget with Name: Test"),
+        x => x.LogInformation("Creating {Entity} with Name: Test"),
         Times.Once);
 }
 ```
@@ -1468,13 +1468,13 @@ public async Task HandleAsync_LogsSpecificMessage()
 
 ```csharp
 [TestMethod]
-public async Task HandleAsync_LogsInformationWhenCreatingBudget()
+public async Task HandleAsync_LogsInformationWhenCreating{Entity}()
 {
     // ✅ Verify logging occurred, not exact message
-    var loggerMock = new Mock<ILogger<CreateBudgetCommandHandler>>();
-    var handler = new CreateBudgetCommandHandler(null!, loggerMock.Object);
+    var loggerMock = new Mock<ILogger<Create{Entity}CommandHandler>>();
+    var handler = new Create{Entity}CommandHandler(null!, loggerMock.Object);
 
-    await handler.HandleAsync(new CreateBudgetCommand("Test", 1000m, DateTimeOffset.UtcNow));
+    await handler.HandleAsync(new Create{Entity}Command("Test", 1000m, DateTimeOffset.UtcNow));
 
     loggerMock.Verify(
         x => x.Log(

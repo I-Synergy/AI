@@ -326,8 +326,8 @@ var command = new Create{Entity}Command(e);
 
 ```csharp
 // Named parameters for optional filters
-var query = new GetDepositsTotalAmountQuery(GoalId: id);
-var query = new GetDepositsTotalAmountQuery(BudgetId: id);
+var query = new GetDepositsTotalAmountQuery({ChildEntity}Id: id);
+var query = new GetDepositsTotalAmountQuery({Entity}Id: id);
 
 // Positional parameters for simple queries
 var query = new Get{Entity}ByIdQuery(id);
@@ -1176,43 +1176,35 @@ public static class ServiceCollectionExtensions
 When a single domain has multiple entities, organize with `#region` blocks:
 
 ```csharp
-public static class BudgetEndpoints
+public static class {Entity}Endpoints
 {
-    public static void MapBudgetEndpoints(
+    public static void Map{Entity}Endpoints(
         this IEndpointRouteBuilder app,
         params string[] authenticationSchemes)
     {
         // ... version set and group setup ...
 
-        // Budget routes
-        group.MapPost("", AddBudgetAsync);
-        group.MapGet("{id}", GetBudgetByIdAsync);
-        group.MapPut("", UpdateBudgetAsync);
-        group.MapDelete("{id}", RemoveBudgetAsync);
+        // {Entity} routes
+        group.MapPost("", Add{Entity}Async);
+        group.MapGet("{id}", Get{Entity}ByIdAsync);
+        group.MapPut("", Update{Entity}Async);
+        group.MapDelete("{id}", Remove{Entity}Async);
 
-        // Debt sub-entity routes
-        group.MapPost($"{nameof(Debt)}", AddDebtAsync);
-        group.MapGet($"{nameof(Debt)}/{nameof(Budget)}/{{id}}/list", GetDebtsFromBudgetAsync);
-        group.MapPut($"{nameof(Debt)}", UpdateDebtAsync);
-        group.MapDelete($"{nameof(Debt)}/{{id}}", RemoveDebtAsync);
-
-        // Expense sub-entity routes
-        group.MapPost($"{nameof(Expense)}", AddExpenseAsync);
-        group.MapGet($"{nameof(Expense)}/{nameof(Budget)}/{{id}}/list", GetExpensesFromBudgetAsync);
+        // {ChildEntity} sub-entity routes
+        group.MapPost($"{nameof({ChildEntity})}", Add{ChildEntity}Async);
+        group.MapGet($"{nameof({ChildEntity})}/{nameof({Entity})}/{{id}}/list", Get{ChildEntities}From{Entity}Async);
+        group.MapPut($"{nameof({ChildEntity})}", Update{ChildEntity}Async);
+        group.MapDelete($"{nameof({ChildEntity})}/{{id}}", Remove{ChildEntity}Async);
     }
 
-    #region Budget Methods
-    public static async Task<Results<Created<Guid>, BadRequest>> AddBudgetAsync(...) { ... }
-    public static async Task<Results<Ok<Budget>, NotFound>> GetBudgetByIdAsync(...) { ... }
+    #region {Entity} Methods
+    public static async Task<Results<Created<Guid>, BadRequest>> Add{Entity}Async(...) { ... }
+    public static async Task<Results<Ok<{Entity}>, NotFound>> Get{Entity}ByIdAsync(...) { ... }
     #endregion
 
-    #region Debt Methods
-    public static async Task<Results<Created<Guid>, BadRequest>> AddDebtAsync(...) { ... }
-    public static async Task<Ok<List<Debt>>> GetDebtsFromBudgetAsync(...) { ... }
-    #endregion
-
-    #region Expense Methods
-    public static async Task<Results<Created<Guid>, BadRequest>> AddExpenseAsync(...) { ... }
+    #region {ChildEntity} Methods
+    public static async Task<Results<Created<Guid>, BadRequest>> Add{ChildEntity}Async(...) { ... }
+    public static async Task<Ok<List<{ChildEntity}>>> Get{ChildEntities}From{Entity}Async(...) { ... }
     #endregion
 }
 ```
@@ -1225,7 +1217,7 @@ public static class BudgetEndpoints
 2. **`[FromServices]` injection** — handler interfaces injected per method
 3. **`TypedResults.*`** — not `Results.*` (typed return values)
 4. **Individual command parameters** — never pass model objects to commands
-5. **Named query parameters** — use `GoalId: id` syntax for clarity
+5. **Named query parameters** — use `{ChildEntity}Id: id` syntax for clarity
 6. **Version set inside method** — not passed as parameter
 7. **`params string[] authenticationSchemes`** — auth schemes passed from Program.cs
 8. **`.WithSummary()` + `.WithDescription()`** — not `.WithName()` + `.WithOpenApi()`

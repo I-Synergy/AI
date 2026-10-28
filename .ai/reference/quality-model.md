@@ -121,8 +121,8 @@ survives this taxonomy, and **the taxonomy adds attribution and severity, never 
 **Every finding carries exactly one characteristic and one severity**, written as:
 
 ```text
-[Major] Performance efficiency — GetOrdersQueryHandler materializes the whole Orders table
-(OrdersQueryHandler.cs:31); the table grows with every order. Add a filter or paging.
+[Major] Performance efficiency — Get{Entities}QueryHandler materializes the whole {Entities} table
+({Entities}QueryHandler.cs:31); the table grows with every record. Add a filter or paging.
 ```
 
 A characteristic with nothing to report is simply absent from the review. `Not applicable` is a

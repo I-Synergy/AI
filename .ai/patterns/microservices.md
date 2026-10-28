@@ -15,40 +15,40 @@ Each microservice should have a single, well-defined responsibility aligned with
 ```csharp
 // ✅ CORRECT - Single responsibility per service
 
-// BudgetService - Manages budgets only
-public sealed class BudgetService
+// {Entity}Service - Manages {entities} only
+public sealed class {Entity}Service
 {
-    [HttpPost("/api/budgets")]
-    public async Task<IResult> CreateBudget([FromBody] CreateBudgetRequest request)
+    [HttpPost("/api/{entities}")]
+    public async Task<IResult> Create{Entity}([FromBody] Create{Entity}Request request)
     {
-        // Budget creation logic only
+        // {Entity} creation logic only
     }
 }
 
-// GoalService - Manages goals only
-public sealed class GoalService
+// {ChildEntity}Service - Manages {childEntities} only
+public sealed class {ChildEntity}Service
 {
-    [HttpPost("/api/goals")]
-    public async Task<IResult> CreateGoal([FromBody] CreateGoalRequest request)
+    [HttpPost("/api/{childEntities}")]
+    public async Task<IResult> Create{ChildEntity}([FromBody] Create{ChildEntity}Request request)
     {
-        // Goal creation logic only
+        // {ChildEntity} creation logic only
     }
 }
 
 // ❌ WRONG - Multiple responsibilities in one service
-public sealed class FinancialService
+public sealed class MonolithicService
 {
-    [HttpPost("/api/budgets")]
-    public async Task<IResult> CreateBudget() { /* ... */ }
+    [HttpPost("/api/{entities}")]
+    public async Task<IResult> Create{Entity}() { /* ... */ }
 
-    [HttpPost("/api/goals")]
-    public async Task<IResult> CreateGoal() { /* ... */ }
-
-    [HttpPost("/api/transactions")]
-    public async Task<IResult> CreateTransaction() { /* ... */ }
+    [HttpPost("/api/{childEntities}")]
+    public async Task<IResult> Create{ChildEntity}() { /* ... */ }
 
     [HttpPost("/api/reports")]
     public async Task<IResult> GenerateReport() { /* ... */ }
+
+    [HttpPost("/api/notifications")]
+    public async Task<IResult> SendNotification() { /* ... */ }
 }
 ```
 
@@ -63,8 +63,8 @@ Services should be independently deployable and scalable.
 // - Deployment pipeline
 // - Scaling configuration
 
-// BudgetService - Deployed independently
-// GoalService - Deployed independently
+// {Entity}Service - Deployed independently
+// {ChildEntity}Service - Deployed independently
 // NotificationService - Deployed independently
 ```
 
@@ -75,26 +75,25 @@ Decentralize data management and governance.
 ```csharp
 // ✅ CORRECT - Each service owns its data
 
-// BudgetService database
-public sealed class BudgetDbContext : DbContext
+// {Entity}Service database
+public sealed class {Entity}DbContext : DbContext
 {
-    public DbSet<Budget> Budgets { get; set; }
-    public DbSet<BudgetCategory> Categories { get; set; }
+    public DbSet<{Entity}> {Entities} { get; set; }
+    public DbSet<{Entity}Category> Categories { get; set; }
 }
 
-// GoalService database
-public sealed class GoalDbContext : DbContext
+// {ChildEntity}Service database
+public sealed class {ChildEntity}DbContext : DbContext
 {
-    public DbSet<Goal> Goals { get; set; }
-    public DbSet<GoalMilestone> Milestones { get; set; }
+    public DbSet<{ChildEntity}> {ChildEntities} { get; set; }
+    public DbSet<{ChildEntity}Milestone> Milestones { get; set; }
 }
 
 // ❌ WRONG - Shared database across services
 public sealed class SharedDbContext : DbContext
 {
-    public DbSet<Budget> Budgets { get; set; }
-    public DbSet<Goal> Goals { get; set; }
-    public DbSet<Transaction> Transactions { get; set; }
+    public DbSet<{Entity}> {Entities} { get; set; }
+    public DbSet<{ChildEntity}> {ChildEntities} { get; set; }
     // All services accessing same database!
 }
 ```
@@ -108,26 +107,21 @@ public sealed class SharedDbContext : DbContext
 Use Domain-Driven Design to identify service boundaries.
 
 ```
-Financial Planning Application
+{ApplicationName}
 
 Bounded Contexts:
-├── Budget Management (BudgetService)
-│   ├── Budgets
+├── {Domain1} Management ({Entity}Service)
+│   ├── {Entities}
 │   ├── Categories
-│   └── Budget Allocations
+│   └── {Entity} Allocations
 │
-├── Goal Management (GoalService)
-│   ├── Financial Goals
+├── {Domain2} Management ({ChildEntity}Service)
+│   ├── {ChildEntities}
 │   ├── Milestones
 │   └── Progress Tracking
 │
-├── Transaction Management (TransactionService)
-│   ├── Income
-│   ├── Expenses
-│   └── Transfers
-│
 ├── Reporting (ReportingService)
-│   ├── Financial Reports
+│   ├── Reports
 │   ├── Analytics
 │   └── Dashboards
 │
@@ -140,36 +134,36 @@ Bounded Contexts:
 ### Context Mapping
 
 ```csharp
-// File: {ApplicationName}.Services.Budget/Domain/Budget.cs
+// File: {ApplicationName}.Services.{Entity}/Domain/{Entity}.cs
 
-namespace {ApplicationName}.Services.Budget.Domain;
+namespace {ApplicationName}.Services.{Entity}.Domain;
 
 /// <summary>
-/// Budget aggregate in Budget Management context.
+/// {Entity} aggregate in {Entity} Management context.
 /// </summary>
-public sealed class Budget
+public sealed class {Entity}
 {
-    public Guid BudgetId { get; init; }
+    public Guid {Entity}Id { get; init; }
     public string Name { get; init; } = string.Empty;
     public decimal TotalAmount { get; init; }
     public Guid UserId { get; init; } // Reference to User context
-    // Budget-specific properties and behavior
+    // {Entity}-specific properties and behavior
 }
 
-// File: {ApplicationName}.Services.Goal/Domain/Goal.cs
+// File: {ApplicationName}.Services.{ChildEntity}/Domain/{ChildEntity}.cs
 
-namespace {ApplicationName}.Services.Goal.Domain;
+namespace {ApplicationName}.Services.{ChildEntity}.Domain;
 
 /// <summary>
-/// Goal aggregate in Goal Management context.
+/// {ChildEntity} aggregate in {ChildEntity} Management context.
 /// </summary>
-public sealed class Goal
+public sealed class {ChildEntity}
 {
-    public Guid GoalId { get; init; }
+    public Guid {ChildEntity}Id { get; init; }
     public string Name { get; init; } = string.Empty;
-    public decimal TargetAmount { get; init; }
-    public Guid BudgetId { get; init; } // Reference to Budget context
-    // Goal-specific properties and behavior
+    public decimal Amount { get; init; }
+    public Guid {Entity}Id { get; init; } // Reference to {Entity} context
+    // {ChildEntity}-specific properties and behavior
 }
 ```
 
@@ -222,50 +216,50 @@ app.Run();
 {
   "ReverseProxy": {
     "Routes": {
-      "budget-route": {
-        "ClusterId": "budget-cluster",
+      "{entity}-route": {
+        "ClusterId": "{entity}-cluster",
         "Match": {
-          "Path": "/api/budgets/{**catch-all}"
+          "Path": "/api/{entities}/{**catch-all}"
         },
         "Transforms": [
-          { "PathPattern": "/api/budgets/{**catch-all}" }
+          { "PathPattern": "/api/{entities}/{**catch-all}" }
         ]
       },
-      "goal-route": {
-        "ClusterId": "goal-cluster",
+      "{childEntity}-route": {
+        "ClusterId": "{childEntity}-cluster",
         "Match": {
-          "Path": "/api/goals/{**catch-all}"
+          "Path": "/api/{childEntities}/{**catch-all}"
         },
         "Transforms": [
-          { "PathPattern": "/api/goals/{**catch-all}" }
+          { "PathPattern": "/api/{childEntities}/{**catch-all}" }
         ]
       },
-      "transaction-route": {
-        "ClusterId": "transaction-cluster",
+      "reporting-route": {
+        "ClusterId": "reporting-cluster",
         "Match": {
-          "Path": "/api/transactions/{**catch-all}"
+          "Path": "/api/reports/{**catch-all}"
         }
       }
     },
     "Clusters": {
-      "budget-cluster": {
+      "{entity}-cluster": {
         "Destinations": {
-          "budget-service": {
-            "Address": "http://budget-service:8080"
+          "{entity}-service": {
+            "Address": "http://{entity}-service:8080"
           }
         }
       },
-      "goal-cluster": {
+      "{childEntity}-cluster": {
         "Destinations": {
-          "goal-service": {
-            "Address": "http://goal-service:8080"
+          "{childEntity}-service": {
+            "Address": "http://{childEntity}-service:8080"
           }
         }
       },
-      "transaction-cluster": {
+      "reporting-cluster": {
         "Destinations": {
-          "transaction-service": {
-            "Address": "http://transaction-service:8080"
+          "reporting-service": {
+            "Address": "http://reporting-service:8080"
           }
         }
       }
@@ -302,59 +296,43 @@ public sealed class DashboardAggregationService
         CancellationToken cancellationToken = default)
     {
         // Call multiple services in parallel
-        var budgetTask = GetBudgetsAsync(userId, cancellationToken);
-        var goalTask = GetGoalsAsync(userId, cancellationToken);
-        var transactionTask = GetRecentTransactionsAsync(userId, cancellationToken);
+        var {entity}Task = Get{Entities}Async(userId, cancellationToken);
+        var {childEntity}Task = Get{ChildEntities}Async(userId, cancellationToken);
 
-        await Task.WhenAll(budgetTask, goalTask, transactionTask);
+        await Task.WhenAll({entity}Task, {childEntity}Task);
 
         return new DashboardResponse
         {
-            Budgets = await budgetTask,
-            Goals = await goalTask,
-            RecentTransactions = await transactionTask
+            {Entities} = await {entity}Task,
+            {ChildEntities} = await {childEntity}Task
         };
     }
 
-    private async Task<List<BudgetSummary>> GetBudgetsAsync(
+    private async Task<List<{Entity}Summary>> Get{Entities}Async(
         Guid userId,
         CancellationToken cancellationToken)
     {
         var response = await _httpClient.GetAsync(
-            $"http://budget-service/api/budgets?userId={userId}",
+            $"http://{entity}-service/api/{entities}?userId={userId}",
             cancellationToken);
 
         response.EnsureSuccessStatusCode();
 
-        return await response.Content.ReadFromJsonAsync<List<BudgetSummary>>(
+        return await response.Content.ReadFromJsonAsync<List<{Entity}Summary>>(
             cancellationToken: cancellationToken) ?? new();
     }
 
-    private async Task<List<GoalSummary>> GetGoalsAsync(
+    private async Task<List<{ChildEntity}Summary>> Get{ChildEntities}Async(
         Guid userId,
         CancellationToken cancellationToken)
     {
         var response = await _httpClient.GetAsync(
-            $"http://goal-service/api/goals?userId={userId}",
+            $"http://{childEntity}-service/api/{childEntities}?userId={userId}",
             cancellationToken);
 
         response.EnsureSuccessStatusCode();
 
-        return await response.Content.ReadFromJsonAsync<List<GoalSummary>>(
-            cancellationToken: cancellationToken) ?? new();
-    }
-
-    private async Task<List<TransactionSummary>> GetRecentTransactionsAsync(
-        Guid userId,
-        CancellationToken cancellationToken)
-    {
-        var response = await _httpClient.GetAsync(
-            $"http://transaction-service/api/transactions/recent?userId={userId}",
-            cancellationToken);
-
-        response.EnsureSuccessStatusCode();
-
-        return await response.Content.ReadFromJsonAsync<List<TransactionSummary>>(
+        return await response.Content.ReadFromJsonAsync<List<{ChildEntity}Summary>>(
             cancellationToken: cancellationToken) ?? new();
     }
 }
@@ -367,63 +345,63 @@ public sealed class DashboardAggregationService
 ### Synchronous Communication (REST)
 
 ```csharp
-// File: {ApplicationName}.Services.Goal/Services/BudgetServiceClient.cs
+// File: {ApplicationName}.Services.{ChildEntity}/Services/{Entity}ServiceClient.cs
 
-namespace {ApplicationName}.Services.Goal.Services;
+namespace {ApplicationName}.Services.{ChildEntity}.Services;
 
 /// <summary>
-/// Client for communicating with Budget Service.
+/// Client for communicating with {Entity} Service.
 /// </summary>
-public sealed class BudgetServiceClient
+public sealed class {Entity}ServiceClient
 {
     private readonly HttpClient _httpClient;
-    private readonly ILogger<BudgetServiceClient> _logger;
+    private readonly ILogger<{Entity}ServiceClient> _logger;
 
-    public BudgetServiceClient(
+    public {Entity}ServiceClient(
         HttpClient httpClient,
-        ILogger<BudgetServiceClient> logger)
+        ILogger<{Entity}ServiceClient> logger)
     {
         _httpClient = httpClient;
         _logger = logger;
     }
 
-    public async Task<BudgetDto?> GetBudgetByIdAsync(
-        Guid budgetId,
+    public async Task<{Entity}Dto?> Get{Entity}ByIdAsync(
+        Guid {entity}Id,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogInformation("Fetching budget {BudgetId} from Budget Service", budgetId);
+            _logger.LogInformation("Fetching {entity} {Entity}Id from {Entity} Service", {entity}Id);
 
             var response = await _httpClient.GetAsync(
-                $"/api/budgets/{budgetId}",
+                $"/api/{entities}/{entity}Id",
                 cancellationToken);
 
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogWarning(
-                    "Failed to fetch budget {BudgetId}. Status: {StatusCode}",
-                    budgetId, response.StatusCode);
+                    "Failed to fetch {entity} {Entity}Id. Status: {StatusCode}",
+                    {entity}Id, response.StatusCode);
                 return null;
             }
 
-            var budget = await response.Content.ReadFromJsonAsync<BudgetDto>(
+            var {entity} = await response.Content.ReadFromJsonAsync<{Entity}Dto>(
                 cancellationToken: cancellationToken);
 
-            return budget;
+            return {entity};
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error fetching budget {BudgetId}", budgetId);
+            _logger.LogError(ex, "Error fetching {entity} {Entity}Id", {entity}Id);
             throw;
         }
     }
 }
 
 // Registration in Program.cs
-builder.Services.AddHttpClient<BudgetServiceClient>(client =>
+builder.Services.AddHttpClient<{Entity}ServiceClient>(client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["Services:BudgetService:Url"]!);
+    client.BaseAddress = new Uri(builder.Configuration["Services:{Entity}Service:Url"]!);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 })
 .AddStandardResilienceHandler(); // Adds retry, circuit breaker, timeout
@@ -432,107 +410,107 @@ builder.Services.AddHttpClient<BudgetServiceClient>(client =>
 ### Synchronous Communication (gRPC)
 
 ```csharp
-// File: {ApplicationName}.Services.Budget/Protos/budget.proto
+// File: {ApplicationName}.Services.{Entity}/Protos/{entity}.proto
 
 syntax = "proto3";
 
-option csharp_namespace = "{ApplicationName}.Services.Budget.Grpc";
+option csharp_namespace = "{ApplicationName}.Services.{Entity}.Grpc";
 
-package budget;
+package {entity};
 
-service BudgetService {
-  rpc GetBudget (GetBudgetRequest) returns (BudgetResponse);
-  rpc CreateBudget (CreateBudgetRequest) returns (CreateBudgetResponse);
-  rpc UpdateBudget (UpdateBudgetRequest) returns (UpdateBudgetResponse);
+service {Entity}Service {
+  rpc Get{Entity} (Get{Entity}Request) returns ({Entity}Response);
+  rpc Create{Entity} (Create{Entity}Request) returns (Create{Entity}Response);
+  rpc Update{Entity} (Update{Entity}Request) returns (Update{Entity}Response);
 }
 
-message GetBudgetRequest {
-  string budget_id = 1;
+message Get{Entity}Request {
+  string {entity}_id = 1;
 }
 
-message BudgetResponse {
-  string budget_id = 1;
+message {Entity}Response {
+  string {entity}_id = 1;
   string name = 2;
   double total_amount = 3;
   string user_id = 4;
 }
 
-message CreateBudgetRequest {
+message Create{Entity}Request {
   string name = 1;
   double total_amount = 2;
   string user_id = 3;
 }
 
-message CreateBudgetResponse {
-  string budget_id = 1;
+message Create{Entity}Response {
+  string {entity}_id = 1;
 }
 
-message UpdateBudgetRequest {
-  string budget_id = 1;
+message Update{Entity}Request {
+  string {entity}_id = 1;
   string name = 2;
   double total_amount = 3;
 }
 
-message UpdateBudgetResponse {
+message Update{Entity}Response {
   bool success = 1;
 }
 ```
 
 **gRPC Service Implementation:**
 ```csharp
-// File: {ApplicationName}.Services.Budget/GrpcServices/BudgetGrpcService.cs
+// File: {ApplicationName}.Services.{Entity}/GrpcServices/{Entity}GrpcService.cs
 
 using Grpc.Core;
-using {ApplicationName}.Services.Budget.Grpc;
+using {ApplicationName}.Services.{Entity}.Grpc;
 
-namespace {ApplicationName}.Services.Budget.GrpcServices;
+namespace {ApplicationName}.Services.{Entity}.GrpcServices;
 
-public sealed class BudgetGrpcService : BudgetService.BudgetServiceBase
+public sealed class {Entity}GrpcService : {Entity}Service.{Entity}ServiceBase
 {
-    private readonly IQueryHandler<GetBudgetByIdQuery, BudgetResponse> _queryHandler;
-    private readonly ICommandHandler<CreateBudgetCommand, CreateBudgetResponse> _createHandler;
-    private readonly ILogger<BudgetGrpcService> _logger;
+    private readonly IQueryHandler<Get{Entity}ByIdQuery, {Entity}Response> _queryHandler;
+    private readonly ICommandHandler<Create{Entity}Command, Create{Entity}Response> _createHandler;
+    private readonly ILogger<{Entity}GrpcService> _logger;
 
-    public BudgetGrpcService(
-        IQueryHandler<GetBudgetByIdQuery, BudgetResponse> queryHandler,
-        ICommandHandler<CreateBudgetCommand, CreateBudgetResponse> createHandler,
-        ILogger<BudgetGrpcService> logger)
+    public {Entity}GrpcService(
+        IQueryHandler<Get{Entity}ByIdQuery, {Entity}Response> queryHandler,
+        ICommandHandler<Create{Entity}Command, Create{Entity}Response> createHandler,
+        ILogger<{Entity}GrpcService> logger)
     {
         _queryHandler = queryHandler;
         _createHandler = createHandler;
         _logger = logger;
     }
 
-    public override async Task<BudgetResponse> GetBudget(
-        GetBudgetRequest request,
+    public override async Task<{Entity}Response> Get{Entity}(
+        Get{Entity}Request request,
         ServerCallContext context)
     {
-        var query = new GetBudgetByIdQuery(Guid.Parse(request.BudgetId));
+        var query = new Get{Entity}ByIdQuery(Guid.Parse(request.{Entity}Id));
         var result = await _queryHandler.HandleAsync(query, context.CancellationToken);
 
-        return new BudgetResponse
+        return new {Entity}Response
         {
-            BudgetId = result.BudgetId.ToString(),
+            {Entity}Id = result.{Entity}Id.ToString(),
             Name = result.Name,
             TotalAmount = (double)result.Amount,
             UserId = result.UserId.ToString()
         };
     }
 
-    public override async Task<CreateBudgetResponse> CreateBudget(
-        CreateBudgetRequest request,
+    public override async Task<Create{Entity}Response> Create{Entity}(
+        Create{Entity}Request request,
         ServerCallContext context)
     {
-        var command = new CreateBudgetCommand(
+        var command = new Create{Entity}Command(
             request.Name,
             (decimal)request.TotalAmount,
             DateTimeOffset.UtcNow);
 
         var result = await _createHandler.HandleAsync(command, context.CancellationToken);
 
-        return new CreateBudgetResponse
+        return new Create{Entity}Response
         {
-            BudgetId = result.BudgetId.ToString()
+            {Entity}Id = result.{Entity}Id.ToString()
         };
     }
 }
@@ -540,62 +518,62 @@ public sealed class BudgetGrpcService : BudgetService.BudgetServiceBase
 
 **gRPC Client:**
 ```csharp
-// File: {ApplicationName}.Services.Goal/Services/BudgetGrpcClient.cs
+// File: {ApplicationName}.Services.{ChildEntity}/Services/{Entity}GrpcClient.cs
 
-using {ApplicationName}.Services.Budget.Grpc;
+using {ApplicationName}.Services.{Entity}.Grpc;
 
-namespace {ApplicationName}.Services.Goal.Services;
+namespace {ApplicationName}.Services.{ChildEntity}.Services;
 
-public sealed class BudgetGrpcClient
+public sealed class {Entity}GrpcClient
 {
-    private readonly BudgetService.BudgetServiceClient _client;
-    private readonly ILogger<BudgetGrpcClient> _logger;
+    private readonly {Entity}Service.{Entity}ServiceClient _client;
+    private readonly ILogger<{Entity}GrpcClient> _logger;
 
-    public BudgetGrpcClient(
-        BudgetService.BudgetServiceClient client,
-        ILogger<BudgetGrpcClient> logger)
+    public {Entity}GrpcClient(
+        {Entity}Service.{Entity}ServiceClient client,
+        ILogger<{Entity}GrpcClient> logger)
     {
         _client = client;
         _logger = logger;
     }
 
-    public async Task<BudgetResponse?> GetBudgetAsync(
-        Guid budgetId,
+    public async Task<{Entity}Response?> Get{Entity}Async(
+        Guid {entity}Id,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            var request = new GetBudgetRequest { BudgetId = budgetId.ToString() };
-            return await _client.GetBudgetAsync(request, cancellationToken: cancellationToken);
+            var request = new Get{Entity}Request { {Entity}Id = {entity}Id.ToString() };
+            return await _client.Get{Entity}Async(request, cancellationToken: cancellationToken);
         }
         catch (RpcException ex)
         {
-            _logger.LogError(ex, "gRPC call failed for budget {BudgetId}", budgetId);
+            _logger.LogError(ex, "gRPC call failed for {entity} {Entity}Id", {entity}Id);
             return null;
         }
     }
 }
 
 // Registration
-builder.Services.AddGrpcClient<BudgetService.BudgetServiceClient>(options =>
+builder.Services.AddGrpcClient<{Entity}Service.{Entity}ServiceClient>(options =>
 {
-    options.Address = new Uri(builder.Configuration["Services:BudgetService:GrpcUrl"]!);
+    options.Address = new Uri(builder.Configuration["Services:{Entity}Service:GrpcUrl"]!);
 });
 ```
 
 ### Asynchronous Communication (Message Queue)
 
 ```csharp
-// File: {ApplicationName}.Services.Budget/Events/BudgetCreatedEvent.cs
+// File: {ApplicationName}.Services.{Entity}/Events/{Entity}CreatedEvent.cs
 
-namespace {ApplicationName}.Services.Budget.Events;
+namespace {ApplicationName}.Services.{Entity}.Events;
 
 /// <summary>
-/// Event published when a budget is created.
+/// Event published when a {entity} is created.
 /// </summary>
-public sealed record BudgetCreatedEvent
+public sealed record {Entity}CreatedEvent
 {
-    public Guid BudgetId { get; init; }
+    public Guid {Entity}Id { get; init; }
     public string Name { get; init; } = string.Empty;
     public decimal TotalAmount { get; init; }
     public Guid UserId { get; init; }
@@ -605,39 +583,39 @@ public sealed record BudgetCreatedEvent
 
 **Publishing Events (using MassTransit):**
 ```csharp
-// File: {ApplicationName}.Services.Budget/Handlers/CreateBudgetCommandHandler.cs
+// File: {ApplicationName}.Services.{Entity}/Handlers/Create{Entity}CommandHandler.cs
 
 using MassTransit;
 
-public sealed class CreateBudgetCommandHandler(
+public sealed class Create{Entity}CommandHandler(
     DataContext dataContext,
     IPublishEndpoint publishEndpoint,
-    ILogger<CreateBudgetCommandHandler> logger
-) : ICommandHandler<CreateBudgetCommand, CreateBudgetResponse>
+    ILogger<Create{Entity}CommandHandler> logger
+) : ICommandHandler<Create{Entity}Command, Create{Entity}Response>
 {
-    public async Task<CreateBudgetResponse> HandleAsync(
-        CreateBudgetCommand command,
+    public async Task<Create{Entity}Response> HandleAsync(
+        Create{Entity}Command command,
         CancellationToken cancellationToken = default)
     {
-        // Create budget
-        var entity = new Entities.Budgets.Budget
+        // Create {entity}
+        var entity = new Entities.{Domain}.{Entity}
         {
-            BudgetId = Guid.NewGuid(),
+            {Entity}Id = Guid.NewGuid(),
             Name = command.Name,
             TotalAmount = command.TotalAmount,
             UserId = command.UserId
         };
 
-        dataContext.Budgets.Add(entity);
+        dataContext.{Entities}.Add(entity);
         var rowsAffected = await dataContext.SaveChangesAsync(cancellationToken);
 
         if (rowsAffected == 0)
-            throw new InvalidOperationException("Failed to create budget");
+            throw new InvalidOperationException("Failed to create {entity}");
 
         // Publish event
-        var @event = new BudgetCreatedEvent
+        var @event = new {Entity}CreatedEvent
         {
-            BudgetId = entity.BudgetId,
+            {Entity}Id = entity.{Entity}Id,
             Name = entity.Name,
             TotalAmount = entity.TotalAmount,
             UserId = entity.UserId,
@@ -647,64 +625,64 @@ public sealed class CreateBudgetCommandHandler(
         await publishEndpoint.Publish(@event, cancellationToken);
 
         logger.LogInformation(
-            "Published BudgetCreatedEvent for budget {BudgetId}",
-            entity.BudgetId);
+            "Published {Entity}CreatedEvent for {entity} {Entity}Id",
+            entity.{Entity}Id);
 
-        return new CreateBudgetResponse(entity.BudgetId);
+        return new Create{Entity}Response(entity.{Entity}Id);
     }
 }
 ```
 
 **Consuming Events:**
 ```csharp
-// File: {ApplicationName}.Services.Notification/Consumers/BudgetCreatedEventConsumer.cs
+// File: {ApplicationName}.Services.Notification/Consumers/{Entity}CreatedEventConsumer.cs
 
 using MassTransit;
-using {ApplicationName}.Services.Budget.Events;
+using {ApplicationName}.Services.{Entity}.Events;
 
 namespace {ApplicationName}.Services.Notification.Consumers;
 
 /// <summary>
-/// Consumes BudgetCreatedEvent and sends notification.
+/// Consumes {Entity}CreatedEvent and sends notification.
 /// </summary>
-public sealed class BudgetCreatedEventConsumer : IConsumer<BudgetCreatedEvent>
+public sealed class {Entity}CreatedEventConsumer : IConsumer<{Entity}CreatedEvent>
 {
     private readonly IEmailService _emailService;
-    private readonly ILogger<BudgetCreatedEventConsumer> _logger;
+    private readonly ILogger<{Entity}CreatedEventConsumer> _logger;
 
-    public BudgetCreatedEventConsumer(
+    public {Entity}CreatedEventConsumer(
         IEmailService emailService,
-        ILogger<BudgetCreatedEventConsumer> logger)
+        ILogger<{Entity}CreatedEventConsumer> logger)
     {
         _emailService = emailService;
         _logger = logger;
     }
 
-    public async Task Consume(ConsumeContext<BudgetCreatedEvent> context)
+    public async Task Consume(ConsumeContext<{Entity}CreatedEvent> context)
     {
         var @event = context.Message;
 
         _logger.LogInformation(
-            "Processing BudgetCreatedEvent for budget {BudgetId}",
-            @event.BudgetId);
+            "Processing {Entity}CreatedEvent for {entity} {Entity}Id",
+            @event.{Entity}Id);
 
         // Send notification email
-        await _emailService.SendBudgetCreatedEmailAsync(
+        await _emailService.Send{Entity}CreatedEmailAsync(
             @event.UserId,
             @event.Name,
             @event.TotalAmount,
             context.CancellationToken);
 
         _logger.LogInformation(
-            "Sent notification for budget {BudgetId}",
-            @event.BudgetId);
+            "Sent notification for {entity} {Entity}Id",
+            @event.{Entity}Id);
     }
 }
 
 // Registration in Program.cs
 builder.Services.AddMassTransit(x =>
 {
-    x.AddConsumer<BudgetCreatedEventConsumer>();
+    x.AddConsumer<{Entity}CreatedEventConsumer>();
 
     x.UsingRabbitMq((context, cfg) =>
     {
@@ -726,27 +704,27 @@ builder.Services.AddMassTransit(x =>
 Each microservice owns its database schema and data.
 
 ```csharp
-// BudgetService - PostgreSQL
-public sealed class BudgetDbContext : DbContext
+// {Entity}Service - PostgreSQL
+public sealed class {Entity}DbContext : DbContext
 {
-    public DbSet<Budget> Budgets { get; set; }
-    public DbSet<BudgetCategory> Categories { get; set; }
+    public DbSet<{Entity}> {Entities} { get; set; }
+    public DbSet<{Entity}Category> Categories { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        optionsBuilder.UseNpgsql("Host=budget-db;Database=BudgetDb;");
+        optionsBuilder.UseNpgsql("Host={entity}-db;Database={Entity}Db;");
     }
 }
 
-// GoalService - PostgreSQL (separate database)
-public sealed class GoalDbContext : DbContext
+// {ChildEntity}Service - PostgreSQL (separate database)
+public sealed class {ChildEntity}DbContext : DbContext
 {
-    public DbSet<Goal> Goals { get; set; }
+    public DbSet<{ChildEntity}> {ChildEntities} { get; set; }
     public DbSet<Milestone> Milestones { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        optionsBuilder.UseNpgsql("Host=goal-db;Database=GoalDb;");
+        optionsBuilder.UseNpgsql("Host={childEntity}-db;Database={ChildEntity}Db;");
     }
 }
 
@@ -946,37 +924,37 @@ public interface IDomainEvent
     DateTimeOffset OccurredAt { get; init; }
 }
 
-// File: {ApplicationName}.Services.Budget/Events/BudgetUpdatedEvent.cs
+// File: {ApplicationName}.Services.{Entity}/Events/{Entity}UpdatedEvent.cs
 
-public sealed record BudgetUpdatedEvent : IDomainEvent
+public sealed record {Entity}UpdatedEvent : IDomainEvent
 {
     public Guid EventId { get; init; } = Guid.NewGuid();
     public DateTimeOffset OccurredAt { get; init; } = DateTimeOffset.UtcNow;
-    public Guid BudgetId { get; init; }
+    public Guid {Entity}Id { get; init; }
     public string Name { get; init; } = string.Empty;
     public decimal OldAmount { get; init; }
     public decimal NewAmount { get; init; }
     public Guid UserId { get; init; }
 }
 
-// File: {ApplicationName}.Services.Reporting/Consumers/BudgetUpdatedEventConsumer.cs
+// File: {ApplicationName}.Services.Reporting/Consumers/{Entity}UpdatedEventConsumer.cs
 
-public sealed class BudgetUpdatedEventConsumer : IConsumer<BudgetUpdatedEvent>
+public sealed class {Entity}UpdatedEventConsumer : IConsumer<{Entity}UpdatedEvent>
 {
-    private readonly ILogger<BudgetUpdatedEventConsumer> _logger;
+    private readonly ILogger<{Entity}UpdatedEventConsumer> _logger;
     private readonly ReportingDbContext _dbContext;
 
-    public async Task Consume(ConsumeContext<BudgetUpdatedEvent> context)
+    public async Task Consume(ConsumeContext<{Entity}UpdatedEvent> context)
     {
         var @event = context.Message;
 
         _logger.LogInformation(
-            "Updating reporting data for budget {BudgetId}",
-            @event.BudgetId);
+            "Updating reporting data for {entity} {Entity}Id",
+            @event.{Entity}Id);
 
         // Update read model for reporting
-        var reportEntry = await _dbContext.BudgetReports
-            .FirstOrDefaultAsync(x => x.BudgetId == @event.BudgetId);
+        var reportEntry = await _dbContext.{Entity}Reports
+            .FirstOrDefaultAsync(x => x.{Entity}Id == @event.{Entity}Id);
 
         if (reportEntry is not null)
         {
@@ -1002,23 +980,23 @@ public sealed class BudgetUpdatedEventConsumer : IConsumer<BudgetUpdatedEvent>
 var builder = DistributedApplication.CreateBuilder(args);
 
 // Define services
-var budgetService = builder.AddProject<Projects.BudgetService>("budget-service")
+var {entity}Service = builder.AddProject<Projects.{Entity}Service>("{entity}-service")
     .WithHttpEndpoint(port: 8081, name: "http");
 
-var goalService = builder.AddProject<Projects.GoalService>("goal-service")
+var {childEntity}Service = builder.AddProject<Projects.{ChildEntity}Service>("{childEntity}-service")
     .WithHttpEndpoint(port: 8082, name: "http");
 
 var gateway = builder.AddProject<Projects.Gateway>("gateway")
     .WithHttpEndpoint(port: 8080, name: "http")
-    .WithReference(budgetService)
-    .WithReference(goalService);
+    .WithReference({entity}Service)
+    .WithReference({childEntity}Service);
 
 builder.Build().Run();
 ```
 
 **Service Discovery in Consumer:**
 ```csharp
-// File: {ApplicationName}.Services.Goal/Program.cs
+// File: {ApplicationName}.Services.{ChildEntity}/Program.cs
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -1026,10 +1004,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddServiceDiscovery();
 
 // Add HttpClient with service discovery
-builder.Services.AddHttpClient<BudgetServiceClient>(client =>
+builder.Services.AddHttpClient<{Entity}ServiceClient>(client =>
 {
     // Service name from Aspire
-    client.BaseAddress = new Uri("http://budget-service");
+    client.BaseAddress = new Uri("http://{entity}-service");
 })
 .AddServiceDiscovery() // Resolves service address automatically
 .AddStandardResilienceHandler();
@@ -1043,15 +1021,15 @@ app.Run();
 ## Circuit Breaker and Resilience Patterns
 
 ```csharp
-// File: {ApplicationName}.Services.Goal/Program.cs
+// File: {ApplicationName}.Services.{ChildEntity}/Program.cs
 
 using Microsoft.Extensions.Http.Resilience;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddHttpClient<BudgetServiceClient>(client =>
+builder.Services.AddHttpClient<{Entity}ServiceClient>(client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["Services:BudgetService:Url"]!);
+    client.BaseAddress = new Uri(builder.Configuration["Services:{Entity}Service:Url"]!);
 })
 .AddStandardResilienceHandler(options =>
 {
@@ -1081,7 +1059,7 @@ app.Run();
 ## Distributed Tracing with OpenTelemetry
 
 ```csharp
-// File: {ApplicationName}.Services.Budget/Program.cs
+// File: {ApplicationName}.Services.{Entity}/Program.cs
 
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -1090,7 +1068,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenTelemetry()
     .ConfigureResource(resource => resource
-        .AddService("budget-service"))
+        .AddService("{entity}-service"))
     .WithTracing(tracing => tracing
         .AddAspNetCoreInstrumentation()
         .AddHttpClientInstrumentation()
@@ -1148,8 +1126,8 @@ var builder = DistributedApplication.CreateBuilder(args);
 var postgres = builder.AddPostgres("postgres")
     .WithPgAdmin();
 
-var budgetDb = postgres.AddDatabase("budgetdb");
-var goalDb = postgres.AddDatabase("goaldb");
+var {entity}Db = postgres.AddDatabase("{entity}db");
+var {childEntity}Db = postgres.AddDatabase("{childEntity}db");
 
 // Add Redis for caching
 var redis = builder.AddRedis("redis");
@@ -1158,23 +1136,23 @@ var redis = builder.AddRedis("redis");
 var rabbitmq = builder.AddRabbitMQ("rabbitmq")
     .WithManagementPlugin();
 
-// Add Budget Service
-var budgetService = builder.AddProject<Projects.BudgetService>("budget-service")
-    .WithReference(budgetDb)
+// Add {Entity} Service
+var {entity}Service = builder.AddProject<Projects.{Entity}Service>("{entity}-service")
+    .WithReference({entity}Db)
     .WithReference(redis)
     .WithReference(rabbitmq)
     .WithHttpEndpoint(port: 8081, name: "http");
 
-// Add Goal Service
-var goalService = builder.AddProject<Projects.GoalService>("goal-service")
-    .WithReference(goalDb)
+// Add {ChildEntity} Service
+var {childEntity}Service = builder.AddProject<Projects.{ChildEntity}Service>("{childEntity}-service")
+    .WithReference({childEntity}Db)
     .WithReference(redis)
     .WithReference(rabbitmq)
     .WithHttpEndpoint(port: 8082, name: "http");
 
-// Add Transaction Service
-var transactionService = builder.AddProject<Projects.TransactionService>("transaction-service")
-    .WithReference(postgres.AddDatabase("transactiondb"))
+// Add Reporting Service
+var reportingService = builder.AddProject<Projects.ReportingService>("reporting-service")
+    .WithReference(postgres.AddDatabase("reportingdb"))
     .WithReference(redis)
     .WithReference(rabbitmq)
     .WithHttpEndpoint(port: 8083, name: "http");
@@ -1182,9 +1160,9 @@ var transactionService = builder.AddProject<Projects.TransactionService>("transa
 // Add API Gateway
 var gateway = builder.AddProject<Projects.Gateway>("gateway")
     .WithHttpEndpoint(port: 8080, name: "http")
-    .WithReference(budgetService)
-    .WithReference(goalService)
-    .WithReference(transactionService);
+    .WithReference({entity}Service)
+    .WithReference({childEntity}Service)
+    .WithReference(reportingService);
 
 builder.Build().Run();
 ```
@@ -1201,14 +1179,14 @@ builder.Build().Run();
 version: '3.8'
 
 services:
-  budget-service:
+  {entity}-service:
     build:
-      context: ./src/{ApplicationName}.Services.Budget
+      context: ./src/{ApplicationName}.Services.{Entity}
       dockerfile: Dockerfile
     ports:
       - "8081:8080"
     environment:
-      - ConnectionStrings__DefaultConnection=Host=postgres;Database=BudgetDb;Username=postgres;Password=postgres
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database={Entity}Db;Username=postgres;Password=postgres
       - RabbitMQ__Host=rabbitmq
       - Redis__ConnectionString=redis:6379
     depends_on:
@@ -1216,31 +1194,31 @@ services:
       - rabbitmq
       - redis
 
-  goal-service:
+  {childEntity}-service:
     build:
-      context: ./src/{ApplicationName}.Services.Goal
+      context: ./src/{ApplicationName}.Services.{ChildEntity}
       dockerfile: Dockerfile
     ports:
       - "8082:8080"
     environment:
-      - ConnectionStrings__DefaultConnection=Host=postgres;Database=GoalDb;Username=postgres;Password=postgres
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database={ChildEntity}Db;Username=postgres;Password=postgres
       - RabbitMQ__Host=rabbitmq
       - Redis__ConnectionString=redis:6379
-      - Services__BudgetService__Url=http://budget-service:8080
+      - Services__{Entity}Service__Url=http://{entity}-service:8080
     depends_on:
       - postgres
       - rabbitmq
       - redis
-      - budget-service
+      - {entity}-service
 
-  transaction-service:
+  reporting-service:
     build:
-      context: ./src/{ApplicationName}.Services.Transaction
+      context: ./src/{ApplicationName}.Services.Reporting
       dockerfile: Dockerfile
     ports:
       - "8083:8080"
     environment:
-      - ConnectionStrings__DefaultConnection=Host=postgres;Database=TransactionDb;Username=postgres;Password=postgres
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=ReportingDb;Username=postgres;Password=postgres
       - RabbitMQ__Host=rabbitmq
       - Redis__ConnectionString=redis:6379
     depends_on:
@@ -1255,13 +1233,13 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - Services__BudgetService__Url=http://budget-service:8080
-      - Services__GoalService__Url=http://goal-service:8080
-      - Services__TransactionService__Url=http://transaction-service:8080
+      - Services__{Entity}Service__Url=http://{entity}-service:8080
+      - Services__{ChildEntity}Service__Url=http://{childEntity}-service:8080
+      - Services__ReportingService__Url=http://reporting-service:8080
     depends_on:
-      - budget-service
-      - goal-service
-      - transaction-service
+      - {entity}-service
+      - {childEntity}-service
+      - reporting-service
 
   postgres:
     image: postgres:16
@@ -1294,34 +1272,34 @@ volumes:
 ### Kubernetes Deployment
 
 ```yaml
-# File: k8s/budget-service-deployment.yaml
+# File: k8s/{entity}-service-deployment.yaml
 
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: budget-service
+  name: {entity}-service
   labels:
-    app: budget-service
+    app: {entity}-service
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: budget-service
+      app: {entity}-service
   template:
     metadata:
       labels:
-        app: budget-service
+        app: {entity}-service
     spec:
       containers:
-      - name: budget-service
-        image: {registry}/{ApplicationName}/budget-service:latest
+      - name: {entity}-service
+        image: {registry}/{ApplicationName}/{entity}-service:latest
         ports:
         - containerPort: 8080
         env:
         - name: ConnectionStrings__DefaultConnection
           valueFrom:
             secretKeyRef:
-              name: budget-service-secrets
+              name: {entity}-service-secrets
               key: connection-string
         - name: RabbitMQ__Host
           value: rabbitmq-service
@@ -1350,10 +1328,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: budget-service
+  name: {entity}-service
 spec:
   selector:
-    app: budget-service
+    app: {entity}-service
   ports:
   - protocol: TCP
     port: 8080
@@ -1363,12 +1341,12 @@ spec:
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: budget-service-hpa
+  name: {entity}-service-hpa
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: budget-service
+    name: {entity}-service
   minReplicas: 2
   maxReplicas: 10
   metrics:
@@ -1397,54 +1375,54 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: budget-service-blue
+  name: {entity}-service-blue
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: budget-service
+      app: {entity}-service
       version: blue
   template:
     metadata:
       labels:
-        app: budget-service
+        app: {entity}-service
         version: blue
     spec:
       containers:
-      - name: budget-service
-        image: {registry}/{ApplicationName}/budget-service:v1.0.0
+      - name: {entity}-service
+        image: {registry}/{ApplicationName}/{entity}-service:v1.0.0
 
 ---
 # Green deployment (new version)
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: budget-service-green
+  name: {entity}-service-green
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: budget-service
+      app: {entity}-service
       version: green
   template:
     metadata:
       labels:
-        app: budget-service
+        app: {entity}-service
         version: green
     spec:
       containers:
-      - name: budget-service
-        image: {registry}/{ApplicationName}/budget-service:v2.0.0
+      - name: {entity}-service
+        image: {registry}/{ApplicationName}/{entity}-service:v2.0.0
 
 ---
 # Service pointing to blue initially
 apiVersion: v1
 kind: Service
 metadata:
-  name: budget-service
+  name: {entity}-service
 spec:
   selector:
-    app: budget-service
+    app: {entity}-service
     version: blue  # Change to 'green' to switch traffic
   ports:
   - port: 8080
@@ -1457,54 +1435,54 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: budget-service-stable
+  name: {entity}-service-stable
 spec:
   replicas: 9
   selector:
     matchLabels:
-      app: budget-service
+      app: {entity}-service
       version: stable
   template:
     metadata:
       labels:
-        app: budget-service
+        app: {entity}-service
         version: stable
     spec:
       containers:
-      - name: budget-service
-        image: {registry}/{ApplicationName}/budget-service:v1.0.0
+      - name: {entity}-service
+        image: {registry}/{ApplicationName}/{entity}-service:v1.0.0
 
 ---
 # Canary version (10% of traffic)
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: budget-service-canary
+  name: {entity}-service-canary
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: budget-service
+      app: {entity}-service
       version: canary
   template:
     metadata:
       labels:
-        app: budget-service
+        app: {entity}-service
         version: canary
     spec:
       containers:
-      - name: budget-service
-        image: {registry}/{ApplicationName}/budget-service:v2.0.0
+      - name: {entity}-service
+        image: {registry}/{ApplicationName}/{entity}-service:v2.0.0
 
 ---
 # Service distributes traffic across both
 apiVersion: v1
 kind: Service
 metadata:
-  name: budget-service
+  name: {entity}-service
 spec:
   selector:
-    app: budget-service  # Matches both stable and canary
+    app: {entity}-service  # Matches both stable and canary
   ports:
   - port: 8080
 ```
@@ -1516,7 +1494,7 @@ spec:
 ### Health Checks
 
 ```csharp
-// File: {ApplicationName}.Services.Budget/Program.cs
+// File: {ApplicationName}.Services.{Entity}/Program.cs
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -1524,7 +1502,7 @@ builder.Services.AddHealthChecks()
     .AddNpgSql(builder.Configuration.GetConnectionString("DefaultConnection")!)
     .AddRedis(builder.Configuration["Redis:ConnectionString"]!)
     .AddRabbitMQ(rabbitConnectionString: builder.Configuration["RabbitMQ:ConnectionString"]!)
-    .AddCheck<BudgetServiceHealthCheck>("budget-service-health");
+    .AddCheck<{Entity}ServiceHealthCheck>("{entity}-service-health");
 
 var app = builder.Build();
 
@@ -1544,11 +1522,11 @@ app.Run();
 ### Custom Health Check
 
 ```csharp
-public sealed class BudgetServiceHealthCheck : IHealthCheck
+public sealed class {Entity}ServiceHealthCheck : IHealthCheck
 {
     private readonly DataContext _dataContext;
 
-    public BudgetServiceHealthCheck(DataContext dataContext)
+    public {Entity}ServiceHealthCheck(DataContext dataContext)
     {
         _dataContext = dataContext;
     }
@@ -1562,12 +1540,12 @@ public sealed class BudgetServiceHealthCheck : IHealthCheck
             // Check database connectivity
             await _dataContext.Database.CanConnectAsync(cancellationToken);
 
-            return HealthCheckResult.Healthy("Budget service is healthy");
+            return HealthCheckResult.Healthy("{Entity} service is healthy");
         }
         catch (Exception ex)
         {
             return HealthCheckResult.Unhealthy(
-                "Budget service is unhealthy",
+                "{Entity} service is unhealthy",
                 exception: ex);
         }
     }
@@ -1577,7 +1555,7 @@ public sealed class BudgetServiceHealthCheck : IHealthCheck
 ### Application Insights / Sentry
 
 ```csharp
-// File: {ApplicationName}.Services.Budget/Program.cs
+// File: {ApplicationName}.Services.{Entity}/Program.cs
 
 using I.Synergy.Framework.OpenTelemetry.Extensions;
 
@@ -1586,7 +1564,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add OpenTelemetry with Application Insights
 builder.Services.AddOpenTelemetryWithApplicationInsights(
     builder.Configuration["ApplicationInsights:ConnectionString"]!,
-    "budget-service");
+    "{entity}-service");
 
 // Or with Sentry
 builder.Services.AddSentry(options =>
@@ -1610,12 +1588,11 @@ app.Run();
 // ❌ Multiple services accessing same database
 public sealed class SharedDbContext : DbContext
 {
-    public DbSet<Budget> Budgets { get; set; }
-    public DbSet<Goal> Goals { get; set; }
-    public DbSet<Transaction> Transactions { get; set; }
+    public DbSet<{Entity}> {Entities} { get; set; }
+    public DbSet<{ChildEntity}> {ChildEntities} { get; set; }
 }
 
-// BudgetService, GoalService, TransactionService all use SharedDbContext
+// {Entity}Service and {ChildEntity}Service both use SharedDbContext
 // This creates tight coupling and prevents independent deployment!
 ```
 
@@ -1623,19 +1600,19 @@ public sealed class SharedDbContext : DbContext
 
 ```csharp
 // ✅ Each service has its own database
-public sealed class BudgetDbContext : DbContext
+public sealed class {Entity}DbContext : DbContext
 {
-    public DbSet<Budget> Budgets { get; set; }
+    public DbSet<{Entity}> {Entities} { get; set; }
 }
 
-public sealed class GoalDbContext : DbContext
+public sealed class {ChildEntity}DbContext : DbContext
 {
-    public DbSet<Goal> Goals { get; set; }
+    public DbSet<{ChildEntity}> {ChildEntities} { get; set; }
 }
 
-public sealed class TransactionDbContext : DbContext
+public sealed class ReportingDbContext : DbContext
 {
-    public DbSet<Transaction> Transactions { get; set; }
+    public DbSet<Report> Reports { get; set; }
 }
 ```
 
@@ -1692,10 +1669,10 @@ public async Task<CreateOrderResponse> CreateOrderAsync(CreateOrderCommand comma
 
 ```csharp
 // ❌ No resilience - if service is down, keeps trying indefinitely
-public async Task<BudgetDto?> GetBudgetAsync(Guid budgetId)
+public async Task<{Entity}Dto?> Get{Entity}Async(Guid {entity}Id)
 {
-    var response = await _httpClient.GetAsync($"/api/budgets/{budgetId}");
-    return await response.Content.ReadFromJsonAsync<BudgetDto>();
+    var response = await _httpClient.GetAsync($"/api/{entities}/{entity}Id");
+    return await response.Content.ReadFromJsonAsync<{Entity}Dto>();
 }
 ```
 
@@ -1703,7 +1680,7 @@ public async Task<BudgetDto?> GetBudgetAsync(Guid budgetId)
 
 ```csharp
 // ✅ With circuit breaker and retry
-builder.Services.AddHttpClient<BudgetServiceClient>()
+builder.Services.AddHttpClient<{Entity}ServiceClient>()
     .AddStandardResilienceHandler(options =>
     {
         options.CircuitBreaker.FailureRatio = 0.5;
