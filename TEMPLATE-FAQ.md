@@ -419,6 +419,16 @@ The authoritative list of suites is in `.ai/tests/run-all-tests.sh` (bash) and `
 
 ---
 
+## Q8: Is there a VS Code extension for managing skills and agents?
+
+### Answer
+
+Yes. [AI Manager](https://github.com/I-Synergy/AIManager) is the companion VS Code extension for this template. It reads the skill and agent catalog, lets you choose a preset or individual items, and installs the selection into `.ai/skills/` and `.ai/agents/`.
+
+The extension keeps its selection and tooling state in `.ai/ai.json`, `.ai/ai.lock.json`, `.ai/tooling.json`, `.ai/catalog/`, `.ai/installed/`, and `*.ai-installed.json`. Those paths are gitignored: they describe the current machine's installed selection, not template content. Only `.ai/skills/` and `.ai/agents/` are committed.
+
+After installing or changing a selection, run `python .ai/scripts/sync-skills.py` so Claude Code, GitHub Copilot, and Reasonix Code see the updated junctions.
+
 ## Key Takeaways
 
 1. **Interaction is flexible** - Use slash commands, natural language, or structured requests

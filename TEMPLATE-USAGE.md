@@ -48,6 +48,39 @@ bash .ai/tests/run-all-tests.sh
 
 Every suite should pass.
 
+## AI Manager Extension (Optional)
+
+[AI Manager](https://github.com/I-Synergy/AIManager) is the VS Code companion for the template's skill and agent catalog. Use it when you want a project to carry only the skills and agents it needs instead of the full set.
+
+### What It Does
+
+1. Reads the catalog of available skills and agents.
+2. Lets you choose a preset (for example Architecture or Security) or individual items.
+3. Installs the chosen items into `.ai/skills/` and `.ai/agents/`.
+4. Records what was installed so the selection can be reviewed or updated later.
+
+After the extension installs a selection, run the junction sync once so every client sees the result:
+
+```bash
+python .ai/scripts/sync-skills.py
+```
+
+### Local State vs Template Content
+
+The extension writes machine-local state. This template ignores those paths so they are never committed:
+
+| Path | Purpose |
+|------|---------|
+| `.ai/ai.json` | Project selection |
+| `.ai/ai.lock.json` | Resolved revisions and content hashes |
+| `.ai/tooling.json` | Bundled tooling manifest |
+| `.ai/catalog/` | Catalog categories, presets, and schemas |
+| `.ai/installed/` | Install markers for agents installed as single files |
+| `.ai/scripts/catalog.py` | Catalog resolver provided by the extension |
+| `*.ai-installed.json` | Per-item install markers |
+
+`.ai/skills/` and `.ai/agents/` are different: they are the committed source of truth that all clients read through junctions. Commit those, not the extension state.
+
 ### Customize Project-Specific Files
 
 Navigate to `.ai/project/` and customize these files. **Each file has a distinct purpose with NO duplication:**

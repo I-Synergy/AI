@@ -242,6 +242,17 @@ bash .ai/tests/run-all-tests.sh
 
 Every suite should pass.
 
+### 5. Optional: AI Manager Extension
+
+[AI Manager](https://github.com/I-Synergy/AIManager) is the companion VS Code extension for this template. Instead of carrying every skill and agent, it lets you choose the ones a project needs:
+
+- browse skills and agents by category, or start from a preset such as Architecture or Security
+- record the selected items and their resolved revisions
+- install the selection under `.ai/skills/` and `.ai/agents/`
+- keep the bundled catalog tooling available to the repository
+
+Open the project folder in VS Code with AI Manager installed, then use its view to choose a preset or individual items. The extension keeps its local state in `.ai/ai.json`, `.ai/ai.lock.json`, `.ai/tooling.json`, `.ai/catalog/`, `.ai/installed/`, and the `*.ai-installed.json` markers. Those paths are **gitignored** here: they describe one machine's installed selection, not template content. The selected skills and agents themselves live in `.ai/skills/` and `.ai/agents/` and remain the committed source of truth.
+
 ### Customize Project Files
 
 Edit files in `.ai/project/` to customize for your project:
