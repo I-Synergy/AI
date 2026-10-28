@@ -1,6 +1,6 @@
 # GitHub Copilot Instructions
 
-<!-- ai-manager:generated-from-agents -->
+<!-- ai-workspace-manager:generated-from-agents -->
 <!-- Generated from AGENTS.md. Edit AGENTS.md, not this file. Regenerate with `python .ai/scripts/sync-instructions.py`. -->
 
 # .NET Development Template
@@ -200,7 +200,7 @@ These files contain detailed guidance. Load them when the task type matches — 
 - `.ai/project/tech-stack.md` — technology stack
 - `.ai/project/preferences.md` — communication style, workflow preferences
 
-<!-- ai-manager:copilot-reference:start -->
+<!-- ai-workspace-manager:copilot-reference:start -->
 ## Project Context
 
 See `.ai/project/architecture.md` for complete architecture documentation and `.ai/project/tech-stack.md` for the full technology stack.
@@ -292,4 +292,4 @@ Load these files based on task type:
 | Domain Modeling | `.ai/skills/ubiquitous-language/SKILL.md`, `.ai/skills/usecase-specification/SKILL.md`, `.ai/skills/user-story/SKILL.md` |
 | Skill Creation | `.ai/skills/skill-creator/SKILL.md` |
 | Council | `.ai/reference/council.md`, `.ai/skills/council/SKILL.md` |
-<!-- ai-manager:copilot-reference:end -->
+<!-- ai-workspace-manager:copilot-reference:end -->

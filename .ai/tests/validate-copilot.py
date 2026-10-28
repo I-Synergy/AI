@@ -27,6 +27,11 @@ AI_SKILLS     = TEMPLATE_ROOT / ".ai"     / "skills"
 GITHUB_SKILLS = TEMPLATE_ROOT / ".github" / "skills"
 CLAUDE_SKILLS = TEMPLATE_ROOT / ".claude" / "skills"
 COPILOT_MD    = TEMPLATE_ROOT / ".github" / "copilot-instructions.md"
+AGENTS_MD     = TEMPLATE_ROOT / "AGENTS.md"
+
+GENERATED_MARK  = "<!-- ai-workspace-manager:generated-from-agents -->"
+LEGACY_MARK     = "<!-- ai-manager:generated-from-agents -->"
+REFERENCE_START = "<!-- ai-workspace-manager:copilot-reference:start -->"
 
 STALE_REF_PATTERN = re.compile(
     r'(?<!~/)\.claude/(?!settings\.json|settings\.local\.json)'
@@ -69,6 +74,26 @@ def test_copilot_instructions() -> bool:
         return False
 
     print("  PASS: no stale .claude/ references")
+
+    if LEGACY_MARK in content:
+        print("  FAIL: legacy ai-manager marker — run: python .ai/scripts/sync-instructions.py")
+        return False
+
+    if GENERATED_MARK in content:
+        expected = AGENTS_MD.read_text(encoding="utf-8").strip() if AGENTS_MD.is_file() else ""
+        body = content.split(GENERATED_MARK, 1)[1]
+        body = re.sub(r"<!-- Generated from AGENTS\.md\..*?-->", "", body, count=1)
+        cut = body.find(REFERENCE_START)
+        if cut != -1:
+            body = body[:cut]
+        if not expected or body.strip() != expected:
+            print("  FAIL: AGENTS.md changed without regenerating the Copilot file")
+            print("        run: python .ai/scripts/sync-instructions.py")
+            return False
+        print("  PASS: generated body matches AGENTS.md")
+    else:
+        print("  SKIP: hand-written Copilot file (not generated)")
+
     return True
 
 

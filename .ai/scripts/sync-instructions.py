@@ -13,9 +13,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 AGENTS = ROOT / "AGENTS.md"
 COPILOT = ROOT / ".github" / "copilot-instructions.md"
-GENERATED = "<!-- ai-manager:generated-from-agents -->"
-START = "<!-- ai-manager:copilot-reference:start -->"
-END = "<!-- ai-manager:copilot-reference:end -->"
+GENERATED = "<!-- ai-workspace-manager:generated-from-agents -->"
+START = "<!-- ai-workspace-manager:copilot-reference:start -->"
+END = "<!-- ai-workspace-manager:copilot-reference:end -->"
 NOTE = ("<!-- Generated from AGENTS.md. Edit AGENTS.md, not this file. "
         "Regenerate with `python .ai/scripts/sync-instructions.py`. -->")
 HEADINGS = (
@@ -45,6 +45,8 @@ def main() -> int:
         return 2
     agents = AGENTS.read_text(encoding="utf-8").strip()
     existing = COPILOT.read_text(encoding="utf-8") if COPILOT.is_file() else ""
+    # Normalize markers written by earlier releases so the block is found.
+    existing = existing.replace("<!-- ai-manager:", "<!-- ai-workspace-manager:")
     parts = ["# GitHub Copilot Instructions", "", GENERATED, NOTE, "", agents]
     block = reference(existing)
     if block:
