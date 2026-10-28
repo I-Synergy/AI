@@ -2,29 +2,30 @@
 
 Professional .NET development template with AI-powered agent orchestration and modular architecture.
 
-## AI Manager (VS Code extension)
+## AI Workspace Manager (VS Code extension)
 
 A template catalog can offer hundreds of skills and agents. Copying all of them into every project bloats the AI context, hides what is actually installed, and turns template updates into a blind overwrite.
 
-[AI Manager](https://github.com/I-Synergy/AIManager) solves that. It is the VS Code front end for the template's per-repository resolver: you choose the skills and agents a repository needs — from a preset or item by item — and the extension records that selection, installs only those files, and shows what has drifted or changed upstream. Because it calls the same resolver CI uses, the UI cannot disagree with `sync --check`.
+[AI Workspace Manager](https://marketplace.visualstudio.com/items?itemName=I-Synergy.aiworkspacemanager) solves that. It is the VS Code front end for the template's per-repository resolver: you choose the skills and agents a repository needs — from a preset or item by item — and the extension records that selection, installs only those files, and shows what has drifted or changed upstream. Because it calls the same resolver CI uses, the UI cannot disagree with `sync --check`.
 
-![AI Manager — Updates view](images/ai-manager/updates-view.png)
+![AI Workspace Manager](images/ai-workspace-manager/social-preview.png)
 
-![AI Manager — Sources settings](images/ai-manager/sources-view.png)
+![AI Workspace Manager — Browse, Installed, Updates, Presets and Settings](images/ai-workspace-manager/tabs.gif)
 
 - **Browse** — search the whole catalog, filter by kind / source / state, and install a selection in bulk.
 - **Installed** — see what this repo has, grouped by health, and remove or prune leftovers.
 - **Updates** — compare installed items with upstream and update the safe ones.
 - **Presets** — start from a named selection (Architecture, Security, .NET, MAUI, …) with resolved counts and deltas.
 - **Settings** — choose the Python interpreter and manage sources, refs, and releases.
+- **Setup** — first activation writes the resolver, vocabulary, `AGENTS.md`, Copilot/Claude configuration, project folders, and the platform junctions.
 
-Install it from the Extensions view (search **AI Manager for Visual Studio Code**) or:
+Install it from the Extensions view (search **AI Workspace Manager for VS Code**) or:
 
 ```bash
-code --install-extension I-Synergy.ai-manager
+code --install-extension I-Synergy.aiworkspacemanager
 ```
 
-Open the project folder and use the AI Manager view. The extension keeps its local state in `.ai/ai.json`, `.ai/ai.lock.json`, `.ai/tooling.json`, `.ai/catalog/`, `.ai/installed/`, and the `*.ai-installed.json` markers. Those paths are **gitignored** here: they describe one machine's installed selection, not template content. The selected skills and agents themselves live in `.ai/skills/` and `.ai/agents/` and remain the committed source of truth.
+Open the project folder and use the AI Workspace Manager view. The extension keeps its local state in `.ai/ai.json`, `.ai/ai.lock.json`, `.ai/tooling.json`, `.ai/catalog/`, `.ai/installed/`, and the `*.ai-installed.json` markers. Those paths are **gitignored** here: they describe one machine's installed selection, not template content. The selected skills and agents themselves live in `.ai/skills/` and `.ai/agents/` and remain the committed source of truth.
 
 ## Overview
 

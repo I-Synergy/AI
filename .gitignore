@@ -12,7 +12,7 @@ __pycache__/
 # Agent scratch folder
 .ai/tmp/
 
-# AI Manager extension state (generated locally; not template content)
+# AI Workspace Manager extension state (generated locally; not template content)
 .ai/ai.json
 .ai/ai.lock.json
 .ai/tooling.json
