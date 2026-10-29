@@ -153,6 +153,45 @@ the built-in `aspire-skills` source, and the `Aspire` preset selects all seven:
 | **upgrade-template** | Sync template improvements to existing projects without losing context |
 | **verify-config** | Audit config drift and generate the standards-compatibility view |
 
+### Prompts (20)
+
+Every file in `.ai/prompts/` is a `*.prompt.md` for a repeatable Copilot/Claude
+workflow. They are mirrored to `.github/prompts/` and `.claude/commands/`, and
+AI Workspace Manager lists them under the **Prompts** kind filter.
+
+| Prompt | Purpose |
+|--------|---------|
+| **architectural-code-review-modernize** | Solution-wide C#/TypeScript/LINQ/SQL review with compilable replacements |
+| **architecture-blueprint-generator** | Architecture blueprint, diagrams and implementation patterns from the codebase |
+| **aspnet-minimal-api-openapi** | ASP.NET Minimal API endpoints with OpenAPI documentation |
+| **create-implementation-plan** | Implementation plan for features, refactors and upgrades |
+| **create-readme** | Project README from the codebase |
+| **create-unittest** | MSTest unit-test patterns, including data-driven tests |
+| **csharp-async** | C# async programming best practices |
+| **csharp-docs** | XML documentation for C# types |
+| **csharp-xunit** | xUnit unit-test patterns, including data-driven tests |
+| **documentation-writer** | Diátaxis technical documentation |
+| **dotnet-best-practices** | .NET/C# solution best practices |
+| **dotnet-design-pattern-review** | Design-pattern review for C#/.NET code |
+| **ef-core** | Entity Framework Core best practices |
+| **folder-structure-blueprint-generator** | Folder-structure blueprint, conventions and placement patterns |
+| **generate-custom-instructions-from-codebase** | Instructions from a migration, refactor or version-upgrade diff |
+| **iso-5055-quality-enforcer** | ISO/IEC 5055 risk report and refactor fixes |
+| **postgresql-optimization** | PostgreSQL-specific features, types and query optimisation |
+| **prompt-builder** | Build high-quality Copilot prompts with the right structure and tools |
+| **update-markdown-file-index** | Markdown index/table for the files in a folder |
+| **usecases-gherkin-specs** | Use cases and Gherkin BDD specifications for Clean Architecture |
+
+### Instructions (1)
+
+Every file in `.ai/instructions/` is a `*.instructions.md`, mirrored to
+`.github/instructions/` and `.claude/instructions/`. AI Workspace Manager lists
+them under the **Instructions** kind filter.
+
+| Instruction | Purpose |
+|-------------|---------|
+| **sonarqube_mcp** | Guidelines for using the SonarQube MCP tools during a task |
+
 ### Pattern Guides (8)
 
 | Pattern | Description |
