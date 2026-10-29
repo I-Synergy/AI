@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
 """
-Ensure folder-level junctions exist from .ai/skills/ and .ai/agents/ to:
+Ensure folder-level junctions exist from .ai/skills/, .ai/agents/,
+.ai/instructions/ and .ai/prompts/ to:
   - .claude/skills/  (junction -> .ai/skills/)
   - .github/skills/  (junction -> .ai/skills/)
   - .reasonix/skills/  (junction -> .ai/skills/)
   - .claude/agents/  (junction -> .ai/agents/)
   - .github/agents/  (junction -> .ai/agents/)
   - .reasonix/agents/  (junction -> .ai/agents/)
+  - .claude/commands/  (junction -> .ai/prompts/)
+  - .github/prompts/  (junction -> .ai/prompts/)
+  - .claude/instructions/  (junction -> .ai/instructions/)
+  - .github/instructions/  (junction -> .ai/instructions/)
 
 Everything else reads the canonical source through junctions.
 
@@ -27,6 +32,8 @@ SCRIPT_DIR = Path(__file__).parent.parent.parent  # .ai/scripts/ -> .ai/ -> repo
 JUNCTIONS = {
     ".ai/skills": [".claude/skills", ".github/skills", ".reasonix/skills"],
     ".ai/agents": [".claude/agents", ".github/agents", ".reasonix/agents"],
+    ".ai/instructions": [".claude/instructions", ".github/instructions"],
+    ".ai/prompts": [".claude/commands", ".github/prompts"],
 }
 
 
@@ -85,6 +92,9 @@ def sync_junction(source_rel: str, target_rel: str, dry_run: bool) -> str:
     target = root / target_rel
     source = (root / source_rel).resolve()
 
+    if not source.is_dir():
+        return "SKIP"
+
     if target.exists():
         if _is_junction(target):
             # Junction/symlink exists — verify it points correctly by checking
@@ -122,6 +132,8 @@ def sync_all(dry_run: bool = False) -> int:
             result = sync_junction(source_rel, target_rel, dry_run)
             if result == "OK":
                 print(f"  OK   {target_rel} -> {source_rel}")
+            elif result == "SKIP":
+                print(f"  SKIP {target_rel} -> {source_rel} (source missing)")
             else:
                 label = f"WOULD {result}" if dry_run else result
                 print(f"  {label} {target_rel} -> {source_rel}")

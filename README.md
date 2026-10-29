@@ -25,7 +25,7 @@ Install it from the Extensions view (search **AI Workspace Manager for VS Code**
 code --install-extension I-Synergy.aiworkspacemanager
 ```
 
-Open the project folder and use the AI Workspace Manager view. The extension keeps its local state in `.ai/ai.json`, `.ai/ai.lock.json`, `.ai/tooling.json`, `.ai/catalog/`, `.ai/installed/`, and the `*.ai-installed.json` markers. Those paths are **gitignored** here: they describe one machine's installed selection, not template content. The selected skills and agents themselves live in `.ai/skills/` and `.ai/agents/` and remain the committed source of truth.
+Open the project folder and use the AI Workspace Manager view. The extension keeps its local state in `.ai/ai.json`, `.ai/ai.lock.json`, `.ai/tooling.json`, `.ai/catalog/`, `.ai/installed/`, and the `*.ai-installed.json` markers. Those paths are **gitignored** here: they describe one machine's installed selection, not template content. The selected skills, agents, prompts and instructions themselves live in `.ai/skills/`, `.ai/agents/`, `.ai/prompts/` and `.ai/instructions/` and remain the committed source of truth.
 
 ## Overview
 
@@ -203,7 +203,7 @@ cp -r ./.github/copilot-instructions.md /path/to/YourProject/.github/
 
 ### 2. Create Junctions (One Command)
 
-All platforms read `.ai/skills/` and `.ai/agents/` through directory junctions — no file copies.
+All platforms read `.ai/skills/`, `.ai/agents/`, `.ai/prompts/` and `.ai/instructions/` through directory junctions — no file copies.
 
 ```bash
 cd /path/to/YourProject
@@ -216,8 +216,12 @@ This creates:
 |----------|----------|---------|
 | `.claude/skills` | `.ai/skills` | Claude Code |
 | `.claude/agents` | `.ai/agents` | Claude Code |
+| `.claude/commands` | `.ai/prompts` | Claude Code |
+| `.claude/instructions` | `.ai/instructions` | Claude Code |
 | `.github/skills` | `.ai/skills` | GitHub Copilot |
 | `.github/agents` | `.ai/agents` | GitHub Copilot |
+| `.github/prompts` | `.ai/prompts` | GitHub Copilot |
+| `.github/instructions` | `.ai/instructions` | GitHub Copilot |
 | `.reasonix/skills` | `.ai/skills` | Reasonix Code |
 | `.reasonix/agents` | `.ai/agents` | Reasonix Code |
 
@@ -317,14 +321,18 @@ Edit `.ai/session-context.md` to establish your project's initial state.
 ├── .claude/
 │   ├── settings.json                # Claude Code config (hooks, permissions)
 │   ├── skills/  → .ai/skills/       # Junction — do not edit
-│   └── agents/  → .ai/agents/       # Junction — do not edit
+│   ├── agents/  → .ai/agents/       # Junction — do not edit
+│   ├── commands/  → .ai/prompts/    # Junction — do not edit
+│   └── instructions/  → .ai/instructions/  # Junction — do not edit
 ├── .github/
 │   ├── copilot-instructions.md      # GitHub Copilot instructions
 │   ├── workflows/
 │   │   ├── validate-template.yml    # Runs the validation suite in CI
 │   │   └── ci.yml                   # Versions, tags and publishes a release on merge to main
 │   ├── skills/  → .ai/skills/       # Junction — do not edit
-│   └── agents/  → .ai/agents/       # Junction — do not edit
+│   ├── agents/  → .ai/agents/       # Junction — do not edit
+│   ├── prompts/  → .ai/prompts/     # Junction — do not edit
+│   └── instructions/  → .ai/instructions/  # Junction — do not edit
 ├── .reasonix/
 │   ├── skills/  → .ai/skills/       # Junction — do not edit
 │   └── agents/  → .ai/agents/       # Junction — do not edit
@@ -369,8 +377,10 @@ Edit `.ai/session-context.md` to establish your project's initial state.
     │   ├── service-oriented-architecture.md
     │   ├── object-oriented-programming.md
     │   └── test-driven-development.md
+    ├── prompts/                     # Copilot prompt files (source of truth)
+    ├── instructions/                # Copilot instruction files (source of truth)
     ├── scripts/                     # Automation scripts
-    │   ├── sync-skills.py           # Create junctions to .ai/skills/ and .ai/agents/ for Claude Code, GitHub Copilot, and Reasonix
+    │   ├── sync-skills.py           # Create junctions from .ai/ to Claude Code, GitHub Copilot, and Reasonix
     │   ├── sync-agents.py           # Agent-side entry point (delegates to sync-skills.py)
     │   ├── hygiene-lint.py          # Read-only hygiene lint — stale progress, committed secrets
     │   ├── migrate-to-ai.py         # Migrate a repo from the old .claude/ layout to .ai/
@@ -410,16 +420,22 @@ Edit `.ai/session-context.md` to establish your project's initial state.
 
 ### Skills Architecture — Directory Junctions
 
-Skills and agents live in `.ai/skills/` and `.ai/agents/` (single source of truth). All platforms read the exact same files through directory junctions — no wrappers, no copies, no sync.
+Skills, agents, prompts and instructions live in `.ai/skills/`, `.ai/agents/`, `.ai/prompts/` and `.ai/instructions/` (single source of truth). All platforms read the exact same files through directory junctions — no wrappers, no copies, no sync.
 
 ```
 .ai/skills/              ← Edit here (canonical source)
 .ai/agents/              ← Agent definitions with runAs: subagent
+.ai/prompts/             ← Copilot prompt files
+.ai/instructions/        ← Copilot instruction files
 
 .claude/skills/   → junction → .ai/skills/
 .claude/agents/   → junction → .ai/agents/
+.claude/commands/ → junction → .ai/prompts/
+.claude/instructions/ → junction → .ai/instructions/
 .github/skills/   → junction → .ai/skills/
 .github/agents/   → junction → .ai/agents/
+.github/prompts/  → junction → .ai/prompts/
+.github/instructions/ → junction → .ai/instructions/
 .reasonix/skills/ → junction → .ai/skills/
 .reasonix/agents/ → junction → .ai/agents/
 ```
