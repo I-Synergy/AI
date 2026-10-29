@@ -30,16 +30,18 @@ For any non-trivial task (3+ steps or multi-file), plan before writing code:
    ## Steps
    - [ ] Step 1
    - [ ] Step 2
+   - [ ] Update README.md for the change
 
    ## Notes
    ```
 3. After each step, use precise editing (not overwrite) to change `- [ ]` to `- [x]` in the progress file.
 4. On completion:
+   - Update `README.md` for the change — this is the closing step of the task, not a follow-up the user has to request (see **Documentation: Update the README When a Task Finishes**)
    - Add `**Status:** DONE` near the top
    - Move to `.ai/completed/{task-slug}.md`
    - Never end a session without completing this step
 
-Trivial tasks (single file, obvious fix): skip the plan and progress file.
+Trivial tasks (single file, obvious fix): skip the plan and progress file. They still finish with the README review before the final reply.
 
 ### When to Convene a Council
 
@@ -158,6 +160,21 @@ Never save plans to `docs/plans/`. Always use `.ai/plans/`.
 
 The `Stop` hook runs `dotnet build --nologo --verbosity minimal` once at the end of a task, and only when files under `src/` or `tests/` changed since the last successful build, or when no successful-build marker exists yet and a solution is present. Read the build output. If it fails, fix before continuing. Run `dotnet test` after multi-file changes.
 
+## Documentation: Update the README When a Task Finishes
+
+**README maintenance is the final step of every task.** When the in-progress work is finished — before you mark it DONE, move the progress file to `.ai/completed/`, or send your final reply — update `README.md` for the change and commit it together with the work. It is never a follow-up the user has to request.
+
+Update `README.md` whenever a change:
+
+- adds, moves, renames or removes a file or directory
+- adds or removes a skill, agent, pattern, checklist, template or reference
+- changes scripts, junctions, hooks, workflows, commands or setup steps
+- changes behaviour, configuration or defaults that the README describes
+
+Structural changes must also follow `.ai/reference/readme-maintenance.md`, which lists the sections to touch.
+
+If a change genuinely touches nothing the README describes, state that explicitly in the final reply — a reviewed README is the requirement, and silently skipping the check is not.
+
 ## Environment
 
 **Builds:** Never run `dotnet build` / `dotnet publish` with MSBuild node reuse — it exhausts this machine's memory. Always set `MSBUILDDISABLENODEREUSE=1` and pass `-nodeReuse:false`, and state that explicitly in any subagent prompt that builds .NET. See `.ai/project/preferences.md` → Environment → Builds.
@@ -184,6 +201,7 @@ These files contain detailed guidance. Load them when the task type matches — 
 - `.ai/reference/forbidden-tech.md` — banned libraries and replacements
 - `.ai/reference/task-execution.md` — full ReAct loop, escalation format, subagent templates
 - `.ai/reference/work-type-mapping.md` — which files to load per task type
+- `.ai/reference/readme-maintenance.md` — README update requirements for every change
 - `.ai/reference/operational-rules.md` — refactoring conventions, file management, workflow
 - `.ai/reference/traceability.md` — `US-` / `AC-` / `UC-` / `AF-` IDs that link stories, scenarios and tests
 - `.ai/reference/quality-model.md` — ISO/IEC 25010 review vocabulary and severity taxonomy
