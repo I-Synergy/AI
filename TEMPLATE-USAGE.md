@@ -35,10 +35,10 @@ cp /path/to/Template/.github/copilot-instructions.md /path/to/YourProject/.githu
 
 ```bash
 cd /path/to/YourProject
-python .ai/scripts/sync-skills.py
+python .ai/scripts/sync-platforms.py
 ```
 
-This creates 6 directory junctions so all tools read from the same `.ai/skills/` and `.ai/agents/` source. Junction targets are gitignored.
+This creates 10 directory junctions so all tools read from the same `.ai/skills/`, `.ai/agents/`, `.ai/prompts/` and `.ai/instructions/` source. Junction targets are gitignored.
 
 `.github/copilot-instructions.md` is generated from `AGENTS.md`. After editing `AGENTS.md`, regenerate it with:
 
@@ -76,7 +76,7 @@ code --install-extension I-Synergy.aiworkspacemanager
 After the extension installs a selection, run the junction sync once so every client sees the result:
 
 ```bash
-python .ai/scripts/sync-skills.py
+python .ai/scripts/sync-platforms.py
 ```
 
 ### Local State vs Template Content
@@ -177,7 +177,7 @@ AGENTS.md                        # AI orchestration instructions (auto-loaded)
 │   ├── testing-patterns.md     # Testing patterns
 │   └── ...                     # 8 patterns total
 ├── scripts/                    # Automation scripts
-│   ├── sync-skills.py          # Create folder-level junctions for all platforms
+│   ├── sync-platforms.py       # Create folder-level junctions for all platforms
 │   └── upgrade-template.py     # Safely upgrade existing projects
 ├── skills/                     # Specialized agent personas (source of truth)
 ├── agents/                     # Specialized subagents (each has runAs: subagent)
@@ -473,7 +473,7 @@ __pycache__/
 
 ```bash
 pip install -r requirements-dev.txt
-python .ai/scripts/sync-skills.py      # recreate the 6 platform junctions
+python .ai/scripts/sync-platforms.py      # recreate the 10 platform junctions
 python -m pytest .ai/tests/test_suite.py -q
 ```
 
@@ -530,10 +530,10 @@ Edit `.ai/skills/<skill-name>/SKILL.md` — changes are instantly visible to all
 ### After Cloning
 
 ```bash
-python .ai/scripts/sync-skills.py
+python .ai/scripts/sync-platforms.py
 ```
 
-This creates the 9 folder-level junctions. On Windows this requires no special permissions (directory junctions are user-level). On macOS/Linux, standard symlinks are used.
+This creates the 10 folder-level junctions. On Windows this requires no special permissions (directory junctions are user-level). On macOS/Linux, standard symlinks are used.
 
 ### Contributing Improvements
 
