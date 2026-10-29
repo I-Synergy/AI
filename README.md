@@ -107,52 +107,34 @@ name is the skill name (`/<skill-name>` invokes it explicitly).
 |-------|---------|
 | **maui-specialist** | Cross-platform MAUI apps, offline-first data, platform features |
 | **maui-blazor** | I-Synergy MVVM patterns for MAUI + Blazor Hybrid shells |
-| **maui-blazor-hybrid** | `BlazorWebView` vs `HybridWebView`, Razor UI, JS/.NET messaging, trim-safe JSON |
-| **maui-app-architecture** | DI/`MauiProgram`, MVVM wiring, Shell routes, compiled bindings, page lifetimes |
-| **maui-app-assets-lifecycle** | Icons, splash screens, images, fonts, raw assets, window lifecycle |
-| **maui-project-structure** | Single-project layout, resource folders, versioning, package IDs |
-| **maui-controls-deep-dive** | `CollectionView` incremental loading, `SafeAreaEdges`, `GraphicsView`, gestures |
-| **maui-ui-patterns** | Layout, binding, state and automation-id fixes for MAUI UI |
 | **maui-apple-design** | Apple-style fluid motion — springs, gestures, momentum, materials, type scale, reduced motion, haptics |
-| **maui-accessibility** | Semantic labels, focus/announcements, touch targets, screen-reader checks |
-| **maui-localization-theming** | RESX localisation, culture switching, RTL, `AppThemeBinding`, dynamic themes |
-| **maui-current-apis** | Target-framework-safe API choices (net8 vs net10) |
-| **maui-custom-handlers** | Handler mappers, renderer→handler migration, platform partials |
-| **maui-platform-invoke** | Native APIs via DI services, manifests, entitlements, lifecycle hooks |
-| **maui-device-capabilities** | Camera, files, geolocation, maps, permissions, platform declarations |
-| **maui-networking-offline-data** | Typed `HttpClient`, emulator hosts, offline-first sync, retries, encryption |
-| **maui-aspire-client** | Aspire service discovery, typed clients, device networking, dev certs |
-| **maui-auth-secure-storage** | WebAuthenticator/MSAL, OAuth redirects, SecureStorage, token cache cleanup |
-| **maui-notifications-deep-links** | Local/push notifications, FCM v1/APNs, notification taps, app links |
-| **maui-essentials-ai** | On-device AI via `Microsoft.Maui.Essentials.AI` (Apple Intelligence, `IChatClient`) |
-| **maui-ai-tool-bindings** | Source-generated `Microsoft.Extensions.AI` tools for MAUI |
-| **maui-performance** | Measurable startup/jank/trim fixes, NativeAOT and linker regressions |
-| **maui-unit-testing** | ViewModel/service tests, fakes, Essentials abstractions, device-test boundaries |
-| **maui-release-notes** | Official .NET/MAUI release notes → app upgrade plan |
-| **maui-labs-platform-targeting** | MAUI Labs desktop heads — Linux GTK4, macOS, WPF |
-| **maui-xcode27-migration** | Xcode 27 scene-lifecycle migration for iOS/Mac Catalyst |
-| **xamarin-forms-migration** | Xamarin.Forms → MAUI migration planning |
 | **mobile-release** | App Store / Google Play artifacts, signing, uploads, store rejections |
-| **dotnet-workload-info** | Workload manifest and SDK requirement lookup from live NuGet APIs |
 
-#### Native Bindings
+#### MAUI Labs (third-party source)
 
-| Skill | Purpose |
-|-------|---------|
-| **android-java-bindings** | C# bindings for Java/Kotlin Android libraries — AAR/JAR, Metadata.xml, generator errors |
-| **android-slim-bindings** | Android slim bindings and Native Library Interop wrappers |
-| **ios-slim-bindings** | iOS slim bindings — Swift/Objective-C wrappers, XcodeGen, CocoaPods |
+The MAUI Labs skills are not copied into this template. They come from
+[`dotnet/maui-labs`](https://github.com/dotnet/maui-labs) through the built-in
+`dotnet-maui` and `dotnet-maui-tooling` sources, pinned to a ref in `.ai/ai.json`,
+and are installed only in projects that select them (the `.NET MAUI` preset
+includes them). The source id is the plugin name, so provenance stays visible in
+the selection:
 
-#### DevFlow & Device Debugging
+| Source id | Skills |
+|---|---|
+| `dotnet-maui` | `maui-accessibility`, `maui-ai-tool-bindings`, `maui-app-architecture`, `maui-app-assets-lifecycle`, `maui-aspire-client`, `maui-auth-secure-storage`, `maui-blazor-hybrid`, `maui-controls-deep-dive`, `maui-current-apis`, `maui-custom-handlers`, `maui-device-capabilities`, `maui-essentials-ai`, `maui-labs-platform-targeting`, `maui-localization-theming`, `maui-networking-offline-data`, `maui-notifications-deep-links`, `maui-performance`, `maui-platform-invoke`, `maui-project-structure`, `maui-release-notes`, `maui-ui-patterns`, `maui-unit-testing`, `maui-xcode27-migration`, `xamarin-forms-migration` |
+| `dotnet-maui-tooling` | `android-java-bindings`, `android-slim-bindings`, `devflow-automation`, `devflow-connect`, `dotnet-workload-info`, `ios-slim-bindings`, `maui-ai-debugging`, `maui-devflow-debug`, `maui-devflow-onboard`, `maui-devflow-session-review` |
 
-| Skill | Purpose |
-|-------|---------|
-| **maui-devflow-onboard** | Add DevFlow to a MAUI app (package refs, `MauiProgram`, variants) |
-| **maui-devflow-debug** | Inspect-and-fix loops against a running MAUI app |
-| **maui-devflow-session-review** | Post-hoc DevFlow friction reports and scrubbed issue drafts |
-| **devflow-automation** | `[DevFlowAction]` shortcuts that drive app state |
-| **devflow-connect** | Diagnose `maui devflow` connection, port and adb-forwarding failures |
-| **maui-ai-debugging** | Screenshots, visual tree, Blazor CDP, simulator/emulator debugging |
+The repository's agents (`agentic-workflows`, `comet-squad`, `expert-reviewer`)
+and instructions (`dependencies`, `devflow-architecture`, `mcp-tools`,
+`packaging`, `testing`) are available in Browse under `dotnet-maui`.
+
+#### Aspire (third-party source)
+
+The official Aspire skills are not copied either. They come from
+[`microsoft/aspire-skills`](https://github.com/microsoft/aspire-skills) through
+the built-in `aspire-skills` source, and the `Aspire` preset selects all seven:
+`aspire` (router), `aspire-init`, `aspireify`, `aspire-orchestration`,
+`aspire-monitoring`, `aspire-deployment` and `aspire-project-v2-migration`.
 
 #### Documentation & Content
 
