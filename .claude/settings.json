@@ -11,8 +11,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python .ai/scripts/sync-skills.py",
-            "statusMessage": "Ensuring skill/agent junctions exist..."
+            "command": "python .ai/scripts/sync-platforms.py",
+            "statusMessage": "Syncing skills, prompts and instructions..."
           }
         ]
       },
@@ -33,9 +33,9 @@
         "hooks": [
           {
             "type": "command",
-            "if": "Write(.ai/skills/**/*)|Edit(.ai/skills/**/*)",
-            "command": "python .ai/scripts/sync-skills.py",
-            "statusMessage": "Syncing skills to Claude Code and GitHub Copilot..."
+            "if": "Write(.ai/skills/**/*)|Edit(.ai/skills/**/*)|Write(.ai/prompts/**/*)|Edit(.ai/prompts/**/*)|Write(.ai/instructions/**/*)|Edit(.ai/instructions/**/*)",
+            "command": "python .ai/scripts/sync-platforms.py",
+            "statusMessage": "Syncing skills, prompts and instructions..."
           }
         ]
       },

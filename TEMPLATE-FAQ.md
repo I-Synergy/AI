@@ -42,7 +42,7 @@ Invoke specialized skills directly:
 /gap-review               - Validate solution against design decisions
 /upgrade-template         - Upgrade existing project from template
 /verify-config            - Audit AGENTS.md against actual codebase
-/update-skills            - Sync .ai/skills/ to Claude Code and GitHub Copilot
+/sync-platforms            - Sync platform junctions for skills, agents, prompts and instructions
 ```
 
 #### 2. Natural Language Requests
@@ -433,7 +433,7 @@ code --install-extension I-Synergy.aiworkspacemanager
 
 The extension keeps its selection and tooling state in `.ai/ai.json`, `.ai/ai.lock.json`, `.ai/tooling.json`, `.ai/catalog/`, `.ai/installed/`, and `*.ai-installed.json`. Those paths are gitignored: they describe the current machine's installed selection, not template content. Only `.ai/skills/` and `.ai/agents/` are committed.
 
-After installing or changing a selection, run `python .ai/scripts/sync-skills.py` so Claude Code, GitHub Copilot, and Reasonix Code see the updated junctions.
+After installing or changing a selection, run `python .ai/scripts/sync-platforms.py` so Claude Code, GitHub Copilot, and Reasonix Code see the updated junctions.
 
 ## Key Takeaways
 

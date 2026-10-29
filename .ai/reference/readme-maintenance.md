@@ -11,7 +11,7 @@
 | Renaming or moving files | Skill renamed, directory restructured, prompts moved into `.ai/` |
 | Adding/removing directories | New top-level folder, new subdirectory |
 | Changing the directory layout | Moving templates, reorganizing skills, new junctions |
-| Changing scripts or automation | `sync-skills.py`, `hygiene-lint.py`, hooks, workflows, commands |
+| Changing scripts or automation | `sync-platforms.py`, `hygiene-lint.py`, hooks, workflows, commands |
 | Changing behaviour or setup | New prerequisite, changed default, changed CLI usage |
 
 ## Required Actions

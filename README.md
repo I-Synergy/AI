@@ -149,7 +149,7 @@ the built-in `aspire-skills` source, and the `Aspire` preset selects all seven:
 | Skill | Purpose |
 |-------|---------|
 | **skill-creator** | Create, test and tune skills, including description triggering |
-| **update-skills** | Sync `.ai/skills/` to all targets (Claude Code, GitHub Copilot, Reasonix) |
+| **sync-platforms** | Sync platform junctions for skills, agents, prompts and instructions (Claude Code, GitHub Copilot, Reasonix) |
 | **upgrade-template** | Sync template improvements to existing projects without losing context |
 | **verify-config** | Audit config drift and generate the standards-compatibility view |
 
@@ -246,7 +246,7 @@ All platforms read `.ai/skills/`, `.ai/agents/`, `.ai/prompts/` and `.ai/instruc
 
 ```bash
 cd /path/to/YourProject
-python .ai/scripts/sync-skills.py
+python .ai/scripts/sync-platforms.py
 ```
 
 This creates:
@@ -419,8 +419,8 @@ Edit `.ai/session-context.md` to establish your project's initial state.
     ├── prompts/                     # Copilot prompt files (source of truth)
     ├── instructions/                # Copilot instruction files (source of truth)
     ├── scripts/                     # Automation scripts
-    │   ├── sync-skills.py           # Create junctions from .ai/ to Claude Code, GitHub Copilot, and Reasonix
-    │   ├── sync-agents.py           # Agent-side entry point (delegates to sync-skills.py)
+    │   ├── sync-platforms.py        # Create junctions from .ai/ to Claude Code, GitHub Copilot, and Reasonix
+    │   ├── sync-agents.py           # Agent-side entry point (delegates to sync-platforms.py)
     │   ├── hygiene-lint.py          # Read-only hygiene lint — stale progress, committed secrets
     │   ├── migrate-to-ai.py         # Migrate a repo from the old .claude/ layout to .ai/
     │   └── upgrade-template.py      # Safely upgrade an existing project from this template
@@ -479,15 +479,18 @@ Skills, agents, prompts and instructions live in `.ai/skills/`, `.ai/agents/`, `
 .reasonix/agents/ → junction → .ai/agents/
 ```
 
-Git cannot track Windows junctions (or symlinks, with the common `core.symlinks=false` default), so a fresh clone has **none** of these 6 paths until they're created locally. A `SessionStart` hook in `.claude/settings.json` runs the sync automatically the moment a Claude Code session opens in the repo, and a `PostToolUse` hook re-runs it whenever `.ai/skills/` or `.ai/agents/` files change — so Claude Code sessions self-heal with no manual step.
+Git cannot track Windows junctions (or symlinks, with the common `core.symlinks=false` default), so a fresh clone has **none** of these 10 paths until they're created locally. A `SessionStart` hook in `.claude/settings.json` runs the sync automatically the moment a Claude Code session opens in the repo, and a `PostToolUse` hook re-runs it whenever `.ai/skills/`, `.ai/agents/`, `.ai/prompts/` or `.ai/instructions/` files change — so Claude Code sessions self-heal with no manual step.
 
 Reasonix Code and GitHub Copilot don't have an equivalent session-start hook, so after cloning — or before using one of those tools for the first time — run once manually:
 
 ```bash
-python .ai/scripts/sync-skills.py
+python .ai/scripts/sync-platforms.py
 ```
 
-This creates (or repairs) all 6 junctions; it's idempotent and safe to re-run at any time.
+This creates (or repairs) all 10 junctions; it's idempotent and safe to re-run at any time.
+
+`sync-skills.py` remains as a deprecated alias for hooks created before the
+rename; new instructions should call `sync-platforms.py`.
 
 ### Specialized Agents
 

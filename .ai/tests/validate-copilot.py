@@ -21,7 +21,7 @@ SCRIPT_DIR    = Path(__file__).parent
 TEMPLATE_ROOT = SCRIPT_DIR.parent.parent
 
 # Bootstrap folder-level junctions before running tests
-_script = str(SCRIPT_DIR.parent / "scripts" / "sync-skills.py")
+_script = str(SCRIPT_DIR.parent / "scripts" / "sync-platforms.py")
 subprocess.run([sys.executable, _script], capture_output=True)
 AI_SKILLS     = TEMPLATE_ROOT / ".ai"     / "skills"
 GITHUB_SKILLS = TEMPLATE_ROOT / ".github" / "skills"
@@ -102,7 +102,7 @@ def test_github_skills_exist() -> bool:
     print("-" * 40)
 
     if not GITHUB_SKILLS.exists():
-        print("  FAIL: .github/skills/ not found — run: python .ai/scripts/sync-skills.py")
+        print("  FAIL: .github/skills/ not found — run: python .ai/scripts/sync-platforms.py")
         return False
 
     count = sum(1 for d in GITHUB_SKILLS.iterdir() if d.is_dir())
@@ -120,7 +120,7 @@ def test_skills_in_sync() -> bool:
 
     if not _is_junction(GITHUB_SKILLS):
         print("  FAIL: .github/skills/ is not a folder-level junction")
-        print("  Fix: python .ai/scripts/sync-skills.py")
+        print("  Fix: python .ai/scripts/sync-platforms.py")
         return False
 
     # With a folder-level junction, content is always identical to source
@@ -140,7 +140,7 @@ def test_claude_skills() -> bool:
 
     if not _is_junction(CLAUDE_SKILLS):
         print("  FAIL: .claude/skills/ is not a folder-level junction")
-        print("  Fix: python .ai/scripts/sync-skills.py")
+        print("  Fix: python .ai/scripts/sync-platforms.py")
         return False
 
     claude_count = sum(1 for d in CLAUDE_SKILLS.iterdir() if d.is_dir())
@@ -174,7 +174,7 @@ def main():
         return 0
 
     print("  SOME COPILOT TESTS FAILED")
-    print("  Fix: python .ai/scripts/sync-skills.py")
+    print("  Fix: python .ai/scripts/sync-platforms.py")
     return 1
 
 

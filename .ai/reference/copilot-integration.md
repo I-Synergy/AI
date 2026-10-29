@@ -15,7 +15,7 @@ Template/
 └── .ai/                               # Shared knowledge base (source of truth)
     ├── reference/                     # Standards (all systems)
     ├── patterns/                      # Patterns (all systems)
-    ├── scripts/                       # sync-skills.py, migrate-to-ai.py
+    ├── scripts/                       # sync-platforms.py, migrate-to-ai.py
     ├── skills/                        # Skills source — edit here
     └── project/                       # Shared project context
 ```
@@ -30,7 +30,7 @@ Skills have a single source of truth in `.ai/skills/` and are synced to two targ
 | Claude Code | `.claude/skills/<name>/SKILL.md` | Thin wrapper: `!`cat .ai/skills/...`` | Claude Code executes at runtime |
 | GitHub Copilot | `.github/skills/<name>/SKILL.md` | Full content copy | Copilot reads directly |
 
-**Sync:** A PostToolUse hook fires `sync-skills.py --from-hook` on every `.ai/skills/` write. Run `/update-skills` (or `python .ai/scripts/sync-skills.py`) manually to sync all at once.
+**Sync:** A PostToolUse hook fires `sync-platforms.py` on every `.ai/skills/`, `.ai/prompts/` or `.ai/instructions/` write. Run `/sync-platforms` (or `python .ai/scripts/sync-platforms.py`) manually to sync all at once.
 
 ## System Comparison
 

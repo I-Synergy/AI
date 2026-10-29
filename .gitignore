@@ -21,7 +21,7 @@ __pycache__/
 .ai/scripts/catalog.py
 .ai/**/.ai-installed.json
 
-# Platform skill/agent junctions (recreated by sync-skills.py)
+# Platform skill/agent junctions (recreated by sync-platforms.py)
 .claude/skills/
 .claude/agents/
 .github/skills/

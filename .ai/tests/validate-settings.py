@@ -81,31 +81,31 @@ def test_settings_json() -> bool:
         # Ensure it's a dict with commands or list
         if isinstance(session_start, dict) and "commands" in session_start:
             commands = session_start["commands"]
-            if isinstance(commands, list) and any("sync-skills.py" in str(cmd) for cmd in commands):
-                print("  PASS: SessionStart hook contains sync-skills.py")
+            if isinstance(commands, list) and any("sync-platforms.py" in str(cmd) for cmd in commands):
+                print("  PASS: SessionStart hook contains sync-platforms.py")
             else:
-                print("  FAIL: SessionStart command missing sync-skills.py")
+                print("  FAIL: SessionStart command missing sync-platforms.py")
                 passed = False
         elif isinstance(session_start, list):
-            if any("sync-skills.py" in str(cmd) for cmd in session_start):
-                print("  PASS: SessionStart hook contains sync-skills.py")
+            if any("sync-platforms.py" in str(cmd) for cmd in session_start):
+                print("  PASS: SessionStart hook contains sync-platforms.py")
             else:
-                print("  FAIL: SessionStart hook missing sync-skills.py")
+                print("  FAIL: SessionStart hook missing sync-platforms.py")
                 passed = False
         else:
             print("  PASS: SessionStart hook present")
     else:
-        print("  FAIL: SessionStart hook required (for sync-skills.py)")
+        print("  FAIL: SessionStart hook required (for sync-platforms.py)")
         passed = False
 
     if "PostToolUse" in hooks:
         post_tool = hooks.get("PostToolUse", {})
         if isinstance(post_tool, dict) and "commands" in post_tool:
             commands = post_tool["commands"]
-            has_sync_skills = any("sync-skills.py" in str(cmd) for cmd in commands) if isinstance(commands, list) else False
+            has_sync_skills = any("sync-platforms.py" in str(cmd) for cmd in commands) if isinstance(commands, list) else False
             has_sync_agents = any("sync-agents.py" in str(cmd) for cmd in commands) if isinstance(commands, list) else False
             if has_sync_skills and has_sync_agents:
-                print("  PASS: PostToolUse hook contains sync-skills.py and sync-agents.py")
+                print("  PASS: PostToolUse hook contains sync-platforms.py and sync-agents.py")
             elif has_sync_skills or has_sync_agents:
                 print("  PASS: PostToolUse hook present (has sync scripts)")
             else:
@@ -113,7 +113,7 @@ def test_settings_json() -> bool:
         else:
             print("  PASS: PostToolUse hooks present")
     else:
-        print("  FAIL: PostToolUse hooks required (for sync-skills.py and sync-agents.py)")
+        print("  FAIL: PostToolUse hooks required (for sync-platforms.py and sync-agents.py)")
         passed = False
 
     if "Stop" in hooks:
@@ -260,18 +260,18 @@ def test_session_context_hook() -> bool:
         print("  FAIL: SessionStart should be a list")
         return False
 
-    # Find sync-skills.py hook
+    # Find sync-platforms.py hook
     sync_skills_found = False
     for entry in session_start:
         if isinstance(entry, dict) and "hooks" in entry:
             for hook in entry["hooks"]:
-                if isinstance(hook, dict) and "sync-skills.py" in hook.get("command", ""):
+                if isinstance(hook, dict) and "sync-platforms.py" in hook.get("command", ""):
                     sync_skills_found = True
-                    print("  PASS: sync-skills.py SessionStart hook still exists")
+                    print("  PASS: sync-platforms.py SessionStart hook still exists")
                     break
 
     if not sync_skills_found:
-        print("  FAIL: sync-skills.py SessionStart hook missing or invalid structure")
+        print("  FAIL: sync-platforms.py SessionStart hook missing or invalid structure")
         passed = False
 
     # Find session-context hook
