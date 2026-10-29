@@ -416,7 +416,7 @@ def _run_upgrade(args, source: Path, target: Path, raw_source: str, tmpdir) -> N
     if not counts["quit"]:
         merge_settings_json(source, target, args.dry_run)
 
-    # ─── Post-sync: run sync-skills.py in target ──────────────────────────────
+    # ─── Post-sync: run sync-platforms.py in target ───────────────────────────
     if not args.dry_run and not counts["quit"]:
         sync_script = target / ".ai" / "scripts" / "sync-platforms.py"
         if not sync_script.exists():
@@ -438,7 +438,7 @@ def _run_upgrade(args, source: Path, target: Path, raw_source: str, tmpdir) -> N
                 if result.stderr:
                     print(f"    {result.stderr.strip()}")
         else:
-            print(f"\n{c(YELLOW, 'Note:')} run /sync-platforms in the target project to sync skills to Claude Code and GitHub Copilot")
+            print(f"\n{c(YELLOW, 'Note:')} run /sync-platforms in the target project to sync the platform junctions")
 
         sync_agents = target / ".ai" / "scripts" / "sync-agents.py"
         if sync_agents.exists():
