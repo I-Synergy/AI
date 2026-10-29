@@ -376,7 +376,7 @@ def test_claude_dir_is_config_only() -> bool:
         print("  SKIP: .claude/ not found")
         return True
 
-    allowed = {"settings.json", "settings.local.json", "skills", "agents"}
+    allowed = {"settings.json", "settings.local.json", "skills", "agents", "commands", "instructions"}
     unexpected = [p.name for p in claude_dir.iterdir() if p.name not in allowed]
 
     if unexpected:
@@ -384,7 +384,7 @@ def test_claude_dir_is_config_only() -> bool:
         print("        Run migrate-to-ai.py to clean up")
         return False
 
-    print("  PASS: .claude/ contains only settings files, skills/, and agents/")
+    print("  PASS: .claude/ contains only settings files, skills/, agents/, commands/, and instructions/")
     return True
 
 

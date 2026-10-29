@@ -28,3 +28,7 @@ __pycache__/
 .github/agents/
 .reasonix/skills/
 .reasonix/agents/
+.github/instructions/
+.github/prompts/
+.claude/commands/
+.claude/instructions/
