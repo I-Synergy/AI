@@ -365,6 +365,7 @@ Edit `.ai/session-context.md` to establish your project's initial state.
 ├── pip.ini                          # Project-scoped pip config
 ├── requirements-dev.txt             # Development dependency pins (PyYAML, pytest)
 ├── requirements-dev.lock            # Hash-pinned dependency lock installed by CI
+├── .sonarcloud.properties           # Analysis scope + UTF-8 encoding for SonarCloud
 ├── .gitattributes                   # LF line endings enforced for *.sh
 ├── .gitignore                       # Excludes junction targets + pycache
 ├── .vscode/
