@@ -56,7 +56,8 @@ name is the skill name (`/<skill-name>` invokes it explicitly).
 | Skill | Purpose |
 |-------|---------|
 | **architect** | Architecture decisions, technology selection, bounded contexts |
-| **design-interrogation** | Structured design interview — stress-test plans and resolve decision trees |
+| **product-discovery** | Plain-language product interview — capture what to build before designing architecture; produces product brief, wireframes, mockups, and clickable prototype |
+| **design-interrogation** | Structured design interview — consumes product-discovery output; stress-test plans and interrogate technical dimensions (architecture, identity, data, delivery, operations, testing, AI); produces Product Specification |
 | **ubiquitous-language** | Capture and maintain the domain glossary (`UBIQUITOUS_LANGUAGE.md`) |
 | **usecase-specification** | Use case specs with `UC-`/`AF-` IDs and Gherkin |
 | **user-story** | INVEST-validated user stories with `AC-`-identified criteria |
@@ -439,7 +440,14 @@ Edit `.ai/session-context.md` to establish your project's initial state.
     │   └── upgrade-template.py      # Safely upgrade an existing project from this template
     ├── agents/                      # Specialized subagents (source of truth)
     ├── skills/                      # Specialized agent personas (source of truth)
-    │   └── <skill>/SKILL.md         # One directory per skill — all listed under "Specialized Skills"
+    │   ├── <skill>/SKILL.md         # One directory per skill — all listed under "Specialized Skills"
+    │   ├── product-discovery/
+    │   │   ├── SKILL.md
+    │   │   ├── references/          # question-bank.md, output-templates.md, prototype-guide.md
+    │   │   └── assets/prototype-scaffold/  # HTML/CSS/JS clickable prototype scaffold
+    │   └── design-interrogation/
+    │       ├── SKILL.md             # Extended to consume product-discovery output
+    │       └── references/product-specification-template.md
     ├── checklists/
     │   └── pre-submission.md        # Quality gate — run before completing any task
     ├── project/                     # CUSTOMIZE THESE FOR YOUR PROJECT
@@ -602,11 +610,13 @@ Claude will:
 3. Create MSTest unit tests + Reqnroll BDD scenarios
 ```
 
-### Design Interrogation Pipeline
+### Product Discovery & Design Interrogation Pipeline
 
 ```
-/design-interrogation    # Phase -1 to Phase 1: intake → strategic anchors → BC interrogation
-                         # Produces: ubiquitous language, use cases, user stories, solution scaffold
+/product-discovery       # Product interview: problem, audience, value, UX, UI, platforms, deliverables
+                         # Produces: product brief, audience profile, UX/UI briefs, wireframes, mockups, clickable prototype
+/design-interrogation    # Consumes product output; interrogates technical dimensions (architecture, identity, data, delivery, operations, testing, AI)
+                         # Produces: ubiquitous language, use cases, user stories, Product Specification
 /solution-generator      # Scaffold .NET solution from architecture document
 /vertical-slices         # Generate blueprint JSON per vertical slice
 /gap-review              # Validate generated solution against design decisions
@@ -642,6 +652,7 @@ Claude loads these files automatically based on your task type:
 | MAUI | `.ai/skills/maui-specialist/SKILL.md`, `.ai/patterns/mvvm.md` |
 | WinUI 3 | `.ai/skills/winui-specialist/SKILL.md`, `.ai/patterns/mvvm.md` |
 | Architecture | `.ai/skills/architect/SKILL.md`, `.ai/project/architecture.md` |
+| Product Discovery | `.ai/skills/product-discovery/SKILL.md`, `.ai/reference/readme-maintenance.md` |
 | Code Review | `.ai/skills/code-reviewer/SKILL.md`, `.ai/reference/quality-model.md`, `.ai/checklists/pre-submission.md` |
 | Security | `.ai/skills/security/SKILL.md`, `.ai/skills/api-security/SKILL.md`, `.ai/skills/software-security/SKILL.md` |
 | Bulk Refactoring | `.ai/skills/refactor/SKILL.md` |

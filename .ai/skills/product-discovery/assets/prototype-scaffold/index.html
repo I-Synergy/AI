@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Product Discovery Prototype - Interactive demonstration">
+  <title>Prototype Shell</title>
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="stylesheet" href="prototype.css">
+</head>
+<body class="theme-light">
+
+<div id="prototype-banner">
+  Prototype — not the product
+</div>
+
+<div id="app">
+
+  <!-- Toolbar / Header -->
+  <header id="toolbar">
+    <div class="toolbar-brand">
+      <h1>Prototype</h1>
+      <span>Demo</span>
+    </div>
+
+    <div class="toolbar-controls">
+      <div class="control-group">
+        <label for="theme-select">Theme:</label>
+        <select id="theme-select">
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+          <option value="hc">High Contrast</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label for="language-select">Language:</label>
+        <select id="language-select">
+          <option value="en">English</option>
+          <option value="nl">Nederlands</option>
+          <option value="es">Español</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label for="state-select">State:</label>
+        <select id="state-select">
+          <option value="default">Default</option>
+          <option value="empty">Empty</option>
+          <option value="loading">Loading</option>
+          <option value="error">Error</option>
+          <option value="offline">Offline</option>
+          <option value="success">Success</option>
+          <option value="no-permission">No Permission</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label for="persona-select">Persona:</label>
+        <select id="persona-select">
+          <option value="user">User</option>
+          <option value="admin">Admin</option>
+          <option value="guest">Guest</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label for="device-select">Device:</label>
+        <select id="device-select">
+          <option value="web-desktop">Web Desktop</option>
+          <option value="web-tablet">Web Tablet</option>
+          <option value="web-mobile">Web Mobile</option>
+          <option value="ios-phone">iOS Phone</option>
+          <option value="android-phone">Android Phone</option>
+          <option value="tablet">Tablet</option>
+          <option value="windows-window">Windows Window</option>
+          <option value="macos-window">macOS Window</option>
+        </select>
+      </div>
+    </div>
+  </header>
+
+  <!-- Sidebar: Screen Inventory -->
+  <aside id="sidebar">
+    <div class="sidebar-title">Screens</div>
+    <ul class="screen-list">
+      <li><a href="#SCR-001" class="screen-link" data-screen="SCR-001">SCR-001 Sign In</a></li>
+      <li><a href="#SCR-002" class="screen-link" data-screen="SCR-002">SCR-002 List</a></li>
+      <li><a href="#SCR-003" class="screen-link" data-screen="SCR-003">SCR-003 Detail Form</a></li>
+    </ul>
+  </aside>
+
+  <!-- Main Content -->
+  <main id="main">
+
+    <!-- SCR-001: Sign In Screen -->
+    <section class="screen active" id="SCR-001" data-label="Sign In" data-device-frame="web-desktop" data-state="default" data-persona="user" aria-label="Sign in screen">
+      <div class="device-frame">
+        <div class="device-frame-header">
+          <span>Sign In</span>
+          <span>www.example.com</span>
+        </div>
+        <div class="device-frame-content">
+          <div class="content-default" style="display: block;">
+            <h1 id="signin-heading">Welcome</h1>
+            <p>Sign in to your account to get started.</p>
+            <form aria-labelledby="signin-heading">
+              <div>
+                <label for="email">Email Address</label>
+                <input type="email" id="email" placeholder="user@example.com" required aria-required="true">
+              </div>
+              <div>
+                <label for="password">Password</label>
+                <input type="password" id="password" placeholder="••••••••" required aria-required="true">
+              </div>
+              <button type="submit" aria-label="Sign in to your account">Sign In</button>
+            </form>
+            <p style="margin-top: 16px; text-align: center;">
+              Don't have an account? <a href="#SCR-002" aria-label="Create a new account">Create one</a>
+            </p>
+          </div>
+
+          <div class="content-loading" style="display: none;">
+            <div class="state-placeholder" role="status" aria-live="polite">
+              <span>Signing in...</span>
+            </div>
+          </div>
+
+          <div class="content-error" style="display: none;">
+            <div class="state-placeholder state-warn" role="alert" aria-live="assertive">
+              <span>Invalid credentials. Please try again.</span>
+            </div>
+          </div>
+
+          <div class="content-offline" style="display: none;">
+            <div class="state-placeholder" role="alert" aria-live="assertive">
+              <span>You are offline. Check your connection.</span>
+            </div>
+          </div>
+
+          <div class="content-success" style="display: none;">
+            <div class="state-placeholder state-ok" role="status" aria-live="polite">
+              <span>Sign in successful! Redirecting...</span>
+            </div>
+          </div>
+
+          <div class="content-no-permission" style="display: none;">
+            <div class="state-placeholder" role="alert" aria-live="assertive">
+              <span>Access denied. Contact support.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCR-002: List Screen -->
+    <section class="screen" id="SCR-002" data-label="List" data-device-frame="web-desktop" data-state="default" data-persona="user">
+      <div class="device-frame">
+        <div class="device-frame-header">
+          <span>Items</span>
+          <span>www.example.com/items</span>
+        </div>
+        <div class="device-frame-content">
+          <div class="content-default" style="display: block;">
+            <h2>Items</h2>
+            <button style="margin-bottom: 16px;">Create New Item</button>
+            <div class="card">
+              <div class="card-title">Item 1: Introduction</div>
+              <div class="card-text">
+                This is a sample item in the list. Click on it to view details.
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-title">Item 2: Getting Started</div>
+              <div class="card-text">
+                Learn how to use the prototype with theme toggles and state management.
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-title">Item 3: Customization</div>
+              <div class="card-text">
+                Customize screens, states, and personas to match your product.
+              </div>
+            </div>
+          </div>
+
+          <div class="content-empty" style="display: none;">
+            <div class="state-placeholder">
+              <span>No items to display. Create one to get started.</span>
+            </div>
+          </div>
+
+          <div class="content-loading" style="display: none;">
+            <div class="state-placeholder">
+              <span>Loading items...</span>
+            </div>
+          </div>
+
+          <div class="content-error" style="display: none;">
+            <div class="state-placeholder state-err" role="alert" aria-live="assertive">
+              <span>Failed to load items. Please try again.</span>
+            </div>
+          </div>
+
+          <div class="content-offline" style="display: none;">
+            <div class="state-placeholder">
+              <span>You are offline. Showing cached items.</span>
+            </div>
+          </div>
+
+          <div class="content-success" style="display: none;">
+            <div class="state-placeholder state-ok" role="status" aria-live="polite">
+              <span>Items loaded successfully!</span>
+            </div>
+          </div>
+
+          <div class="content-no-permission" style="display: none;">
+            <div class="state-placeholder">
+              <span>You don't have permission to view items.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCR-003: Detail Form Screen -->
+    <section class="screen" id="SCR-003" data-label="Detail Form" data-device-frame="web-desktop" data-state="default" data-persona="user" aria-label="Edit item form">
+      <div class="device-frame">
+        <div class="device-frame-header">
+          <span>Edit Item</span>
+          <span>www.example.com/items/123</span>
+        </div>
+        <div class="device-frame-content">
+          <div class="content-default" style="display: block;">
+            <h2 id="edit-form-heading">Edit Item Details</h2>
+            <form aria-labelledby="edit-form-heading">
+              <div>
+                <label for="item-name">Item Name</label>
+                <input type="text" id="item-name" placeholder="Enter item name" value="Sample Item" required>
+              </div>
+              <div>
+                <label for="item-desc">Description</label>
+                <textarea id="item-desc" placeholder="Enter description">This is a sample item for demonstration purposes.</textarea>
+              </div>
+              <div>
+                <label for="item-category">Category</label>
+                <select id="item-category">
+                  <option>General</option>
+                  <option>Important</option>
+                  <option>Archive</option>
+                </select>
+              </div>
+              <div>
+                <label>
+                  <input type="checkbox" checked aria-label="Mark item as active"> Mark as Active
+                </label>
+              </div>
+              <button type="submit" aria-label="Save changes to this item">Save Changes</button>
+              <a href="#SCR-002" style="display: inline-block; margin-top: 12px;" aria-label="Cancel and return to items list">Cancel</a>
+            </form>
+          </div>
+
+          <div class="content-loading" style="display: none;">
+            <div class="state-placeholder" role="status" aria-live="polite">
+              <span>Saving changes...</span>
+            </div>
+          </div>
+
+          <div class="content-error" style="display: none;">
+            <div class="state-placeholder state-err" role="alert" aria-live="assertive">
+              <span>Failed to save. Please try again.</span>
+            </div>
+          </div>
+
+          <div class="content-offline" style="display: none;">
+            <div class="state-placeholder" role="status" aria-live="polite">
+              <span>You are offline. Changes will sync when online.</span>
+            </div>
+          </div>
+
+          <div class="content-success" style="display: none;">
+            <div class="state-placeholder state-ok" role="status" aria-live="polite">
+              <span>Changes saved successfully!</span>
+            </div>
+          </div>
+
+          <div class="content-no-permission" style="display: none;">
+            <div class="state-placeholder" role="alert" aria-live="assertive">
+              <span>You don't have permission to edit this item.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+</div>
+
+<script src="prototype.js"></script>
+</body>
+</html>

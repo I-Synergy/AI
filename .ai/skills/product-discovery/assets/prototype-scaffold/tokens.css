@@ -1,0 +1,127 @@
+/* Prototype Theme Tokens - Light, Dark, and High-Contrast Variants */
+
+:root {
+  /* Light Mode (Default) */
+  --b-bg: #ffffff;
+  --b-surface: #f5f5f5;
+  --b-surface-2: #ececec;
+  --b-surface-3: #e0e0e0;
+  --b-border: #d0d0d0;
+  --b-text: #1a1a1a;
+  --b-text-2: #424242;
+  --b-text-3: #757575;
+  --b-accent: #0078d4;
+  --b-accent-dim: #b4d7f1;
+  --b-success: #107c10;
+  --b-warning: #ffb900;
+  --b-danger: #d13438;
+  --b-sidebar-bg: #f3f3f3;
+  --b-sidebar-w: 240px;
+  --b-header-h: 56px;
+
+  /* Theme Generator tokens (from css-theme-generator)
+     Replace the --color-primary-* values below with generated output from css-theme-generator
+     and define --b-accent/--b-accent-dim from them */
+  --color-primary-50: #f0f8ff;
+  --color-primary-100: #e1f0ff;
+  --color-primary-200: #b4d7f1;
+  --color-primary-300: #87bae8;
+  --color-primary-400: #5a9ddf;
+  --color-primary-500: #2d80d6;
+  --color-primary-600: #0078d4;
+  --color-primary-700: #006ac0;
+  --color-primary-800: #0056a4;
+  --color-primary-900: #003d7a;
+  --color-primary-950: #002547;
+}
+
+/* Dark Mode */
+@media (prefers-color-scheme: dark) {
+  body.theme-dark:not(.theme-light):not(.theme-hc) {
+    --b-bg: #1e1e1e;
+    --b-surface: #2d2d2d;
+    --b-surface-2: #3c3c3c;
+    --b-surface-3: #454545;
+    --b-border: #505050;
+    --b-text: #ffffff;
+    --b-text-2: #e1e1e1;
+    --b-text-3: #c0c0c0;
+    --b-accent: var(--color-primary-300, #87bae8);
+    --b-accent-dim: var(--color-primary-900, #003d7a);
+    --b-success: #6cce5c;
+    --b-warning: #ffc933;
+    --b-danger: #ff6d6d;
+    --b-sidebar-bg: #252525;
+  }
+}
+
+/* High Contrast Mode */
+body.theme-hc {
+  --b-bg: #000000;
+  --b-surface: #000000;
+  --b-surface-2: #000000;
+  --b-surface-3: #000000;
+  --b-border: #ffffff;
+  --b-text: #ffffff;
+  --b-text-2: #ffffff;
+  --b-text-3: #ffffff;
+  --b-accent: #ffff00;
+  --b-accent-dim: #ffff00;
+  --b-success: #00ff00;
+  --b-warning: #ffff00;
+  --b-danger: #ff0000;
+  --b-sidebar-bg: #000000;
+}
+
+/* Explicit Dark Mode Toggle (overrides prefers-color-scheme) */
+body.theme-dark {
+  --b-bg: #1e1e1e;
+  --b-surface: #2d2d2d;
+  --b-surface-2: #3c3c3c;
+  --b-surface-3: #454545;
+  --b-border: #505050;
+  --b-text: #ffffff;
+  --b-text-2: #e1e1e1;
+  --b-text-3: #c0c0c0;
+  --b-accent: var(--color-primary-300, #87bae8);
+  --b-accent-dim: var(--color-primary-900, #003d7a);
+  --b-success: #6cce5c;
+  --b-warning: #ffc933;
+  --b-danger: #ff6d6d;
+  --b-sidebar-bg: #252525;
+}
+
+/* Explicit Light Mode Toggle */
+body.theme-light {
+  --b-bg: #ffffff;
+  --b-surface: #f5f5f5;
+  --b-surface-2: #ececec;
+  --b-surface-3: #e0e0e0;
+  --b-border: #d0d0d0;
+  --b-text: #1a1a1a;
+  --b-text-2: #424242;
+  --b-text-3: #757575;
+  --b-accent: var(--color-primary-600, #0078d4);
+  --b-accent-dim: var(--color-primary-200, #b4d7f1);
+  --b-success: #107c10;
+  --b-warning: #ffb900;
+  --b-danger: #d13438;
+  --b-sidebar-bg: #f3f3f3;
+}
+
+/* Wireframe Mode - Neutral Greyscale */
+body.wireframe-mode {
+  --b-bg: #ffffff;
+  --b-surface: #f5f5f5;
+  --b-surface-2: #e8e8e8;
+  --b-surface-3: #d9d9d9;
+  --b-border: #999999;
+  --b-text: #333333;
+  --b-text-2: #666666;
+  --b-text-3: #999999;
+  --b-accent: #666666;
+  --b-accent-dim: #cccccc;
+  --b-success: #666666;
+  --b-warning: #999999;
+  --b-danger: #666666;
+}

@@ -21,6 +21,7 @@ Invoke specialized skills directly:
 /unit-tester              - Write MSTest unit tests
 /code-reviewer            - Review code for quality and architecture
 /architect                - System design and architecture decisions
+/product-discovery        - Product interview and discovery — capture what to build
 /blazor-specialist        - Blazor UI development
 /maui-specialist          - MAUI mobile app development
 /playwright-tester        - E2E and UI testing
