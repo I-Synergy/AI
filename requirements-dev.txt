@@ -5,5 +5,12 @@
 #
 # Keep these pins in step with the versions used in CI
 # (.github/workflows/validate-template.yml).
+#
+# CI installs the hash-pinned lock file (requirements-dev.lock), not this file.
+# After changing a pin here, regenerate the lock with:
+#   pip download --dest <tmp> --only-binary :all: --platform manylinux2014_x86_64 \
+#     --python-version 3.14 --implementation cp --abi cp314 -r requirements-dev.txt
+# then rebuild requirements-dev.lock with the SHA-256 hashes from each package's
+# PyPI JSON metadata (https://pypi.org/pypi/<name>/<version>/json).
 PyYAML==6.0.3
 pytest==9.1.1

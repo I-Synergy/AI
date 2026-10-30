@@ -3,6 +3,13 @@
 [![Harness health](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fgithub.com%2FI-Synergy%2FAI%2Freleases%2Flatest%2Fdownload%2Fharness-score.json&query=%24.score&label=harness&suffix=%2F100&color=blue)](https://github.com/I-Synergy/AI/releases/latest)
 [![Harness grade](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fgithub.com%2FI-Synergy%2FAI%2Freleases%2Flatest%2Fdownload%2Fharness-score.json&query=%24.grade&label=grade&color=blue)](https://github.com/I-Synergy/AI/releases/latest)
 
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=I-Synergy_AI&metric=alert_status)](https://sonarcloud.io/dashboard?id=I-Synergy_AI)
+[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=I-Synergy_AI&metric=bugs)](https://sonarcloud.io/dashboard?id=I-Synergy_AI)
+[![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=I-Synergy_AI&metric=code_smells)](https://sonarcloud.io/dashboard?id=I-Synergy_AI)
+[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=I-Synergy_AI&metric=vulnerabilities)](https://sonarcloud.io/dashboard?id=I-Synergy_AI)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=I-Synergy_AI&metric=security_rating)](https://sonarcloud.io/dashboard?id=I-Synergy_AI)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=I-Synergy_AI&metric=sqale_rating)](https://sonarcloud.io/dashboard?id=I-Synergy_AI)
+
 Professional .NET development template with AI-powered agent orchestration and modular architecture.
 
 ## AI Workspace Manager (VS Code extension)
@@ -356,6 +363,8 @@ Edit `.ai/session-context.md` to establish your project's initial state.
 ├── LICENSE                          # MIT license
 ├── pytest.ini                       # Pytest configuration (testpaths = .ai/tests)
 ├── pip.ini                          # Project-scoped pip config
+├── requirements-dev.txt             # Development dependency pins (PyYAML, pytest)
+├── requirements-dev.lock            # Hash-pinned dependency lock installed by CI
 ├── .gitattributes                   # LF line endings enforced for *.sh
 ├── .gitignore                       # Excludes junction targets + pycache
 ├── .vscode/
@@ -548,6 +557,8 @@ PIP_CONFIG_FILE=pip.ini pip install -r requirements-dev.txt
 ```
 
 The `.vscode/settings.json` sets `PIP_CONFIG_FILE` automatically in VS Code terminals.
+
+CI installs the hash-pinned `requirements-dev.lock` (with `--require-hashes --only-binary :all:`), not the loose file. Regenerate the lock whenever `requirements-dev.txt` changes — the header of both files carries the commands.
 
 | Script | What it checks |
 |--------|----------------|
