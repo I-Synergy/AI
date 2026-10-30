@@ -433,6 +433,7 @@ Template-owned paths are copied when missing and diffed when they differ:
 | `.ai/**` | All skills, agents, patterns, reference, scripts, checklists, tests |
 | `AGENTS.md` | Diffed, never silently replaced |
 | `requirements-dev.txt` | Pinned PyYAML + pytest |
+| `requirements-dev.lock` | Hash-pinned dependency lock installed by CI |
 | `pytest.ini` | `testpaths = .ai/tests` |
 | `pip.ini` | Project-scoped PyPI index |
 | `.vscode/settings.json` | `PIP_CONFIG_FILE` and pytest discovery |

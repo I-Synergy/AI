@@ -4,10 +4,11 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FAILED=0
 TOTAL=0
+SEPARATOR="========================================="
 
-echo "========================================="
+echo "$SEPARATOR"
 echo "  Claude Template Validation Suite"
-echo "========================================="
+echo "$SEPARATOR"
 echo ""
 echo "Running comprehensive validation tests..."
 echo ""
@@ -25,9 +26,9 @@ run_test() {
     local test_name="$1"
     local test_command="$2"
 
-    echo "========================================="
+    echo "$SEPARATOR"
     echo "TEST: $test_name"
-    echo "========================================="
+    echo "$SEPARATOR"
 
     TOTAL=$((TOTAL + 1))
 
@@ -60,25 +61,25 @@ run_test "13. Standards" "python3 '$SCRIPT_DIR/validate-standards.py'"
 run_test "14. Release Versioning" "python3 '$SCRIPT_DIR/validate-release.py'"
 
 # Final Summary
-echo "========================================="
+echo "$SEPARATOR"
 echo "  VALIDATION SUITE SUMMARY"
-echo "========================================="
+echo "$SEPARATOR"
 echo ""
 echo "Total test suites: $TOTAL"
 echo "Passed: $((TOTAL - FAILED))"
 echo "Failed: $FAILED"
 echo ""
 
-if [ $FAILED -eq 0 ]; then
+if [[ $FAILED -eq 0 ]]; then
     echo "✅✅✅ ALL TESTS PASSED ✅✅✅"
     echo ""
     echo "The Claude template is valid and ready to use!"
-    echo "========================================="
+    echo "$SEPARATOR"
     exit 0
 else
     echo "❌❌❌ SOME TESTS FAILED ❌❌❌"
     echo ""
     echo "Please review the errors above and fix them."
-    echo "========================================="
+    echo "$SEPARATOR"
     exit 1
 fi
