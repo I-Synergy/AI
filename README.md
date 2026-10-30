@@ -471,6 +471,8 @@ Edit `.ai/session-context.md` to establish your project's initial state.
         ├── validate-tokens.sh
         ├── validate-agents-md.py
         ├── validate-settings.py
+        ├── validate-triggers.py
+        ├── validate-prose.py
         ├── validate-copilot.py
         ├── smoke-test.py
         ├── validate-traceability.py
@@ -578,6 +580,8 @@ CI installs the hash-pinned `requirements-dev.lock` (with `--require-hashes --on
 | `validate-tokens.sh` | Token consistency across templates and skills |
 | `validate-agents-md.py` | All `.ai/` paths in AGENTS.md resolve to real files |
 | `validate-settings.py` | `.claude/settings.json` structure, no stale refs, and hooks correct |
+| `validate-triggers.py` | Every skill and agent description carries an explicit trigger clause — template items only; third-party installs are skipped |
+| `validate-prose.py` | `AGENTS.md` prose over 100 words points at the skill or reference that carries the detail |
 | `smoke-test.py` | Skills loadable, names/descriptions unique |
 | `validate-traceability.py` | Identifier integrity across stories, criteria, `@AC-` scenario tags and `[TestCategory]` attributes |
 | `validate-standards.py` | Standards-compatibility surfaces agree with `.ai/reference/standards.md` and its validator runs |
