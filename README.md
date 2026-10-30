@@ -1,5 +1,8 @@
 # .NET Development Template
 
+[![Harness health](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fgithub.com%2FI-Synergy%2FAI%2Freleases%2Flatest%2Fdownload%2Fharness-score.json&query=%24.score&label=harness&suffix=%2F100&color=blue)](https://github.com/I-Synergy/AI/releases/latest)
+[![Harness grade](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fgithub.com%2FI-Synergy%2FAI%2Freleases%2Flatest%2Fdownload%2Fharness-score.json&query=%24.grade&label=grade&color=blue)](https://github.com/I-Synergy/AI/releases/latest)
+
 Professional .NET development template with AI-powered agent orchestration and modular architecture.
 
 ## AI Workspace Manager (VS Code extension)
@@ -527,6 +530,17 @@ python -m pytest .ai/tests/test_suite.py -v
 ```
 
 `run-all-tests.sh` skips `validate-upgrade-script.py`; the pytest wrapper includes it, so pytest is the fuller run.
+
+#### Harness Health Score
+
+`.ai/tests/score-harness.py` collapses the whole suite into one weighted 0–100 score with a letter grade, a per-category breakdown and every deduction named: 1.0 for a clean pass, 0.8 for a pass carrying advisories, 0.0 for a failure, and `SKIP` lines cost nothing. It runs the existing validators and weights their results, so it doubles as a CI gate and a shields.io badge source.
+
+```bash
+python .ai/tests/score-harness.py
+python .ai/tests/score-harness.py --json harness-score.json --badge harness-score.svg --fail-under 90
+```
+
+Every release runs it: the score is written into the GitHub Release notes, and `harness-score.json` plus `harness-score.svg` are attached as release assets. The badges at the top of this README read the latest release's `harness-score.json`, so they update release by release without a commit to `main`.
 
 On Windows with a corporate pip registry, use the project-scoped override:
 ```bash

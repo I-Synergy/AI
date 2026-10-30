@@ -4,8 +4,9 @@
 #   1. derives a build number in the form YYYY.1MMdd.1HHmm (UTC),
 #   2. derives the version variables from it,
 #   3. generates release notes from the commits since the previous tag,
-#   4. creates and pushes the annotated tag named after the build number, and
-#   5. publishes a GitHub Release with the generated notes.
+#   4. scores the validation harness and appends the result to the release notes,
+#   5. creates and pushes the annotated tag named after the build number, and
+#   6. publishes a GitHub Release with the generated notes and the score assets.
 #
 # The tag is the build number itself (e.g. 2026.11028.11435), without a `v` prefix.
 #
@@ -134,6 +135,39 @@ jobs:
 
           echo "notes_file=$notes_file" >> "$GITHUB_OUTPUT"
 
+      - name: Score the validation harness
+        id: score
+        if: steps.check.outputs.skip != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m venv "$RUNNER_TEMP/score-venv"
+          "$RUNNER_TEMP/score-venv/bin/python" -m pip install --quiet -r requirements-dev.txt
+          "$RUNNER_TEMP/score-venv/bin/python" .ai/tests/score-harness.py \
+            --json "$RUNNER_TEMP/harness-score.json" \
+            --badge "$RUNNER_TEMP/harness-score.svg"
+          score_line="$("$RUNNER_TEMP/score-venv/bin/python" .ai/tests/score-harness.py \
+            --from-json "$RUNNER_TEMP/harness-score.json" --quiet)"
+          echo "score_line=$score_line" >> "$GITHUB_OUTPUT"
+          echo "### Harness health: $score_line" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Add harness health to release notes
+        if: steps.check.outputs.skip != 'true'
+        shell: bash
+        env:
+          NOTES_FILE: ${{ steps.notes.outputs.notes_file }}
+          SCORE_LINE: ${{ steps.score.outputs.score_line }}
+        run: |
+          set -euo pipefail
+          {
+            echo
+            echo "## Harness health"
+            echo
+            echo "Weighted validation score: **${SCORE_LINE}**"
+            echo
+            echo "Download \`harness-score.json\` for the per-check breakdown, or \`harness-score.svg\` for the badge."
+          } >> "$NOTES_FILE"
+
       - name: Create and push annotated tag
         if: steps.check.outputs.skip != 'true'
         shell: bash
@@ -159,3 +193,16 @@ jobs:
             --title "$BUILD_NUMBER" \
             --notes-file "$NOTES_FILE" \
             --verify-tag
+
+      - name: Upload harness score assets
+        if: steps.check.outputs.skip != 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
+          BUILD_NUMBER: ${{ steps.build.outputs.BuildNumber }}
+        run: |
+          set -euo pipefail
+          gh release upload "$BUILD_NUMBER" \
+            "$RUNNER_TEMP/harness-score.json" \
+            "$RUNNER_TEMP/harness-score.svg" \
+            --clobber
