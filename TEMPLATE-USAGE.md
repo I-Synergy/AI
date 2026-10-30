@@ -247,20 +247,31 @@ Claude will:
 4. Create MSTest unit tests + Reqnroll BDD scenarios
 ```
 
-### Example: Design Interrogation Pipeline
+### Example: Product Discovery & Design Interrogation Pipeline
 
-The design-interrogation skill orchestrates a full pipeline from raw requirements to implementation-ready blueprints:
+Start with product discovery to interview stakeholders and build a product brief, then design-interrogation consumes that output to interrogate technical dimensions:
 
 ```
+/product-discovery
+  18 phases (0-17): intake/governance, problem, audience, users, value, scope, market, journeys, UX, UI, platforms, mocks/prototype, data/integrations, compliance, operations, launch, risks, completeness check
+  Produces: product brief, audience profile, UX/UI design briefs, wireframes, mockups, clickable prototype
+  
+  → Interview transcribed into docs/product/{product-brief, audience-profile, ux-brief, ui-design-brief, platform-deliverables}.md
+  → Wireframes, mockups, clickable prototype in docs/product/prototype/
+
 /design-interrogation
-  Phase -1: Document intake (upload specs, architecture docs)
-  Phase  0: Strategic anchors (4 key decisions)
+  Consumes product-discovery output (no re-asking what's already decided)
+  Phase -1: Document intake (reads docs/product/*)
+  Phase  0: Strategic anchors (5 key decisions)
   Phase  1: Bounded context interrogation (parallel)
+  Dimensions 1-8: Domain (plus migration immediately after for migrations), quality attributes
+  Dimensions 9-15: Client surfaces, identity/access, data, delivery, observability, testing, AI/ML
 
   Produces session deliverables:
   → /ubiquitous-language   capture domain vocabulary
   → /usecase-specification  use cases with Gherkin
   → /user-story             INVEST-validated stories
+  → Product Specification   consolidated what-we-build + technical requirements
   → /solution-generator     .NET solution scaffold
   → /vertical-slices        blueprint JSON per slice
   → /gap-review             validate against design
