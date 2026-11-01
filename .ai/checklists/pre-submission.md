@@ -40,6 +40,8 @@ If no trigger from *When to Convene* in `.ai/reference/council.md` fired, skip t
 ## Code Quality
 
 - [ ] SOLID principles applied
+- [ ] One top-level type per file — no file declares two classes, records, interfaces or enums
+- [ ] Model names and model files carry no `Dto` suffix
 - [ ] Code is immutable where possible (records, init, readonly)
 - [ ] Intention-revealing names used
 - [ ] No null reference warnings

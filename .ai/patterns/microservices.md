@@ -365,7 +365,7 @@ public sealed class {Entity}ServiceClient
         _logger = logger;
     }
 
-    public async Task<{Entity}Dto?> Get{Entity}ByIdAsync(
+    public async Task<{Entity}Model?> Get{Entity}ByIdAsync(
         Guid {entity}Id,
         CancellationToken cancellationToken = default)
     {
@@ -385,7 +385,7 @@ public sealed class {Entity}ServiceClient
                 return null;
             }
 
-            var {entity} = await response.Content.ReadFromJsonAsync<{Entity}Dto>(
+            var {entity} = await response.Content.ReadFromJsonAsync<{Entity}Model>(
                 cancellationToken: cancellationToken);
 
             return {entity};
@@ -1669,10 +1669,10 @@ public async Task<CreateOrderResponse> CreateOrderAsync(CreateOrderCommand comma
 
 ```csharp
 // ❌ No resilience - if service is down, keeps trying indefinitely
-public async Task<{Entity}Dto?> Get{Entity}Async(Guid {entity}Id)
+public async Task<{Entity}Model?> Get{Entity}Async(Guid {entity}Id)
 {
     var response = await _httpClient.GetAsync($"/api/{entities}/{entity}Id");
-    return await response.Content.ReadFromJsonAsync<{Entity}Dto>();
+    return await response.Content.ReadFromJsonAsync<{Entity}Model>();
 }
 ```
 

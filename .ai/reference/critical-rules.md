@@ -185,6 +185,8 @@ public sealed class Get{Entity}ByIdHandler : IQueryHandler<...>
 
 ## 10. File Organization: One Type Per File, Subfolder Per Operation
 
+**Every top-level type gets its own file.** A file contains exactly one class, record, struct, interface, or enum — never two, however small or closely related they are. A private nested type is part of its parent type, not a second top-level type.
+
 ```
 // CORRECT - Each operation gets its own subfolder with separate files
 Features/{Entity}/
@@ -205,6 +207,11 @@ Features/{Entity}/
 Features/{Entity}/Commands/
   Create{Entity}Command.cs      (command + response combined)
   Create{Entity}Handler.cs
+
+// WRONG - two top-level types in one file, anywhere in the solution
+Create{Entity}Response.cs
+  public sealed record Create{Entity}Response(Guid {Entity}Id);
+  public sealed record Update{Entity}Response(bool Success);   // belongs in its own file
 ```
 
 ## 11. Enum Naming: Always Plural (except *Status)
@@ -687,6 +694,26 @@ Placement rules:
 
 **Exception — implementation-only seams.** If an interface is used only inside a single implementation and never by a consumer, keep it beside that implementation instead of in an `Abstractions/` folder, and make it `internal` when the implementation and its callers are internal. A public interface reachable by external code never qualifies for this exception.
 
+## 28. Models: Never Use a `Dto` Suffix
+
+Models *are* DTOs — the suffix adds no information to the type name, the file name, or any reference to it. Name the model after the concept it carries.
+
+```csharp
+// CORRECT — type and file named after the concept
+// Models/{Entity}.cs
+public sealed record {Entity}(Guid {Entity}Id, string Description, decimal Amount);
+
+// WRONG — redundant suffix on type and file
+// Models/{Entity}Dto.cs
+public sealed record {Entity}Dto(Guid {Entity}Id, string Description, decimal Amount);
+
+// WRONG — the same redundancy under other spellings
+public sealed record {Entity}DTO(...);
+public sealed record {Entity}DtoModel(...);
+```
+
+`Response` and `Request` already state their role and are never `...Dto` either. The rule applies to every model type: entity projections, read models, view models, and API models.
+
 ## Quick Violation Checklist
 
 Before submitting code, verify you haven't violated these:
@@ -700,6 +727,8 @@ Before submitting code, verify you haven't violated these:
 - [ ] Domain entities never exposed directly (responses wrap Models)
 - [ ] Handlers named with `CommandHandler` / `QueryHandler` suffix
 - [ ] Each type in its own file, each operation in its own subfolder
+- [ ] No file declares more than one top-level type
+- [ ] Model names never carry a `Dto` suffix
 - [ ] Progress files in current solution's `.ai/` folder
 - [ ] Plan files saved to `.ai/plans/` (not `docs/plans/`)
 - [ ] Session context read first and updated last
