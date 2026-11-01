@@ -51,6 +51,7 @@ Specialized agent for .NET, C#, Blazor, and MAUI development.
 - Queries use named parameters for optional filters
 - Never expose domain entities directly (always DTOs)
 - Always include `CancellationToken` in async methods
+- Interfaces live in `Abstractions/` folders in the highest shared project (implementation-only internal seams excepted)
 - No repository interfaces or extension methods (use `DataContext` primitives directly)
 
 ## Templates to Use

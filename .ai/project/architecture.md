@@ -53,8 +53,8 @@ Infrastructure Layer (Database, External Services)
 Example:
 solution/
 ├── src/
-│   ├── {ApplicationName}.Common/                  # Shared enums, constants, interfaces, value objects
-│   ├── {ApplicationName}.Contracts.{Domain}/      # Interfaces, service contracts
+│   ├── {ApplicationName}.Common/                  # Solution-wide contracts (Abstractions/), enums, constants, value objects
+│   ├── {ApplicationName}.Contracts.{Domain}/      # Interfaces in Abstractions/, service contracts
 │   ├── {ApplicationName}.Entities.{Domain}/       # EF Core entity classes
 │   ├── {ApplicationName}.Models.{Domain}/         # DTOs, view models
 │   ├── {ApplicationName}.Domain.{Domain}/         # CQRS handlers, domain logic
@@ -63,6 +63,25 @@ solution/
 │   └── {ApplicationName}.{Domain}.Tests/          # Unit and integration tests
 └── docs/
 ```
+
+## Interface Placement (Abstractions)
+
+Interfaces live in an `Abstractions/` folder in the **highest project that both their consumers and their implementation already depend on** — not in the implementing project, and not automatically in Common.
+
+```
+// CORRECT — consumer and implementation both reach Core; ITest lives there
+src/
+├── {ApplicationName}.Core/
+│   └── Abstractions/
+│       └── ITest.cs                          # namespace {ApplicationName}.Core.Abstractions
+└── {ApplicationName}.Implementation/
+    └── TestImplementation.cs                 # depends on Core
+
+// WRONG — abstraction buried in the implementation project
+src/{ApplicationName}.Implementation/ITest.cs
+```
+
+Exception: an interface used only inside a single implementation, with no consumer, stays beside that implementation and is `internal`. Full rule: `.ai/reference/critical-rules.md` rule 27.
 
 ## CQRS Implementation Pattern
 

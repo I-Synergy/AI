@@ -653,6 +653,40 @@ env:
   GOOGLE_PLAY_SA_JSON: '{ "type": "service_account", ... }'   # LEAK
 ```
 
+## 27. Interfaces: `Abstractions/` Folder, Highest Shared Project
+
+**Every interface lives in an `Abstractions/` folder, in the highest project that its consumers and its implementation already depend on.**
+
+```csharp
+// CORRECT — Test.Implementation already depends on Test.Core, so ITest belongs there
+// src/{ApplicationName}.Core/Abstractions/ITest.cs
+namespace {ApplicationName}.Core.Abstractions;
+
+public interface ITest
+{
+    Task ExecuteAsync(CancellationToken cancellationToken = default);
+}
+
+// src/{ApplicationName}.Implementation/TestImplementation.cs
+namespace {ApplicationName}.Implementation;
+
+public sealed class TestImplementation(ITest test) : ...   // depends on Core
+
+// WRONG — abstraction buried in the implementing project, forcing every consumer
+// to reference the implementation just to see the contract
+// src/{ApplicationName}.Implementation/ITest.cs
+```
+
+Placement rules:
+
+1. **The abstraction belongs to the consumer side.** The implementing project depends on the interface, never the other way round.
+2. **Choose the highest project that both sides already reference** — directly or transitively. If `Test.Implementation` also depends on `Test.Core`, put `ITest` in `Test.Core`, not in `Test.Implementation`.
+3. **Do not create a project or add a reference just to host one interface.** If no shared project exists, place it in the highest consumer project and invert the reference instead.
+4. **`{ApplicationName}.Common` is not the automatic answer.** Only genuinely solution-wide contracts (`IEntity`, `IAuditable`) belong there — see rule 13.
+5. **Folder and namespace mirror each other:** `Abstractions/`, optional grouping subfolder (`Abstractions/Services/`), namespace `{ApplicationName}.{Layer}.Abstractions[.{Group}]`.
+
+**Exception — implementation-only seams.** If an interface is used only inside a single implementation and never by a consumer, keep it beside that implementation instead of in an `Abstractions/` folder, and make it `internal` when the implementation and its callers are internal. A public interface reachable by external code never qualifies for this exception.
+
 ## Quick Violation Checklist
 
 Before submitting code, verify you haven't violated these:
@@ -671,6 +705,7 @@ Before submitting code, verify you haven't violated these:
 - [ ] Session context read first and updated last
 - [ ] Solution includes `{ApplicationName}.Common` project with all enumerations centralized
 - [ ] Entities and models never reference each other (cross-reference = belongs in Common)
+- [ ] Interfaces live in an `Abstractions/` folder in the highest project both consumers and implementation already reference (implementation-only seams excepted)
 - [ ] Enum names are plural (except *Status suffix enums)
 - [ ] EF Core entity properties use enum types, not raw int
 - [ ] Code and design work delegated to specialized subagents (`architect`, `developer`, `designer`, `ui-developer`, `tester`, `ui-tester`, `reviewer`, `writer`) — not done in main conversation

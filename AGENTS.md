@@ -158,6 +158,9 @@ If a type already exists, reuse or extend it. Never create duplicates. Every pla
 ### 13. Plan Files: Always in `.ai/plans/`
 Never save plans to `docs/plans/`. Always use `.ai/plans/`.
 
+### 14. Interfaces: `Abstractions/` Folder, Highest Shared Project
+Every interface goes in an `Abstractions/` folder — never inside the implementing project when a consumer sits above it. Place it in the highest project that both its consumers and its implementation already depend on. Exception: an interface used only inside one internal implementation stays beside it and is `internal`. Full rule: `.ai/reference/critical-rules.md` rule 27.
+
 ## After Every Code Change
 
 The `Stop` hook runs `dotnet build --nologo --verbosity minimal` once at the end of a task, and only when files under `src/` or `tests/` changed since the last successful build, or when no successful-build marker exists yet and a solution is present. Read the build output. If it fails, fix before continuing. Run `dotnet test` after multi-file changes.

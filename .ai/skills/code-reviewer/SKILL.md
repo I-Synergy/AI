@@ -59,6 +59,9 @@ Specialized agent for code quality assurance and review.
 ### Domain Entities
 - [ ] Domain entities never exposed directly
 
+### Structure & Abstractions
+- [ ] Interfaces live in an `Abstractions/` folder in the highest project both consumers and implementation already reference (implementation-only internal seams excepted)
+
 ### Validation & Error Handling
 - [ ] Guard clauses on all public methods
 - [ ] Data Annotations used for validation
