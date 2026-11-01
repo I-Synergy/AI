@@ -33,6 +33,7 @@ If no trigger from *When to Convene* in `.ai/reference/council.md` fired, skip t
 - [ ] Follows CQRS pattern (commands/queries separated)
 - [ ] Follows DDD principles (entities, value objects, aggregates)
 - [ ] Follows Clean Architecture (proper layer separation)
+- [ ] Interfaces are in `Abstractions/` folders in the highest shared project (implementation-only internal seams excepted)
 - [ ] Uses vertical slice organization (feature folders)
 - [ ] No domain entities exposed directly (always use DTOs/Models)
 

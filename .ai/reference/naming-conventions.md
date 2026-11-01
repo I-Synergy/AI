@@ -11,6 +11,7 @@
 | **Response** | `{Action}{Entity}Response` | `Create{Entity}Response` |
 | **DTO / Model** | `{Entity}` (no suffix) | `{Entity}` |
 | **Interface** | `I{Type}` | `ICommandHandler<T>` |
+| **Interface location** | `Abstractions/` folder in the highest shared project, namespace mirrors folder | `{ApplicationName}.Core.Abstractions.ITest` |
 | **Classes** | PascalCase | `{Entity}Endpoints` |
 | **Methods** | PascalCase + `Async` suffix | `Get{Entity}ByIdAsync` |
 | **Properties** | PascalCase | `{Entity}Id`, `CreatedDate` |
@@ -37,10 +38,15 @@
 {ApplicationName}.Models.{Domain}
 {ApplicationName}.Data
 
+// Abstractions (interfaces mirror their folder)
+{ApplicationName}.{Layer}.Abstractions
+{ApplicationName}.{Layer}.Abstractions.{Group}
+
 // Examples
 {ApplicationName}.Domain.{Domain}
 {ApplicationName}.Domain.{Domain}.Features.{Entity}.Commands
 {ApplicationName}.Services.{Domain}.Endpoints
+{ApplicationName}.Core.Abstractions
 {ApplicationName}.Entities.{Domain}
 ```
 
