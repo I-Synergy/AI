@@ -126,7 +126,8 @@ Always map entities to Models before returning from handlers. Responses wrap Mod
 ### 5. Handler Naming: Always Include Command/Query Suffix
 `Create{Entity}CommandHandler`, `Get{Entity}ByIdQueryHandler` — never `Create{Entity}Handler`.
 
-### 6. Example File Organization: One Type Per File, Subfolder Per Operation
+### 6. File Organization: One Type Per File, Subfolder Per Operation
+Every top-level class, record, struct, interface, and enum gets its own file — never merge two types into one file. Each operation also gets its own subfolder.
 ```
 Features/{Entity}/
   Commands/Create{Entity}/
@@ -165,6 +166,9 @@ Never save plans to `docs/plans/`. Always use `.ai/plans/`.
 
 ### 14. Interfaces: `Abstractions/` Folder, Highest Shared Project
 Every interface goes in an `Abstractions/` folder — never inside the implementing project when a consumer sits above it. Place it in the highest project that both its consumers and its implementation already depend on. Exception: an interface used only inside one internal implementation stays beside it and is `internal`. Full rule: `.ai/reference/critical-rules.md` rule 27.
+
+### 15. Models: Never Use a `Dto` Suffix
+Models are DTOs by nature — never suffix a type or its file with `Dto` (`{Entity}DTO`, `{Entity}DtoModel`). Name it after the concept: `{Entity}`, `{Entity}Response`, `Create{Entity}Request`. Full rule: `.ai/reference/critical-rules.md` rule 28.
 
 ## After Every Code Change
 

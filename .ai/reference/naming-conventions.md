@@ -9,7 +9,7 @@
 | **Query** | `Get{Entity}{Criteria}Query` | `Get{Entity}ByIdQuery` |
 | **Handler** | `{Action}{Entity}CommandHandler` / `Get{Entity}{Criteria}QueryHandler` | `Create{Entity}CommandHandler` |
 | **Response** | `{Action}{Entity}Response` | `Create{Entity}Response` |
-| **DTO / Model** | `{Entity}` (no suffix) | `{Entity}` |
+| **DTO / Model** | `{Entity}` (no suffix — never `{Entity}Dto`) | `{Entity}` |
 | **Interface** | `I{Type}` | `ICommandHandler<T>` |
 | **Interface location** | `Abstractions/` folder in the highest shared project, namespace mirrors folder | `{ApplicationName}.Core.Abstractions.ITest` |
 | **Classes** | PascalCase | `{Entity}Endpoints` |
@@ -51,6 +51,8 @@
 ```
 
 ## File Naming
+
+**One top-level type per file.** A file declares exactly one class, record, struct, interface, or enum and is named after it — never place two types in one file. Model files are named after the concept (`{Entity}.cs`), never `{Entity}Dto.cs`.
 
 ### Commands
 

@@ -61,6 +61,8 @@ Specialized agent for code quality assurance and review.
 
 ### Structure & Abstractions
 - [ ] Interfaces live in an `Abstractions/` folder in the highest project both consumers and implementation already reference (implementation-only internal seams excepted)
+- [ ] Each file declares one top-level type — no merged classes, records, interfaces or enums
+- [ ] No `Dto` suffix on model types or model files
 
 ### Validation & Error Handling
 - [ ] Guard clauses on all public methods

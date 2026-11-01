@@ -69,7 +69,7 @@ MSBuild's default node reuse keeps a pool of worker processes alive after a buil
 - **Pattern matching:** [Use modern C# features / Conservative approach]
 
 ### Organization
-- **File organization:** [One class per file / Multiple if related / No preference]
+- **File organization:** One top-level type per file (mandatory — `.ai/reference/critical-rules.md` rule 10)
 - **Namespace structure:** [Match folder structure / Flat / Custom]
 - **Using statements:** [Implicit global usings / Explicit / Minimal]
 

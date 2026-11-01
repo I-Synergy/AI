@@ -37,7 +37,7 @@ public interface I{Entity}Service
     /// <param name="{entity}Id">The {entity} identifier.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>{Entity} details or null if not found.</returns>
-    Task<{Entity}Dto?> Get{Entity}Async(
+    Task<{Entity}Model?> Get{Entity}Async(
         Guid {entity}Id,
         CancellationToken ct = default);
 
@@ -391,7 +391,7 @@ public sealed class {Entity}Service : I{Entity}Service
     }
 
     // Stateless - retrieves fresh data each call
-    public async Task<{Entity}Dto?> Get{Entity}Async(
+    public async Task<{Entity}Model?> Get{Entity}Async(
         Guid {entity}Id,
         CancellationToken ct = default)
     {
@@ -400,7 +400,7 @@ public sealed class {Entity}Service : I{Entity}Service
         var query = new Get{Entity}ByIdQuery({entity}Id);
         var response = await _getHandler.HandleAsync(query, ct);
 
-        return response.{Entity} is null ? null : new {Entity}Dto(response.{Entity}.{Entity}Id, response.{Entity}.Name, response.{Entity}.Amount);
+        return response.{Entity} is null ? null : new {Entity}Model(response.{Entity}.{Entity}Id, response.{Entity}.Name, response.{Entity}.Amount);
     }
 }
 
