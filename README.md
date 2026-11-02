@@ -75,6 +75,7 @@ name is the skill name (`/<skill-name>` invokes it explicitly).
 | **database-migration** | EF Core migrations, schema design, query tuning, PostgreSQL |
 | **integration-specialist** | Third-party APIs, webhooks, message queues, external service calls |
 | **refactor** | Bulk find-and-replace and pattern migrations across the solution |
+| **vscode-ts-to-csharp-migration** | Convert a TypeScript VS Code extension to a thin Node host plus a .NET sidecar — extension-host boundary, JSON-RPC transport, wave-based porting, VSIX packaging, cutover |
 
 #### Security
 
@@ -92,6 +93,7 @@ name is the skill name (`/<skill-name>` invokes it explicitly).
 | **unit-tester** | MSTest + Moq unit tests, Reqnroll BDD scenarios, per-slice test plans |
 | **playwright-tester** | Playwright E2E, accessibility and visual regression tests |
 | **performance-engineer** | Profiling, query and caching optimisation, response times |
+| **vscode-csharp-sidecar-benchmark** | Parity-checked latency and memory comparison of a VS Code extension's TypeScript path against its .NET sidecar — allocation, retention, process RSS |
 | **devops-engineer** | CI/CD pipelines, containerisation, IaC, deployment automation |
 
 #### UI Frameworks & Themes
