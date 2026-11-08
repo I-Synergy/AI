@@ -239,7 +239,19 @@ See `.ai/reference/tokens.md` for complete definitions.
 
 ## Quick Start
 
-### 1. Copy the Template
+### 1. Install a Selection (Recommended: AI Workspace Manager)
+
+Do not copy the whole catalog. Install only the skills, agents, prompts and instructions the project needs:
+
+1. Install **AI Workspace Manager** from the Extensions view, or run `code --install-extension I-Synergy.aiworkspacemanager`.
+2. Open the project folder and pick a preset (Architecture, Security, .NET, MAUI, …), or choose items individually.
+3. Let the extension install the selection. On first activation it also writes the resolver, `AGENTS.md`, the Copilot/Claude configuration, the project folders and the platform junctions.
+
+The selection, its pinned revisions and its content hashes are recorded locally, so installing, removing and updating items is reviewable instead of a blind overwrite. See [AI Workspace Manager](#ai-workspace-manager-vs-code-extension) above for the full workflow.
+
+#### Manual fallback — copy the template
+
+Use this path only when the extension cannot be used (air-gapped machine, no VS Code, or you deliberately want the full library). It copies **every** skill, agent, prompt and instruction into the project.
 
 ```bash
 # Copy AI context to your project root
@@ -249,11 +261,26 @@ cp -r ./.ai /path/to/YourProject/.ai
 cp ./AGENTS.md /path/to/YourProject/
 
 # Copy tool configs (minimal — junctions do the rest)
+mkdir -p /path/to/YourProject/.claude /path/to/YourProject/.github
 cp -r ./.claude/settings.json /path/to/YourProject/.claude/
 cp -r ./.github/copilot-instructions.md /path/to/YourProject/.github/
 ```
 
-### 2. Create Junctions (One Command)
+### 2. Know What Is Always Copied
+
+The resolver selects **skills, agents, prompts and instructions**. The directories below are outside the selection on purpose — `AGENTS.md`, the agents and the skills cite them by literal path, so they must exist in every project:
+
+| Path | Why it is always present |
+|------|--------------------------|
+| `.ai/reference/` | `critical-rules.md`, `tokens.md`, `council.md`, … are cited by path |
+| `.ai/patterns/` | CQRS, API, testing, MVVM and other patterns are cited by path |
+| `.ai/checklists/` | Pre-submission gate used by the agent workflow |
+| `.ai/project/`, `.ai/session-context.md` | Project-owned context and session memory |
+| `.ai/scripts/`, `.ai/tests/` | Junction sync, upgrade and the validation suites |
+
+Selection reduces the catalog; it does not remove this floor.
+
+### 3. Create or Repair Junctions
 
 All platforms read `.ai/skills/`, `.ai/agents/`, `.ai/prompts/` and `.ai/instructions/` through directory junctions — no file copies.
 
@@ -277,9 +304,13 @@ This creates:
 | `.reasonix/skills` | `.ai/skills` | Reasonix Code |
 | `.reasonix/agents` | `.ai/agents` | Reasonix Code |
 
-All junction targets are in `.gitignore` — zero git bloat.
+All junction targets are in `.gitignore` — zero git bloat. Junctions are local, not committed: create them on a fresh clone, and re-run this command after the extension installs or updates a selection.
 
-### 3. Per-Tool Setup
+### 4. Check for Drift
+
+After installing or updating a selection, confirm the repository matches the recorded selection. AI Workspace Manager shows this on its **Installed** view; the same check is available as the resolver's `sync --check`, which is what CI compares against. Treat any drift as a review step — a blind re-copy is exactly what overwrites project changes.
+
+### 5. Per-Tool Setup
 
 All AI tools auto-load `AGENTS.md` at the project root for orchestration instructions, and discover skills/agents through tool-scoped junctions (`.claude/`, `.github/`, `.reasonix/`).
 
@@ -297,7 +328,7 @@ GitHub Copilot also reads `.github/copilot-instructions.md` for VS Code-specific
 
 Reasonix Code reads `AGENTS.md` and auto-discovers skills/agents from the `.reasonix/` junction. No additional setup needed — run the tool in the project root.
 
-### 4. Verify
+### 6. Verify
 
 ```bash
 bash .ai/tests/run-all-tests.sh

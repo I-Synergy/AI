@@ -16,7 +16,17 @@ A **generic, modular .NET project template** with:
 
 ## Quick Start
 
-### New Project — Copy Template
+### New Project — Install a Selection (Recommended)
+
+Do not copy the whole catalog. AI Workspace Manager installs only the skills, agents, prompts and instructions the project needs, records the selection, and reports drift against upstream:
+
+1. Install [AI Workspace Manager](#ai-workspace-manager-extension-recommended) from the Extensions view (or `code --install-extension I-Synergy.aiworkspacemanager`).
+2. Open the project folder and choose a preset or individual items.
+3. Let the extension install the selection. On first activation it also writes the resolver, vocabulary, `AGENTS.md`, the tool configuration, the project folders and the platform junctions.
+
+### New Project — Manual Fallback (Copy Everything)
+
+Use this only when the extension cannot be used — an air-gapped machine, no VS Code, or a deliberate full-library checkout. It copies every skill, agent, prompt and instruction into the project.
 
 ```bash
 # Copy the AI context directory to your project root
@@ -31,6 +41,18 @@ cp /path/to/Template/.claude/settings.json /path/to/YourProject/.claude/
 cp /path/to/Template/.github/copilot-instructions.md /path/to/YourProject/.github/
 ```
 
+### What Is Always Copied
+
+The resolver selects skills, agents, prompts and instructions only. These paths sit outside the selection because `AGENTS.md`, the agents and the skills cite them by literal path, so every project must carry them:
+
+| Path | Why it is always present |
+|------|--------------------------|
+| `.ai/reference/` | `critical-rules.md`, `tokens.md`, `council.md`, … are cited by path |
+| `.ai/patterns/` | CQRS, API, testing, MVVM and other patterns are cited by path |
+| `.ai/checklists/` | Pre-submission gate used by the agent workflow |
+| `.ai/project/`, `.ai/session-context.md` | Project-owned context and session memory |
+| `.ai/scripts/`, `.ai/tests/` | Junction sync, upgrade and the validation suites |
+
 ### Create Junctions
 
 ```bash
@@ -38,7 +60,7 @@ cd /path/to/YourProject
 python .ai/scripts/sync-platforms.py
 ```
 
-This creates 10 directory junctions so all tools read from the same `.ai/skills/`, `.ai/agents/`, `.ai/prompts/` and `.ai/instructions/` source. Junction targets are gitignored.
+This creates 10 directory junctions so all tools read from the same `.ai/skills/`, `.ai/agents/`, `.ai/prompts/` and `.ai/instructions/` source. Junction targets are gitignored, so junctions are local: create them on a fresh clone and re-run this after the extension installs or updates a selection. (The extension does it once on first activation.)
 
 `.github/copilot-instructions.md` is generated from `AGENTS.md`. After editing `AGENTS.md`, regenerate it with:
 
@@ -54,9 +76,9 @@ bash .ai/tests/run-all-tests.sh
 
 Every suite should pass.
 
-## AI Workspace Manager Extension (Optional)
+## AI Workspace Manager Extension (Recommended)
 
-[AI Workspace Manager](https://marketplace.visualstudio.com/items?itemName=I-Synergy.aiworkspacemanager) is the VS Code companion for the template's skill and agent catalog. It solves the problem of a full catalog being too large to copy into every project: a repository would otherwise carry hundreds of skills it never uses, with no clear record of what is installed or what changed upstream.
+[AI Workspace Manager](https://marketplace.visualstudio.com/items?itemName=I-Synergy.aiworkspacemanager) is the VS Code front end for the template's catalog resolver and the supported way to set up a new project. It exists because a full catalog is too large to carry into every project: a repository would otherwise ship hundreds of skills it never uses, with no clear record of what is installed or what changed upstream.
 
 Use it to choose a preset or individual items. The extension records the selection, installs only those items, and shows drift and upstream changes against the same resolver CI uses. On first activation it also writes the resolver, vocabulary, agent configuration, supporting folders, and platform junctions.
 

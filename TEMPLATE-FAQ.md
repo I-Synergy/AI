@@ -424,7 +424,7 @@ The authoritative list of suites is in `.ai/tests/run-all-tests.sh` (bash) and `
 
 ### Answer
 
-Yes. [AI Workspace Manager](https://marketplace.visualstudio.com/items?itemName=I-Synergy.aiworkspacemanager) is the companion VS Code extension for this template. It solves the problem of a full catalog being too large to copy into every project: the extension lets you choose a preset or individual skills and agents, records the selection, installs only those items, and shows drift and upstream changes. It reads the skill and agent catalog and installs the selection into `.ai/skills/` and `.ai/agents/`.
+Yes. [AI Workspace Manager](https://marketplace.visualstudio.com/items?itemName=I-Synergy.aiworkspacemanager) is the supported way to set up a project. It solves the problem of a full catalog being too large to copy into every project: the extension lets you choose a preset or individual skills, agents, prompts and instructions, records the selection, installs only those items, and shows drift and upstream changes against the same resolver CI uses.
 
 Install it from the Extensions view (search **AI Workspace Manager for VS Code**) or:
 
@@ -432,9 +432,11 @@ Install it from the Extensions view (search **AI Workspace Manager for VS Code**
 code --install-extension I-Synergy.aiworkspacemanager
 ```
 
-The extension keeps its selection and tooling state in `.ai/ai.json`, `.ai/ai.lock.json`, `.ai/tooling.json`, `.ai/catalog/`, `.ai/installed/`, and `*.ai-installed.json`. Those paths are gitignored: they describe the current machine's installed selection, not template content. Only `.ai/skills/` and `.ai/agents/` are committed.
+The extension keeps its selection and tooling state in `.ai/ai.json`, `.ai/ai.lock.json`, `.ai/tooling.json`, `.ai/catalog/`, `.ai/installed/`, and `*.ai-installed.json`. Those paths are gitignored: they describe the current machine's installed selection, not template content. Only the installed items under `.ai/skills/`, `.ai/agents/`, `.ai/prompts/` and `.ai/instructions/` are committed.
 
-After installing or changing a selection, run `python .ai/scripts/sync-platforms.py` so Claude Code, GitHub Copilot, and Reasonix Code see the updated junctions.
+The selection covers skills, agents, prompts and instructions. `.ai/reference/`, `.ai/patterns/`, `.ai/checklists/`, `.ai/project/`, `.ai/scripts/` and `.ai/tests/` always come along, because `AGENTS.md`, the agents and the skills cite them by literal path.
+
+After installing or changing a selection, run `python .ai/scripts/sync-platforms.py` so Claude Code, GitHub Copilot, and Reasonix Code see the updated junctions, then confirm there is no drift (`Installed` view, or the resolver's `sync --check`).
 
 ## Key Takeaways
 
@@ -448,10 +450,11 @@ After installing or changing a selection, run `python .ai/scripts/sync-platforms
 ## Quick Start Tips
 
 1. **Start naturally**: Just describe what you want
-2. **Trust the system**: It handles skill selection and agent spawning
-3. **Document learnings**: Explicitly ask to document patterns and decisions
-4. **Review regularly**: Consolidate session context into permanent docs
-5. **Upgrade regularly**: Run the upgrade script when the template improves
+2. **Install a selection, not the catalog**: Use AI Workspace Manager (or a preset) so the project carries only the skills and agents it needs
+3. **Trust the system**: It handles skill selection and agent spawning
+4. **Document learnings**: Explicitly ask to document patterns and decisions
+5. **Review regularly**: Consolidate session context into permanent docs
+6. **Upgrade regularly**: Run the upgrade script when the template improves
 
 ---
 
