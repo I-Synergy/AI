@@ -364,6 +364,7 @@ python .ai/scripts/upgrade-template.py /path/to/YourProject --non-interactive
 | **Template-owned** | `.ai/skills/`, `.ai/agents/`, `.ai/patterns/`, `.ai/reference/`, `.ai/checklists/`, `.ai/tests/`, `.ai/scripts/` | Safely updated |
 | **Project-owned** | `.ai/session-context.md`, `.ai/project/`, `.ai/progress/` | Never touched |
 | **Template-managed** | `AGENTS.md` | Updated (diffed) — project-specific info goes in `.ai/project/` |
+| **Merged** | `.vscode/settings.json`, `.vscode/tasks.json`, `.claude/settings.json` | Never overwritten. Template keys are added, your values are kept on conflict (pinned Copilot keys excepted), comments survive, invalid JSON is not written. See `TEMPLATE-USAGE.md` |
 
 The authoritative lists are `TEMPLATE_OWNED` and `PROJECT_OWNED` in `.ai/scripts/upgrade-template.py`; the table above is a summary.
 

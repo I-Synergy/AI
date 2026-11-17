@@ -179,8 +179,8 @@ Edit `.ai/session-context.md` to establish your project's initial context:
 AGENTS.md                        # AI orchestration instructions (Claude Code loads it; VS Code reads it via copilot-instructions.md)
 
 .vscode/
-├── settings.json                # Pytest discovery, PIP_CONFIG_FILE, terminal env, Copilot workspace settings
-└── tasks.json                   # "Link .ai into the paths tools read" (run on demand)
+├── settings.json                # Template's own: pytest discovery, PIP_CONFIG_FILE; projects receive the Copilot keys and terminal env by merge
+└── tasks.json                   # "Link .ai into the paths tools read" (run on demand); projects receive it by merge
 
 .claude/
 ├── settings.json                # Claude Code configuration (SessionStart, PostToolUse, Stop hooks; permissions)
@@ -483,14 +483,24 @@ Template-owned paths are copied when missing and diffed when they differ:
 | `.sonarcloud.properties` | SonarCloud analysis scope + UTF-8 encoding |
 | `pytest.ini` | `testpaths = .ai/tests` |
 | `pip.ini` | Project-scoped PyPI index |
-| `.vscode/settings.json` | `PIP_CONFIG_FILE`, pytest discovery, terminal env mirrored from `.claude/settings.json`, and Copilot workspace settings (`chat.useAgentsMdFile: false` for the Local harness, `customAgents.enabled`, `chat.useClaudeHooks`, pinned skill and instruction loading). See `.ai/reference/copilot-integration.md` |
-| `.vscode/tasks.json` | The **Link .ai into the paths tools read** task (run on demand, no folder-open run) |
 | `.gitignore` | Junction, `__pycache__` and `.ai/tmp/` ignores |
 | `.github/workflows/validate-template.yml` | CI validation job |
 | `.github/workflows/ci.yml` | Release versioning, tagging and publishing on merge to `main` |
 
-`.claude/settings.json` is handled separately: it is created if absent, otherwise
-merged (hooks, permissions and `plansDirectory` are unioned, your values are kept).
+Three files are merged, not copied or diffed. The template's shipped configuration is added to
+your copy and your values are kept:
+
+| Project file | What is merged | Result |
+|---|---|---|
+| `.vscode/settings.json` | The fragment `.ai/reference/templates/vscode/settings.json`: `chat.useAgentsMdFile: false` for the Local harness, `customAgents.enabled`, `chat.useClaudeHooks`, pinned skill and instruction loading, and the `terminal.integrated.env.*` build variables | Missing keys added; pinned Copilot keys set to the template value (your comment on that line is kept); other conflicts keep your value and are reported |
+| `.vscode/tasks.json` | The fragment `.ai/reference/templates/vscode/tasks.json`: the **Link .ai into the paths tools read** task (run on demand, no folder-open run) | Tasks merged by `label`; a task with an existing label is kept unchanged |
+| `.claude/settings.json` | The template's `.claude/settings.json` | Legacy hook commands listed in `merge-rules.json` removed; template hooks and `permissions` lists added (union); other keys added when missing; your values win on conflicts |
+
+Pinned keys and the other merge rules are in `.ai/reference/templates/merge-rules.json`. Comments
+and formatting are preserved. Invalid JSON in your file means nothing is written for it and the
+error is reported. The template's own `.vscode/settings.json` also holds template-only settings
+(`python.testing.*`, `PIP_CONFIG_FILE`) that are never shipped. See `.ai/reference/copilot-integration.md`,
+section "How the settings reach a project".
 
 #### What it never touches
 
@@ -597,9 +607,10 @@ session start.
 Earlier releases shipped `.ai/prompts/`. Prompts are skills now, so the upgrade does not delete
 `.ai/prompts/` in your project. It prints a notice instead. Move any custom prompts into
 `.ai/skills/<name>/SKILL.md` (with `disable-model-invocation: true` to keep them explicit-only),
-then remove the folder. The retired `.claude/commands/`, `.claude/instructions/` and
-`.github/prompts/` adapters are removed by `sync-platforms.py` when they are links or empty
-directories; real content found there is reported and left in place.
+then remove the folder. Prompt adapters follow `.ai/prompts/`: `.claude/commands/` and
+`.github/prompts/` are linked to it only while it holds files, and `sync-platforms.py` removes
+them when it is absent or empty. The retired `.claude/instructions/` is removed the same way when
+it is a link or empty. Real content found at any of these paths is reported and left in place.
 
 ### Contributing Improvements
 

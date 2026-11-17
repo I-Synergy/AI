@@ -70,7 +70,7 @@ jobs:
         run: bash .ai/tests/run-all-tests.sh
 
       - name: Run pytest suite
-        run: python -m pytest .ai/tests/test_suite.py .ai/tests/test_hooks.py -q
+        run: python -m pytest .ai/tests/test_suite.py .ai/tests/test_hooks.py .ai/tests/test_jsonc_merge.py .ai/tests/test_sync_platforms.py -q
 
       - name: Upload test results
         if: always()

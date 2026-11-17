@@ -255,7 +255,7 @@ Do not copy the whole catalog. Install only the skills, agents and instructions 
 
 1. Install **AI Workspace Manager** from the Extensions view, or run `code --install-extension I-Synergy.aiworkspacemanager`.
 2. Open the project folder and pick a preset (Architecture, Security, .NET, MAUI, …), or choose items individually.
-3. Let the extension install the selection. On first activation it also writes the resolver, `AGENTS.md`, the Copilot/Claude configuration, the project folders and the tool adapters.
+3. Let the extension install the selection. On first activation it also writes the resolver, `AGENTS.md`, the Copilot/Claude configuration, the project folders and the tool adapters. Existing `.vscode/settings.json`, `.vscode/tasks.json` and `.claude/settings.json` files are merged, never overwritten (see [Shared Settings Merge](#shared-settings-merge)).
 
 The selection, its pinned revisions and its content hashes are recorded locally, so installing, removing and updating items is reviewable instead of a blind overwrite. See [AI Workspace Manager](#ai-workspace-manager-vs-code-extension) above for the full workflow.
 
@@ -312,7 +312,9 @@ This creates six folder links:
 
 It also generates (copies, not links) the Claude Code path-scoped rules, `.claude/rules/{name}.instructions.md`, one per file in `.ai/instructions/`. They are gitignored and regenerated on every run.
 
-Two adapters from earlier releases are retired: `.claude/commands` and `.github/prompts` (prompts are skills now), and `.claude/instructions` (Claude Code never read it). The script removes them when they are links or empty directories; real content found there is reported as `CONFLICT` and left in place.
+The prompt adapters are conditional. The template ships no `.ai/prompts/` (prompts are skills now), so a fresh project gets no `.claude/commands` or `.github/prompts`. A project that installed prompts from a catalog (for example awesome-copilot, through the extension) has them linked: `.claude/commands` and `.github/prompts` point at `.ai/prompts` only while that folder holds at least one file. When it is absent or empty, both links are retired.
+
+`.claude/instructions` is retired for good (Claude Code never read it). The script removes the retired adapters when they are links or empty directories. Real content found at a retired path is reported as `CONFLICT` and left in place.
 
 All adapter targets are in `.gitignore` — zero git bloat, and no second copy of any
 skill. Adapters are local, not committed. They are created on Claude Code session start,
@@ -323,6 +325,30 @@ script on demand. It does not run on folder open.
 ### 4. Check for Drift
 
 After installing or updating a selection, confirm the repository matches the recorded selection. AI Workspace Manager shows this on its **Installed** view; the same check is available as the resolver's `sync --check`, which is what CI compares against. Treat any drift as a review step — a blind re-copy is exactly what overwrites project changes.
+
+### Shared Settings Merge
+
+Setup by AI Workspace Manager and `upgrade-template.py` never overwrite a project's VS Code or Claude settings. They merge the template's shipped configuration into the project's files:
+
+| Project file | Template source | Result |
+|---|---|---|
+| `.vscode/settings.json` | `.ai/reference/templates/vscode/settings.json` | Created when missing, otherwise merged |
+| `.vscode/tasks.json` | `.ai/reference/templates/vscode/tasks.json` | Created when missing, otherwise merged |
+| `.claude/settings.json` | `.claude/settings.json` | Created when missing, otherwise merged |
+
+The rules are the same for both tools. The shared data lives in `.ai/reference/templates/merge-rules.json`:
+
+- **Missing key:** added.
+- **Object on both sides** (for example `terminal.integrated.env.windows`): merged key by key, so a project's `PIP_CONFIG_FILE` stays and the MSBuild variables are added.
+- **Pinned Copilot key** (`vscode.pinnedSettings`): the template value replaces the project's. The project's comment on that line is kept, so the comment can describe an old value.
+- **Any other conflicting scalar or array:** the project's value is kept and reported as a conflict.
+- **`tasks.json`:** tasks merge by `label`. A missing label is appended; an existing label is kept unchanged. `version` is added only when absent.
+- **`.claude/settings.json`:** the legacy hook commands listed in `claude.legacyHookCommands` are removed, and template hook groups are added unless their command is already present. Every other project hook is kept. `permissions.allow`, `permissions.deny` and `permissions.additionalDirectories` are unioned, keeping the project's order. Other top-level keys (such as `plansDirectory`) are added when missing; the project's value wins on a conflict.
+- **Formatting and comments** are preserved. The merge edits the text and does not re-serialise the file.
+- **Invalid JSON** in the project file (including duplicate keys, which VS Code tolerates but the merge does not) makes the merge write nothing and report the error.
+- **Idempotent:** a second run changes nothing.
+
+The template's own `.vscode/settings.json` also holds settings for working on the template (`python.testing.*`, `python.envFile`, and `PIP_CONFIG_FILE`). Those are never shipped. Projects receive only the fragment files above. If a template ref has no fragments (an older ref), the `.vscode` merge is skipped; the template's own `.vscode` files are never copied.
 
 ### 5. Per-Tool Setup
 
@@ -348,7 +374,7 @@ The hook logic lives in `.ai/scripts/hooks/` and runs through `py.sh`, which use
 
 VS Code gets its project instructions from `.github/copilot-instructions.md`. That file is generated from `AGENTS.md`: a verbatim copy, followed by a Copilot runtime section (from `.ai/reference/copilot-runtime.md`) that explains session start, delegation, rules and session end, and a project-owned block that the regeneration keeps. After editing `AGENTS.md`, run `python .ai/scripts/sync-instructions.py`. `validate-copilot.py` fails if the generated file drifts from `AGENTS.md`.
 
-`.vscode/settings.json` is tracked and sets the workspace-level Copilot behaviour:
+The template's `.vscode/settings.json` is tracked and sets the workspace-level Copilot behaviour. Projects get these keys by merge, not by copy (see [Shared Settings Merge](#shared-settings-merge)):
 
 | Setting | Value | Why | Harness |
 |---|---|---|---|
@@ -439,8 +465,8 @@ Edit `.ai/session-context.md` to establish your project's initial state.
 ├── .gitattributes                   # LF line endings enforced for *.sh
 ├── .gitignore                       # Excludes junction targets + pycache
 ├── .vscode/
-│   ├── settings.json                # Pytest discovery, PIP_CONFIG_FILE, Copilot workspace settings (see "GitHub Copilot" under Per-Tool Setup)
-│   └── tasks.json                   # "Link .ai into the paths tools read" — run on demand, no folder-open run
+│   ├── settings.json                # Template's own dev settings (pytest, PIP_CONFIG_FILE) plus the Copilot keys projects receive by merge ("GitHub Copilot" under Per-Tool Setup)
+│   └── tasks.json                   # "Link .ai into the paths tools read" — run on demand, no folder-open run; projects receive it by merge
 ├── .claude/
 │   ├── settings.json                # Claude Code config (SessionStart, PostToolUse, Stop hooks; permissions)
 │   ├── skills/  → .ai/skills/       # Junction — do not edit
@@ -488,7 +514,11 @@ Edit `.ai/session-context.md` to establish your project's initial state.
     │       ├── test-completion-report.md.txt
     │       ├── test-incident-report.md.txt
     │       ├── compliance.md.txt
-    │       └── standards-section.md.txt
+    │       ├── standards-section.md.txt
+    │       ├── merge-rules.json     # Shared merge data: pinned Copilot keys, legacy Claude hook commands
+    │       └── vscode/              # Fragments merged into a project's .vscode/settings.json and tasks.json
+    │           ├── settings.json
+    │           └── tasks.json
     ├── patterns/                    # Implementation guides
     │   ├── cqrs-patterns.md
     │   ├── api-patterns.md
@@ -510,7 +540,8 @@ Edit `.ai/session-context.md` to establish your project's initial state.
     │   ├── sync-agents.py           # Agent-side entry point (delegates to sync-platforms.py)
     │   ├── hygiene-lint.py          # Read-only hygiene lint — stale progress, committed secrets
     │   ├── migrate-to-ai.py         # Migrate a repo from the old .claude/ layout to .ai/
-    │   └── upgrade-template.py      # Safely upgrade an existing project from this template
+    │   ├── jsonc_merge.py           # Comment-preserving JSON(C) edits used by upgrade-template.py (stdlib only)
+    │   └── upgrade-template.py      # Safely upgrade an existing project from this template; merges .vscode/ and .claude/settings.json
     ├── agents/                      # Specialized subagents (source of truth)
     ├── skills/                      # Specialized agent personas (source of truth)
     │   ├── <skill>/SKILL.md         # One directory per skill — all listed under "Specialized Skills"
@@ -553,6 +584,8 @@ Edit `.ai/session-context.md` to establish your project's initial state.
         ├── validate-standards.py
         ├── validate-adapters.py     # Copilot-parity adapter layout (suite 15)
         ├── test_hooks.py            # pytest unit tests for scripts/hooks/ and the rules generator
+        ├── test_jsonc_merge.py      # pytest unit tests for the JSONC merge and the .vscode / .claude/settings.json merges
+        ├── test_sync_platforms.py   # pytest unit tests for the prompt-adapter rules in sync-platforms.py
         └── validate-upgrade-script.py
 ```
 
@@ -687,9 +720,11 @@ CI installs the hash-pinned `requirements-dev.lock` (with `--require-hashes --on
 | `smoke-test.py` | Skills loadable, names/descriptions unique |
 | `validate-traceability.py` | Identifier integrity across stories, criteria, `@AC-` scenario tags and `[TestCategory]` attributes |
 | `validate-standards.py` | Standards-compatibility surfaces agree with `.ai/reference/standards.md` and its validator runs |
-| `validate-adapters.py` | Copilot-parity layout (suite 15): no `${…}` prompt variables in skills, no `.ai/prompts/`, retired adapters absent, every agent body lists its skills and rules, the runtime block is embedded in `copilot-instructions.md`, `.claude/rules/` matches its source, hook commands resolve, `.vscode/tasks.json` is tracked and not auto-run, `chat.useAgentsMdFile` is off |
+| `validate-adapters.py` | Copilot-parity layout (suite 15, 10 tests): no `${…}` prompt variables in skills, the template ships no `.ai/prompts/`, prompt adapters link to `.ai/prompts/` only while it has files, `.claude/instructions` absent, every agent body lists its skills and rules, the runtime block is embedded in `copilot-instructions.md`, `.claude/rules/` matches its source, hook commands resolve, `.vscode/tasks.json` is tracked and not auto-run, `chat.useAgentsMdFile` is off, and the VS Code fragments and `merge-rules.json` are valid and contained in the template's own `.vscode` files |
 | `test_hooks.py` | pytest only: unit tests for the shared hook scripts in `.ai/scripts/hooks/` and the rules generator, run against temporary directories |
-| `validate-upgrade-script.py` | Upgrade script classification and integration — pytest only |
+| `test_jsonc_merge.py` | pytest only: unit tests for `jsonc_merge.py` (comment and format preservation, invalid input, edits) and the `.vscode` and `.claude/settings.json` merges |
+| `test_sync_platforms.py` | pytest only: prompt-adapter behaviour of `sync-platforms.py` (linked only while `.ai/prompts/` has files; legacy otherwise), in temporary directories |
+| `validate-upgrade-script.py` | Upgrade script classification and integration (14 tests), including that `.vscode/settings.json` and `tasks.json` are merged rather than template-owned — pytest only |
 
 ## Usage Examples
 
@@ -736,6 +771,8 @@ Claude will:
 /upgrade-template        # Interactive: review each changed file before accepting
                          # AGENTS.md is updated (diffed), project-owned files are never touched
 ```
+
+The upgrade does not copy `.vscode/settings.json` or `.vscode/tasks.json`. It merges the template's fragments into them, and merges the template's `.claude/settings.json` into the project's copy. Project values win on conflicts, except the pinned Copilot keys. Details are in [Shared Settings Merge](#shared-settings-merge).
 
 ### High-Stakes Decisions (Council)
 

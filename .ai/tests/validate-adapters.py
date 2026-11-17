@@ -3,8 +3,8 @@
 """
 Validates the Copilot-parity adapter layout:
   1. No Copilot prompt variables (dollar-brace) in skills
-  2. .ai/prompts/ is gone (prompts are skills now)
-  3. Retired adapters are absent
+  2. The template ships no .ai/prompts/ (prompts are skills now; projects may install catalog prompts)
+  3. Prompt adapters are links to .ai/prompts/ only while it has files; .claude/instructions is absent
   4. Agent bodies reference their skills and critical rules (Copilot ignores `skills:`)
   5. copilot-instructions.md embeds .ai/reference/copilot-runtime.md
   6. .claude/rules matches what sync-platforms.py would generate
@@ -12,11 +12,14 @@ Validates the Copilot-parity adapter layout:
   8. .vscode/tasks.json is tracked and not auto-run; Agents.md auto-load is off;
      Copilot custom agents, Claude hooks, agent skills and instruction files are pinned on
   9. orchestrator.md is the Copilot coordinator: no delegation target, lists every other agent
+ 10. VS Code fragments (.ai/reference/templates/vscode/) are valid, free of template-only keys,
+     contained in the template's own .vscode files, and consistent with merge-rules.json
 """
 
 import importlib.util
 import io
 import json
+import os
 import re
 import subprocess
 import sys
@@ -62,26 +65,59 @@ def test_no_prompt_variables() -> bool:
 
 
 def test_prompts_dir_absent() -> bool:
-    print("\nTEST 2: .ai/prompts/ removed")
+    print("\nTEST 2: Template ships no .ai/prompts/")
     print("-" * 40)
     if (ROOT / ".ai" / "prompts").exists():
-        print("  FAIL: .ai/prompts/ still exists (prompts are skills now)")
+        print("  FAIL: .ai/prompts/ exists in the template (prompts are skills now; "
+              "catalog-installed prompts belong in projects, not in the template)")
         return False
-    print("  PASS: .ai/prompts/ does not exist")
+    print("  PASS: .ai/prompts/ does not exist (projects may install prompts from a catalog)")
     return True
 
 
+def _load_sync_module():
+    script = ROOT / ".ai" / "scripts" / "sync-platforms.py"
+    spec = importlib.util.spec_from_file_location("sync_platforms_adapter_check", script)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
 def test_retired_adapters() -> bool:
-    print("\nTEST 3: Retired adapters absent")
+    print("\nTEST 3: Prompt adapters follow .ai/prompts/; retired adapters absent")
     print("-" * 40)
+    sync = _load_sync_module()
+
+    def present(path: Path) -> bool:
+        return path.exists() or sync._is_link(path)
+
     passed = True
-    for rel in (".claude/commands", ".claude/instructions", ".github/prompts"):
+    retired = ROOT / ".claude" / "instructions"
+    if present(retired):
+        print("  FAIL: .claude/instructions exists (retired; rules are generated into .claude/rules/)")
+        passed = False
+    else:
+        print("  PASS: .claude/instructions absent")
+
+    prompts = ROOT / ".ai" / "prompts"
+    has_prompts = prompts.is_dir() and any(p.is_file() for p in prompts.rglob("*"))
+    for rel in (".claude/commands", ".github/prompts"):
         path = ROOT / rel
-        if path.exists() or path.is_symlink():
-            print(f"  FAIL: {rel} exists (points at content the tool does not read)")
+        if not has_prompts:
+            if present(path):
+                print(f"  FAIL: {rel} exists but .ai/prompts/ has no files (must be absent)")
+                passed = False
+            else:
+                print(f"  PASS: {rel} absent (.ai/prompts/ has no files)")
+        elif not sync._is_link(path):
+            print(f"  FAIL: {rel} must be a link to .ai/prompts/ (it has files)")
+            passed = False
+        elif not path.exists() or not os.path.samefile(path, prompts):
+            print(f"  FAIL: {rel} is a link but does not point to .ai/prompts/")
             passed = False
         else:
-            print(f"  PASS: {rel} absent")
+            print(f"  PASS: {rel} links to .ai/prompts/")
     return passed
 
 
@@ -386,6 +422,88 @@ def test_orchestrator_agent() -> bool:
     return passed
 
 
+VSCODE_FRAGMENT_DIR = ROOT / ".ai" / "reference" / "templates" / "vscode"
+MERGE_RULES = ROOT / ".ai" / "reference" / "templates" / "merge-rules.json"
+# Keys that only make sense for working on the template itself; never shipped to projects.
+TEMPLATE_DEV_ONLY_KEYS = ("python.testing.", "PIP_CONFIG_FILE")
+
+
+def _load_json(path: Path, label: str):
+    try:
+        return json.loads(_read(path))
+    except (OSError, ValueError) as exc:
+        print(f"  FAIL: {label} is not readable JSON: {exc}")
+        return None
+
+
+def test_vscode_fragments() -> bool:
+    print("\nTEST 10: VS Code fragments, merge rules and the template's own .vscode files")
+    print("-" * 40)
+    passed = True
+    settings_frag_path = VSCODE_FRAGMENT_DIR / "settings.json"
+    tasks_frag_path = VSCODE_FRAGMENT_DIR / "tasks.json"
+    settings_frag = _load_json(settings_frag_path, "vscode/settings.json fragment")
+    tasks_frag = _load_json(tasks_frag_path, "vscode/tasks.json fragment")
+    rules = _load_json(MERGE_RULES, "merge-rules.json")
+    if settings_frag is None or tasks_frag is None or rules is None:
+        return False
+    print("  PASS: fragments and merge-rules.json are valid JSON")
+
+    leaked = [k for k in settings_frag
+              if any(k == d or k.startswith(d) for d in TEMPLATE_DEV_ONLY_KEYS)]
+    if leaked:
+        print(f"  FAIL: template-only keys must not ship in the fragment: {leaked}")
+        passed = False
+    else:
+        print("  PASS: fragment has no template-only keys")
+
+    own_path = ROOT / ".vscode" / "settings.json"
+    own = _load_json(own_path, ".vscode/settings.json")
+    if own is None:
+        return False
+    def _contains(have, want) -> bool:
+        # Nested objects may carry extra (dev-only) keys; every fragment key must match.
+        if isinstance(want, dict):
+            return isinstance(have, dict) and all(_contains(have.get(k), v) for k, v in want.items()) \
+                and all(k in have for k in want)
+        return have == want
+
+    for key, value in settings_frag.items():
+        if not _contains(own.get(key), value):
+            print(f"  FAIL: .vscode/settings.json must contain {key!r}: {value!r}")
+            passed = False
+    if passed:
+        print(f"  PASS: .vscode/settings.json contains all {len(settings_frag)} fragment keys with equal values")
+
+    own_tasks = _load_json(ROOT / ".vscode" / "tasks.json", ".vscode/tasks.json")
+    if own_tasks is None:
+        return False
+    own_labels = {t.get("label") for t in own_tasks.get("tasks", []) if isinstance(t, dict)}
+    frag_labels = [t.get("label") for t in tasks_frag.get("tasks", [])]
+    missing_labels = [label for label in frag_labels if label not in own_labels]
+    if missing_labels:
+        print(f"  FAIL: .vscode/tasks.json lacks fragment task labels: {missing_labels}")
+        passed = False
+    else:
+        print(f"  PASS: .vscode/tasks.json contains all {len(frag_labels)} fragment task labels")
+
+    pinned = rules.get("vscode", {}).get("pinnedSettings", [])
+    not_in_fragment = [k for k in pinned if k not in settings_frag]
+    if not pinned or not_in_fragment:
+        print(f"  FAIL: merge-rules pinnedSettings must be non-empty and all in the fragment; missing {not_in_fragment}")
+        passed = False
+    else:
+        print(f"  PASS: all {len(pinned)} pinned settings exist in the fragment")
+
+    legacy = rules.get("claude", {}).get("legacyHookCommands")
+    if not isinstance(legacy, list) or not legacy:
+        print("  FAIL: merge-rules claude.legacyHookCommands must be a non-empty list")
+        passed = False
+    else:
+        print(f"  PASS: {len(legacy)} legacy hook commands listed")
+    return passed
+
+
 def main():
     print("=" * 60)
     print("  Adapter Layout Validation")
@@ -400,6 +518,7 @@ def main():
         test_hooks_wiring(),
         test_vscode_files(),
         test_orchestrator_agent(),
+        test_vscode_fragments(),
     ]
     print()
     print("=" * 60)

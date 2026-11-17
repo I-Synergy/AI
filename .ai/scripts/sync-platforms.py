@@ -10,10 +10,18 @@ folder links:
   tool      adapter path             -> canonical source
   claude    .claude/skills/          -> .ai/skills/
             .claude/agents/          -> .ai/agents/
+            .claude/commands/        -> .ai/prompts/   (only while .ai/prompts/ has files)
   copilot   .github/skills/          -> .ai/skills/
             .github/agents/          -> .ai/agents/
             .github/instructions/    -> .ai/instructions/
+            .github/prompts/         -> .ai/prompts/   (only while .ai/prompts/ has files)
   agents    .agents/skills/          -> .ai/skills/
+
+Prompts are not a template asset: the template ships no .ai/prompts/, because
+prompts are skills now. A project may install prompts from a catalog (for
+example awesome-copilot, through the extension) into .ai/prompts/. The two
+prompt adapters are linked only while that directory holds at least one file.
+Otherwise they are legacy: removed when they are links or empty directories.
 
 Claude Code reads path-scoped rules from .claude/rules/*.md, not from a folder
 link. The claude tool therefore COPIES each .ai/instructions/{name}.instructions.md
@@ -26,9 +34,10 @@ Links are never committed, so they are recreated on clone. A real directory
 holding files at an adapter path is reported as CONFLICT and left untouched:
 that is a second copy of the canonical content, which this template forbids.
 
-Retired adapters (.claude/commands/, .claude/instructions/, .github/prompts/)
-are removed when they are links or empty directories. Real content found at a
-retired path is reported as CONFLICT and left in place; it is never deleted.
+Retired adapters (.claude/instructions/, and the prompt adapters while
+.ai/prompts/ is absent or empty) are removed when they are links or empty
+directories. Real content found at a retired path is reported as CONFLICT and
+left in place; it is never deleted.
 Junctions left behind by platforms that are no longer supported are removed
 the same way: Reasonix support ended, so .reasonix/skills/ and .reasonix/agents/
 are cleaned up when present.
@@ -65,12 +74,19 @@ TOOL_TARGETS = {
 }
 DEFAULT_TOOLS = tuple(TOOL_TARGETS)
 
-# Adapter paths that are retired or belong to unsupported platforms. Removed when
-# they are links or empty directories; real content there is reported, not deleted.
+# Prompt adapters. Linked only while PROMPTS_SOURCE holds at least one file
+# (prompts installed from a catalog); legacy otherwise. tool -> adapter paths.
+PROMPTS_SOURCE = ".ai/prompts"
+PROMPT_TARGETS = {
+    "claude": [".claude/commands"],
+    "copilot": [".github/prompts"],
+}
+PROMPT_ADAPTERS = [path for paths in PROMPT_TARGETS.values() for path in paths]
+
+# Adapter paths that are always retired or belong to unsupported platforms. Removed
+# when they are links or empty directories; real content there is reported, not deleted.
 LEGACY_TARGETS = [
-    ".claude/commands",
     ".claude/instructions",
-    ".github/prompts",
     ".reasonix/skills",
     ".reasonix/agents",
 ]
@@ -375,15 +391,32 @@ def sync_rules(dry_run: bool) -> tuple[int, list[str], int]:
 
 # ─── Summary and legacy cleanup ──────────────────────────────────────────────
 
+def prompts_active() -> bool:
+    """True while .ai/prompts/ exists and holds at least one file."""
+    root = SCRIPT_DIR / PROMPTS_SOURCE
+    return root.is_dir() and any(path.is_file() for path in root.rglob("*"))
+
+
 def sync_all(dry_run: bool = False, tools=DEFAULT_TOOLS) -> int:
     prefix = "[DRY RUN] " if dry_run else ""
     print(f"{prefix}Ensuring folder-level links for: {', '.join(tools)}")
+
+    prompts_on = prompts_active()
+    if prompts_on:
+        prompt_tools = [tool for tool in tools if tool in PROMPT_TARGETS]
+        print(f"Prompts: {PROMPTS_SOURCE}/ has files; linking prompt adapters for: "
+              f"{', '.join(prompt_tools) or 'none of the selected tools'}")
+    else:
+        print(f"Prompts: {PROMPTS_SOURCE}/ is absent or empty; prompt adapters are legacy.")
 
     changed = 0
     failures = 0
     conflicts = []
     for tool in tools:
-        for source_rel, targets in TOOL_TARGETS[tool].items():
+        sources = dict(TOOL_TARGETS[tool])
+        if prompts_on and tool in PROMPT_TARGETS:
+            sources[PROMPTS_SOURCE] = PROMPT_TARGETS[tool]
+        for source_rel, targets in sources.items():
             for target_rel in targets:
                 result = sync_junction(source_rel, target_rel, dry_run)
                 if result == "OK":
@@ -413,7 +446,7 @@ def sync_all(dry_run: bool = False, tools=DEFAULT_TOOLS) -> int:
         print("Merge each CONFLICT by hand: move its files into the canonical source, "
               "delete the directory, then re-run this script.")
 
-    removed, legacy_conflicts, legacy_failed = remove_legacy_targets(dry_run)
+    removed, legacy_conflicts, legacy_failed = remove_legacy_targets(dry_run, prompts_on)
     if removed:
         print(f"{removed} legacy item(s) {'would be ' if dry_run else ''}removed.")
     if legacy_conflicts:
@@ -427,16 +460,18 @@ def sync_all(dry_run: bool = False, tools=DEFAULT_TOOLS) -> int:
     return 0
 
 
-def remove_legacy_targets(dry_run: bool) -> tuple[int, list[str], int]:
+def remove_legacy_targets(dry_run: bool, prompts_on: bool = False) -> tuple[int, list[str], int]:
     """Remove retired links and empty directories. Returns (removed, conflicts, failures).
 
+    The prompt adapters are legacy unless prompts_on (.ai/prompts/ has files).
     Real files or directories holding content are reported as CONFLICT and left alone.
     """
     removed = 0
     conflicts: list[str] = []
     failures = 0
     parents = set()
-    for target_rel in LEGACY_TARGETS:
+    legacy = LEGACY_TARGETS + ([] if prompts_on else PROMPT_ADAPTERS)
+    for target_rel in legacy:
         target = SCRIPT_DIR / target_rel
         if not (target.exists() or _is_link(target)):
             continue

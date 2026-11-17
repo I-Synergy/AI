@@ -8,8 +8,8 @@ This template supports **both** Claude AI and GitHub Copilot working together in
 Template/
 ├── AGENTS.md                          # Orchestration instructions (source of truth)
 ├── .vscode/
-│   ├── settings.json                  # Workspace settings for Copilot (see "VS Code workspace settings")
-│   └── tasks.json                     # "Link .ai into the paths tools read" — run on demand
+│   ├── settings.json                  # Workspace settings for Copilot (see "VS Code workspace settings"); projects get them by merge
+│   └── tasks.json                     # "Link .ai into the paths tools read" — run on demand; projects get it by merge
 ├── .github/
 │   ├── copilot-instructions.md        # Generated: AGENTS.md + copilot-runtime.md + project block
 │   ├── skills/                        # Link -> .ai/skills/ (gitignored, local)
@@ -51,9 +51,13 @@ them are gitignored or regenerated, so none is a second hand-maintained source.
 | `.github/copilot-instructions.md` | `AGENTS.md` + `.ai/reference/copilot-runtime.md` | Copilot | generated copy |
 | `.agents/skills/` | `.ai/skills/` | Codex and other skills-standard agents | link |
 
-Retired adapters: `.claude/commands/` (was `.ai/prompts/`), `.github/prompts/` (was
-`.ai/prompts/`) and `.claude/instructions/`. Claude Code never read the last one. The
-sync removes them when they are links or empty; real content there is reported, never deleted.
+Prompt adapters are conditional. `.claude/commands/` and `.github/prompts/` are links to
+`.ai/prompts/` only while that folder holds at least one file. The template ships no prompts,
+so a fresh project has neither link; a project that installed prompts from a catalog has both.
+When `.ai/prompts/` is absent or empty, both are removed as legacy.
+
+Retired: `.claude/instructions/`. Claude Code never read it. The sync removes it when it is a
+link or empty. Real content found at any retired path is reported, never deleted.
 
 **Why prompts are skills now:** the Copilot harness does not load `*.prompt.md` files. Skills
 are the one format both tools load, so the former prompts live in `.ai/skills/<name>/SKILL.md`
@@ -178,6 +182,32 @@ is not verified in this repository yet; `.ai/tmp/hook-probe.log` shows whether i
 The session-end build check is handled differently per tool. Claude Code runs it as the `Stop` hook.
 Copilot has no `Stop` hook, so the runtime section tells it to run the same `dotnet build` before
 its final reply when a solution exists and `src/` or `tests/` changed (`copilot-runtime.md`, section 4).
+
+### How the settings reach a project
+
+The template's `.vscode/settings.json` also holds settings for working on the template itself
+(`python.testing.*`, `python.envFile`, `PIP_CONFIG_FILE`). Those are never shipped. A project
+receives only the fragments `.ai/reference/templates/vscode/settings.json` and `tasks.json`,
+merged into its own `.vscode/` files by AI Workspace Manager setup and by `upgrade-template.py`.
+Both tools use the same rules, read from `.ai/reference/templates/merge-rules.json`:
+
+- **Missing keys are added.** Objects merge key by key, so `terminal.integrated.env.windows` keeps
+  a project's own variables (for example `PIP_CONFIG_FILE`) and gains the MSBuild variables.
+- **Pinned keys** (`vscode.pinnedSettings`, the Copilot settings in the table above) take the
+  template's value even when the project sets another. The project's comment on that line is kept,
+  so the comment can describe a value that no longer applies.
+- **Other conflicting values** keep the project's value and are reported as conflicts.
+- **`tasks.json`** merges by `label`. A label that already exists is kept unchanged, even if its
+  body differs. `version` is added only when absent.
+- **Formatting and comments** are preserved; the merge edits the text and does not re-serialise it.
+- **Invalid JSON** (or a duplicate key) makes the merge write nothing and report an error. VS Code
+  accepts duplicate keys, so a file that works in VS Code can still be reported here.
+- **Idempotent:** a second run changes nothing.
+
+The same text-preserving merge handles `.claude/settings.json`: legacy hook commands listed in
+`merge-rules.json` are removed, template hook groups are added unless their command is already
+present, `permissions` lists are unioned, and other top-level keys follow the missing-key and
+project-wins rules.
 
 ### What stays per-user
 
@@ -384,11 +414,14 @@ This checks:
 3. `.github/skills/` is a folder-level junction resolving to `.ai/skills/`
 4. `.claude/skills/` is a folder-level junction resolving to `.ai/skills/`
 
-`validate-adapters.py` (suite 15) checks the parity layout: no `${…}` prompt variables in
-skills, no `.ai/prompts/`, retired adapters absent, every agent body lists its skills and
-rules, `.claude/rules/` matches what the generator would write, every hook command points at
-an existing file, `.vscode/tasks.json` is tracked and not auto-run, and `chat.useAgentsMdFile`
-is `false`. `test_hooks.py` is a pytest-only unit suite for the hook scripts and the rules generator.
+`validate-adapters.py` (suite 15, 10 tests) checks the parity layout: no `${…}` prompt variables in
+skills, no `.ai/prompts/` in the template, prompt adapters linked only while `.ai/prompts/` has
+files, `.claude/instructions` absent, every agent body lists its skills and rules, `.claude/rules/`
+matches what the generator would write, every hook command points at an existing file,
+`.vscode/tasks.json` is tracked and not auto-run, `chat.useAgentsMdFile` is `false`, and the VS
+Code fragments and `merge-rules.json` are valid and contained in the template's own `.vscode`
+files. `test_hooks.py`, `test_jsonc_merge.py` and `test_sync_platforms.py` are pytest-only unit
+suites for the hook scripts, the JSONC merge and the prompt-adapter rules.
 
 If either check 3 or 4 fails, run `python .ai/scripts/sync-platforms.py` — a fresh
 clone has no junctions because they are gitignored and cannot be tracked by git.
