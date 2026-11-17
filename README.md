@@ -27,7 +27,9 @@ A template catalog can offer hundreds of skills and agents. Copying all of them 
 - **Updates** — compare installed items with upstream and update the safe ones.
 - **Presets** — start from a named selection (Architecture, Security, .NET, MAUI, …) with resolved counts and deltas.
 - **Settings** — choose the Python interpreter and manage sources, refs, and releases.
-- **Setup** — first activation writes the resolver, vocabulary, `AGENTS.md`, Copilot/Claude configuration, project folders, and the platform junctions.
+Components
+
+- **Setup** — first activation writes the resolver, vocabulary, `AGENTS.md`, Copilot/Claude configuration, project folders, and the tool adapters.
 
 Install it from the Extensions view (search **AI Workspace Manager for VS Code**) or:
 
@@ -35,13 +37,13 @@ Install it from the Extensions view (search **AI Workspace Manager for VS Code**
 code --install-extension I-Synergy.aiworkspacemanager
 ```
 
-Open the project folder and use the AI Workspace Manager view. The extension keeps its local state in `.ai/ai.json`, `.ai/ai.lock.json`, `.ai/tooling.json`, `.ai/catalog/`, `.ai/installed/`, and the `*.ai-installed.json` markers. Those paths are **gitignored** here: they describe one machine's installed selection, not template content. The selected skills, agents, prompts and instructions themselves live in `.ai/skills/`, `.ai/agents/`, `.ai/prompts/` and `.ai/instructions/` and remain the committed source of truth.
+Open the project folder and use the AI Workspace Manager view. The extension keeps its local state in `.ai/ai.json`, `.ai/ai.lock.json`, `.ai/tooling.json`, `.ai/catalog/`, `.ai/installed/`, and the `*.ai-installed.json` markers. Those paths are **gitignored** here: they describe one machine's installed selection, not template content. The selected skills (including the former prompts), agents and instructions themselves live in `.ai/skills/`, `.ai/agents/` and `.ai/instructions/` and remain the committed source of truth.
 
 ## Overview
 
 A **production-ready .NET project template** that provides comprehensive development patterns, specialized agent skills, and quality assurance tools for building enterprise applications with Clean Architecture, CQRS, and Domain-Driven Design.
 
-AI context lives in `.ai/` (the single source of truth shared by Claude Code, GitHub Copilot, and Reasonix Code). Each tool reads the same files through directory junctions — no duplication, no sync lag.
+AI context lives in `.ai/` (the single source of truth shared by Claude Code and GitHub Copilot). Each tool reads the same files through directory junctions — no duplication, no sync lag.
 
 ## Features
 
@@ -162,17 +164,19 @@ the built-in `aspire-skills` source, and the `Aspire` preset selects all seven:
 | Skill | Purpose |
 |-------|---------|
 | **skill-creator** | Create, test and tune skills, including description triggering |
-| **sync-platforms** | Sync platform junctions for skills, agents, prompts and instructions (Claude Code, GitHub Copilot, Reasonix) |
+| **sync-platforms** | Link `.ai/` into the paths each tool reads (Claude Code, GitHub Copilot, other skills-standard agents), and generate `.claude/rules/` from `.ai/instructions/`; `--tools` limits the set |
 | **upgrade-template** | Sync template improvements to existing projects without losing context |
 | **verify-config** | Audit config drift and generate the standards-compatibility view |
 
-### Prompts (20)
+#### Explicit-Only Skills (19, formerly prompts)
 
-Every file in `.ai/prompts/` is a `*.prompt.md` for a repeatable Copilot/Claude
-workflow. They are mirrored to `.github/prompts/` and `.claude/commands/`, and
-AI Workspace Manager lists them under the **Prompts** kind filter.
+These 19 skills were prompt files (`.ai/prompts/*.prompt.md`) until this release. The
+Copilot harness does not load prompt files, so each one is now a skill with
+`disable-model-invocation: true`: an agent never picks it up on its own. Invoke it by
+name, for example `/ef-core`. Claude Code and Copilot both load them through
+`.claude/skills/` and `.github/skills/`.
 
-| Prompt | Purpose |
+| Skill | Purpose |
 |--------|---------|
 | **architectural-code-review-modernize** | Solution-wide C#/TypeScript/LINQ/SQL review with compilable replacements |
 | **architecture-blueprint-generator** | Architecture blueprint, diagrams and implementation patterns from the codebase |
@@ -182,7 +186,6 @@ AI Workspace Manager lists them under the **Prompts** kind filter.
 | **create-unittest** | MSTest unit-test patterns, including data-driven tests |
 | **csharp-async** | C# async programming best practices |
 | **csharp-docs** | XML documentation for C# types |
-| **csharp-xunit** | xUnit unit-test patterns, including data-driven tests |
 | **documentation-writer** | Diátaxis technical documentation |
 | **dotnet-best-practices** | .NET/C# solution best practices |
 | **dotnet-design-pattern-review** | Design-pattern review for C#/.NET code |
@@ -195,15 +198,22 @@ AI Workspace Manager lists them under the **Prompts** kind filter.
 | **update-markdown-file-index** | Markdown index/table for the files in a folder |
 | **usecases-gherkin-specs** | Use cases and Gherkin BDD specifications for Clean Architecture |
 
-### Instructions (1)
+### Instructions (4)
 
-Every file in `.ai/instructions/` is a `*.instructions.md`, mirrored to
-`.github/instructions/` and `.claude/instructions/`. AI Workspace Manager lists
-them under the **Instructions** kind filter.
+Every file in `.ai/instructions/` is a `*.instructions.md` with an `applyTo` glob. The
+files reach the tools in two ways:
 
-| Instruction | Purpose |
-|-------------|---------|
-| **sonarqube_mcp** | Guidelines for using the SonarQube MCP tools during a task |
+- **GitHub Copilot:** read directly from `.github/instructions/` (a folder link to `.ai/instructions/`).
+- **Claude Code:** `sync-platforms.py` copies each file to `.claude/rules/{name}.instructions.md`, mapping `applyTo` to the `paths:` frontmatter (`**/*` gets no `paths:`, so it always applies). The copies are generated, gitignored and never edited by hand. Hand-written rules in `.claude/rules/` are never touched.
+
+Edit the source in `.ai/instructions/`, then run `python .ai/scripts/sync-platforms.py`.
+
+| Instruction | `applyTo` | Purpose |
+|-------------|-----------|---------|
+| **csharp** | `**/*.cs` | C# rules: the critical rules in short form, with links to patterns, forbidden tech and templates |
+| **tests** | `tests/**` | Test project rules: MSTest only, test structure, traceability IDs |
+| **ai-workspace** | `.ai/progress/**`, `.ai/plans/**`, `.ai/completed/**`, `.ai/session-context.md` | Progress, plan and handoff conventions |
+| **sonarqube_mcp** | `**/*` | Guidelines for using the SonarQube MCP tools during a task |
 
 ### Pattern Guides (8)
 
@@ -241,17 +251,17 @@ See `.ai/reference/tokens.md` for complete definitions.
 
 ### 1. Install a Selection (Recommended: AI Workspace Manager)
 
-Do not copy the whole catalog. Install only the skills, agents, prompts and instructions the project needs:
+Do not copy the whole catalog. Install only the skills, agents and instructions the project needs:
 
 1. Install **AI Workspace Manager** from the Extensions view, or run `code --install-extension I-Synergy.aiworkspacemanager`.
 2. Open the project folder and pick a preset (Architecture, Security, .NET, MAUI, …), or choose items individually.
-3. Let the extension install the selection. On first activation it also writes the resolver, `AGENTS.md`, the Copilot/Claude configuration, the project folders and the platform junctions.
+3. Let the extension install the selection. On first activation it also writes the resolver, `AGENTS.md`, the Copilot/Claude configuration, the project folders and the tool adapters. Existing `.vscode/settings.json`, `.vscode/tasks.json` and `.claude/settings.json` files are merged, never overwritten (see [Shared Settings Merge](#shared-settings-merge)).
 
 The selection, its pinned revisions and its content hashes are recorded locally, so installing, removing and updating items is reviewable instead of a blind overwrite. See [AI Workspace Manager](#ai-workspace-manager-vs-code-extension) above for the full workflow.
 
 #### Manual fallback — copy the template
 
-Use this path only when the extension cannot be used (air-gapped machine, no VS Code, or you deliberately want the full library). It copies **every** skill, agent, prompt and instruction into the project.
+Use this path only when the extension cannot be used (air-gapped machine, no VS Code, or you deliberately want the full library). It copies **every** skill, agent and instruction into the project.
 
 ```bash
 # Copy AI context to your project root
@@ -268,7 +278,7 @@ cp -r ./.github/copilot-instructions.md /path/to/YourProject/.github/
 
 ### 2. Know What Is Always Copied
 
-The resolver selects **skills, agents, prompts and instructions**. The directories below are outside the selection on purpose — `AGENTS.md`, the agents and the skills cite them by literal path, so they must exist in every project:
+The resolver selects **skills, agents and instructions**. The directories below are outside the selection on purpose — `AGENTS.md`, the agents and the skills cite them by literal path, so they must exist in every project:
 
 | Path | Why it is always present |
 |------|--------------------------|
@@ -280,39 +290,69 @@ The resolver selects **skills, agents, prompts and instructions**. The directori
 
 Selection reduces the catalog; it does not remove this floor.
 
-### 3. Create or Repair Junctions
+### 3. Create or Repair the Adapters
 
-All platforms read `.ai/skills/`, `.ai/agents/`, `.ai/prompts/` and `.ai/instructions/` through directory junctions — no file copies.
+Tools only read their own hardcoded paths, so `.ai/` is exposed through per-tool links — no file copies.
 
 ```bash
 cd /path/to/YourProject
 python .ai/scripts/sync-platforms.py
 ```
 
-This creates:
+This creates six folder links:
 
 | Junction | → Source | Used By |
 |----------|----------|---------|
 | `.claude/skills` | `.ai/skills` | Claude Code |
 | `.claude/agents` | `.ai/agents` | Claude Code |
-| `.claude/commands` | `.ai/prompts` | Claude Code |
-| `.claude/instructions` | `.ai/instructions` | Claude Code |
 | `.github/skills` | `.ai/skills` | GitHub Copilot |
 | `.github/agents` | `.ai/agents` | GitHub Copilot |
-| `.github/prompts` | `.ai/prompts` | GitHub Copilot |
 | `.github/instructions` | `.ai/instructions` | GitHub Copilot |
-| `.reasonix/skills` | `.ai/skills` | Reasonix Code |
-| `.reasonix/agents` | `.ai/agents` | Reasonix Code |
+| `.agents/skills` | `.ai/skills` | Other skills-standard agents (Codex, …) |
 
-All junction targets are in `.gitignore` — zero git bloat. Junctions are local, not committed: create them on a fresh clone, and re-run this command after the extension installs or updates a selection.
+It also generates (copies, not links) the Claude Code path-scoped rules, `.claude/rules/{name}.instructions.md`, one per file in `.ai/instructions/`. They are gitignored and regenerated on every run.
+
+The prompt adapters are conditional. The template ships no `.ai/prompts/` (prompts are skills now), so a fresh project gets no `.claude/commands` or `.github/prompts`. A project that installed prompts from a catalog (for example awesome-copilot, through the extension) has them linked: `.claude/commands` and `.github/prompts` point at `.ai/prompts` only while that folder holds at least one file. When it is absent or empty, both links are retired.
+
+`.claude/instructions` is retired for good (Claude Code never read it). The script removes the retired adapters when they are links or empty directories. Real content found at a retired path is reported as `CONFLICT` and left in place.
+
+All adapter targets are in `.gitignore` — zero git bloat, and no second copy of any
+skill. Adapters are local, not committed. They are created on Claude Code session start,
+by the `SessionStart` hook; after an upgrade; or by running this command. VS Code has a
+task, **Link .ai into the paths tools read** (`.vscode/tasks.json`), that runs the same
+script on demand. It does not run on folder open.
 
 ### 4. Check for Drift
 
 After installing or updating a selection, confirm the repository matches the recorded selection. AI Workspace Manager shows this on its **Installed** view; the same check is available as the resolver's `sync --check`, which is what CI compares against. Treat any drift as a review step — a blind re-copy is exactly what overwrites project changes.
 
+### Shared Settings Merge
+
+Setup by AI Workspace Manager and `upgrade-template.py` never overwrite a project's VS Code or Claude settings. They merge the template's shipped configuration into the project's files:
+
+| Project file | Template source | Result |
+|---|---|---|
+| `.vscode/settings.json` | `.ai/reference/templates/vscode/settings.json` | Created when missing, otherwise merged |
+| `.vscode/tasks.json` | `.ai/reference/templates/vscode/tasks.json` | Created when missing, otherwise merged |
+| `.claude/settings.json` | `.claude/settings.json` | Created when missing, otherwise merged |
+
+The rules are the same for both tools. The shared data lives in `.ai/reference/templates/merge-rules.json`:
+
+- **Missing key:** added.
+- **Object on both sides** (for example `terminal.integrated.env.windows`): merged key by key, so a project's `PIP_CONFIG_FILE` stays and the MSBuild variables are added.
+- **Pinned Copilot key** (`vscode.pinnedSettings`): the template value replaces the project's. The project's comment on that line is kept, so the comment can describe an old value.
+- **Any other conflicting scalar or array:** the project's value is kept and reported as a conflict.
+- **`tasks.json`:** tasks merge by `label`. A missing label is appended; an existing label is kept unchanged. `version` is added only when absent.
+- **`.claude/settings.json`:** the legacy hook commands listed in `claude.legacyHookCommands` are removed, and template hook groups are added unless their command is already present. Every other project hook is kept. `permissions.allow`, `permissions.deny` and `permissions.additionalDirectories` are unioned, keeping the project's order. Other top-level keys (such as `plansDirectory`) are added when missing; the project's value wins on a conflict.
+- **Formatting and comments** are preserved. The merge edits the text and does not re-serialise the file.
+- **Invalid JSON** in the project file (including duplicate keys, which VS Code tolerates but the merge does not) makes the merge write nothing and report the error.
+- **Idempotent:** a second run changes nothing.
+
+The template's own `.vscode/settings.json` also holds settings for working on the template (`python.testing.*`, `python.envFile`, and `PIP_CONFIG_FILE`). Those are never shipped. Projects receive only the fragment files above. If a template ref has no fragments (an older ref), the `.vscode` merge is skipped; the template's own `.vscode` files are never copied.
+
 ### 5. Per-Tool Setup
 
-All AI tools auto-load `AGENTS.md` at the project root for orchestration instructions, and discover skills/agents through tool-scoped junctions (`.claude/`, `.github/`, `.reasonix/`).
+`AGENTS.md` at the project root holds the orchestration instructions. Claude Code loads it directly. Skills and agents are discovered through tool-scoped adapters (`.claude/`, `.github/`, `.agents/`).
 
 #### Claude Code
 
@@ -320,13 +360,36 @@ All AI tools auto-load `AGENTS.md` at the project root for orchestration instruc
 claude  # start in project root
 ```
 
+Claude Code reads `.claude/settings.json`, which wires three hooks:
+
+| Hook | Runs | What it does |
+|------|------|--------------|
+| `SessionStart` | Every session start, resume, clear or compact | Runs `sync-platforms.py`, then prints `.ai/session-context.md` (skipped while it is the unfilled placeholder) |
+| `PostToolUse` | An edit under `.ai/skills/`, `.ai/agents/` or `.ai/instructions/` | Re-runs `sync-platforms.py` so the adapters and `.claude/rules/` pick up the change |
+| `Stop` | End of a turn | Builds the solution, only when `src/` or `tests/` changed since the last good build (Claude Code only) |
+
+The hook logic lives in `.ai/scripts/hooks/` and runs through `py.sh`, which uses `python3` when it works and `python` otherwise. The scripts are shared with Copilot, but are wired only in `.claude/settings.json`. The hooks are an enhancement, not a control. Whether the Copilot harness also runs them is checked by a probe: `.ai/tmp/hook-probe.log` records which harness fired the `SessionStart` hook.
+
 #### GitHub Copilot
 
-GitHub Copilot also reads `.github/copilot-instructions.md` for VS Code-specific guidance. That file is generated from `AGENTS.md`; after editing `AGENTS.md`, run `python .ai/scripts/sync-instructions.py`. Works automatically in VS Code / GitHub Codespaces.
+VS Code gets its project instructions from `.github/copilot-instructions.md`. That file is generated from `AGENTS.md`: a verbatim copy, followed by a Copilot runtime section (from `.ai/reference/copilot-runtime.md`) that explains session start, delegation, rules and session end, and a project-owned block that the regeneration keeps. After editing `AGENTS.md`, run `python .ai/scripts/sync-instructions.py`. `validate-copilot.py` fails if the generated file drifts from `AGENTS.md`.
 
-#### Reasonix Code
+The template's `.vscode/settings.json` is tracked and sets the workspace-level Copilot behaviour. Projects get these keys by merge, not by copy (see [Shared Settings Merge](#shared-settings-merge)):
 
-Reasonix Code reads `AGENTS.md` and auto-discovers skills/agents from the `.reasonix/` junction. No additional setup needed — run the tool in the project root.
+| Setting | Value | Why | Harness |
+|---|---|---|---|
+| `chat.useAgentsMdFile` | `false` | Stops VS Code loading `AGENTS.md` a second time, because `copilot-instructions.md` embeds it | Local harness only. It does not control Copilot instruction discovery, so the Copilot harness may still load both files |
+| `github.copilot.chat.cli.customAgents.enabled` | `true` | Enables custom agents (`.ai/agents/`) in Copilot harness sessions | Copilot harness |
+| `chat.useClaudeHooks` | `true` | Runs the hooks in `.claude/settings.json` in the Local harness (trusted workspace only) | Local harness |
+| `chat.useAgentSkills`, `chat.includeApplyingInstructions`, `github.copilot.chat.codeGeneration.useInstructionFiles` | `true` | Load skills and path-scoped instructions; the workspace pins them so a user setting cannot turn them off | Local harness |
+
+`.vscode/settings.json` also mirrors the `env` block of `.claude/settings.json` into `terminal.integrated.env.*`, so VS Code terminals get the same environment as Claude Code. The session-end build check is a hook for Claude Code (`Stop`) and an instruction for Copilot, which has no `Stop` hook (`.ai/reference/copilot-runtime.md`, section 4).
+
+Copilot CLI and the cloud agent do not read the Local-harness settings. Some settings can only be set per user, so they are not in the workspace: Copilot sign-in and model choice (bring-your-own-key credentials are account-level), and tool auto-approval, which the template deliberately leaves unset.
+
+**Run sessions in the orchestrator agent.** Select **orchestrator** in the VS Code agent dropdown. It always has the delegation tool and may run the nine specialist agents, so you do not need to enable **Run Subagent** for them. Enable Run Subagent (Agent mode → Configure Tools) only when you run a different agent. `orchestrator` is the Copilot entry point, not a delegation target: specialist agents and Claude Code do not delegate to it. If Copilot ignores the rules or the agents, see the section "Troubleshooting: Copilot ignores the rules or agents" in `.ai/reference/copilot-integration.md`.
+
+Neither file is listed in VS Code's Customizations editor, because that editor lists customization items (skills, agents, `*.instructions.md`) rather than project instruction files — "not listed" does not mean ignored.
 
 ### 6. Verify
 
@@ -369,13 +432,12 @@ Edit `.ai/session-context.md` to establish your project's initial state.
 
 ### Session Memory Across Clients
 
-`.ai/session-context.md` is the shared memory for every client. All three tools (Claude Code, GitHub Copilot, Reasonix Code) read and write the same file to preserve context across sessions.
+`.ai/session-context.md` is the shared memory for every client. Both tools (Claude Code and GitHub Copilot) read and write the same file to preserve context across sessions.
 
 | Client | Read Mechanism | Write Mechanism |
 |--------|---|---|
 | **Claude Code** | `SessionStart` hook prints the file (first 200 lines, skipped while placeholder) + instruction in AGENTS.md | Instruction in AGENTS.md: write handoff before final reply using `.ai/reference/templates/session-handoff.md.txt` |
-| **GitHub Copilot** | Instruction in `.github/copilot-instructions.md` (no hook available) | Instruction in `.github/copilot-instructions.md`: write handoff before final reply |
-| **Reasonix Code** | Instruction in `AGENTS.md` (no hook available) | Instruction in `AGENTS.md`: write handoff before final reply |
+| **GitHub Copilot** | Copilot runtime section in `.github/copilot-instructions.md` tells the model to read the file first. The shared `SessionStart` hook may also fire in the Copilot harness; `.ai/tmp/hook-probe.log` shows whether it does | Copilot runtime section in `.github/copilot-instructions.md`: write handoff before final reply |
 
 `.ai/session-context.md` ships as an unfilled placeholder — fill it in for your project and keep it updated. `.ai/plans/`, `.ai/progress/`, and `.ai/completed/` ship empty; they are populated only while work is in flight.
 
@@ -389,7 +451,7 @@ Edit `.ai/session-context.md` to establish your project's initial state.
 
 ```
 /
-├── AGENTS.md                        # AI orchestration (auto-loaded by all tools)
+├── AGENTS.md                        # AI orchestration (Claude Code loads it; VS Code gets it via copilot-instructions.md)
 ├── TEMPLATE-USAGE.md                # Detailed usage guide
 ├── TEMPLATE-FAQ.md                  # Frequently asked questions
 ├── README.md                        # This file
@@ -403,25 +465,23 @@ Edit `.ai/session-context.md` to establish your project's initial state.
 ├── .gitattributes                   # LF line endings enforced for *.sh
 ├── .gitignore                       # Excludes junction targets + pycache
 ├── .vscode/
-│   └── settings.json                # Pytest discovery + PIP_CONFIG_FILE
+│   ├── settings.json                # Template's own dev settings (pytest, PIP_CONFIG_FILE) plus the Copilot keys projects receive by merge ("GitHub Copilot" under Per-Tool Setup)
+│   └── tasks.json                   # "Link .ai into the paths tools read" — run on demand, no folder-open run; projects receive it by merge
 ├── .claude/
-│   ├── settings.json                # Claude Code config (hooks, permissions)
+│   ├── settings.json                # Claude Code config (SessionStart, PostToolUse, Stop hooks; permissions)
 │   ├── skills/  → .ai/skills/       # Junction — do not edit
 │   ├── agents/  → .ai/agents/       # Junction — do not edit
-│   ├── commands/  → .ai/prompts/    # Junction — do not edit
-│   └── instructions/  → .ai/instructions/  # Junction — do not edit
+│   └── rules/                       # Generated copies of .ai/instructions/ (gitignored); hand-written rules here are kept
 ├── .github/
-│   ├── copilot-instructions.md      # GitHub Copilot instructions
+│   ├── copilot-instructions.md      # GitHub Copilot instructions — generated from AGENTS.md + copilot-runtime.md
 │   ├── workflows/
 │   │   ├── validate-template.yml    # Runs the validation suite in CI
 │   │   └── ci.yml                   # Versions, tags and publishes a release on merge to main
 │   ├── skills/  → .ai/skills/       # Junction — do not edit
 │   ├── agents/  → .ai/agents/       # Junction — do not edit
-│   ├── prompts/  → .ai/prompts/     # Junction — do not edit
 │   └── instructions/  → .ai/instructions/  # Junction — do not edit
-├── .reasonix/
-│   ├── skills/  → .ai/skills/       # Junction — do not edit
-│   └── agents/  → .ai/agents/       # Junction — do not edit
+├── .agents/
+│   └── skills/  → .ai/skills/       # Junction — read by other skills-standard agents
 └── .ai/                             # All AI context (vendor-neutral, shared by all assistants)
     ├── session-context.md           # Working session memory
     ├── reference/
@@ -430,7 +490,8 @@ Edit `.ai/session-context.md` to establish your project's initial state.
     │   ├── tokens.md                # Token definitions
     │   ├── glossary.md              # Terminology
     │   ├── naming-conventions.md
-    │   ├── copilot-integration.md
+    │   ├── copilot-integration.md   # Copilot adapters, sync and troubleshooting
+    │   ├── copilot-runtime.md       # Copilot session/delegation/rules protocol (emitted into copilot-instructions.md)
     │   ├── task-execution.md        # ReAct loop, escalation, subagent templates
     │   ├── work-type-mapping.md     # Which files to load per task type
     │   ├── operational-rules.md     # Refactoring and file-management conventions
@@ -453,7 +514,11 @@ Edit `.ai/session-context.md` to establish your project's initial state.
     │       ├── test-completion-report.md.txt
     │       ├── test-incident-report.md.txt
     │       ├── compliance.md.txt
-    │       └── standards-section.md.txt
+    │       ├── standards-section.md.txt
+    │       ├── merge-rules.json     # Shared merge data: pinned Copilot keys, legacy Claude hook commands
+    │       └── vscode/              # Fragments merged into a project's .vscode/settings.json and tasks.json
+    │           ├── settings.json
+    │           └── tasks.json
     ├── patterns/                    # Implementation guides
     │   ├── cqrs-patterns.md
     │   ├── api-patterns.md
@@ -463,14 +528,20 @@ Edit `.ai/session-context.md` to establish your project's initial state.
     │   ├── service-oriented-architecture.md
     │   ├── object-oriented-programming.md
     │   └── test-driven-development.md
-    ├── prompts/                     # Copilot prompt files (source of truth)
-    ├── instructions/                # Copilot instruction files (source of truth)
+    ├── instructions/                # Path-scoped rules, *.instructions.md (source of truth; applyTo glob)
+    │   ├── csharp.instructions.md          # **/*.cs
+    │   ├── tests.instructions.md           # tests/**
+    │   ├── ai-workspace.instructions.md    # progress, plans, completed, session-context
+    │   └── sonarqube_mcp.instructions.md   # **/*
     ├── scripts/                     # Automation scripts
-    │   ├── sync-platforms.py        # Create junctions from .ai/ to Claude Code, GitHub Copilot, and Reasonix
+    │   ├── sync-platforms.py        # Link .ai/ into the paths tools read, generate .claude/rules (--tools to limit)
+    │   ├── sync-instructions.py     # Regenerate .github/copilot-instructions.md from AGENTS.md
+    │   ├── hooks/                   # Shared hook logic: session_start.py, post_edit_sync.py, stop_build.py, _common.py, py.sh launcher
     │   ├── sync-agents.py           # Agent-side entry point (delegates to sync-platforms.py)
     │   ├── hygiene-lint.py          # Read-only hygiene lint — stale progress, committed secrets
     │   ├── migrate-to-ai.py         # Migrate a repo from the old .claude/ layout to .ai/
-    │   └── upgrade-template.py      # Safely upgrade an existing project from this template
+    │   ├── jsonc_merge.py           # Comment-preserving JSON(C) edits used by upgrade-template.py (stdlib only)
+    │   └── upgrade-template.py      # Safely upgrade an existing project from this template; merges .vscode/ and .claude/settings.json
     ├── agents/                      # Specialized subagents (source of truth)
     ├── skills/                      # Specialized agent personas (source of truth)
     │   ├── <skill>/SKILL.md         # One directory per skill — all listed under "Specialized Skills"
@@ -493,6 +564,7 @@ Edit `.ai/session-context.md` to establish your project's initial state.
     ├── progress/                    # Active task tracking
     ├── completed/                   # Archived completed tasks
     ├── analysis/                    # Analysis files
+    ├── tmp/                         # Scratch files and hook-probe.log (gitignored)
     └── tests/                       # Template validation suite
         ├── run-all-tests.sh         # Run every suite via bash
         ├── conftest.py              # Pytest shared fixtures
@@ -510,40 +582,69 @@ Edit `.ai/session-context.md` to establish your project's initial state.
         ├── smoke-test.py
         ├── validate-traceability.py
         ├── validate-standards.py
+        ├── validate-adapters.py     # Copilot-parity adapter layout (suite 15)
+        ├── test_hooks.py            # pytest unit tests for scripts/hooks/ and the rules generator
+        ├── test_jsonc_merge.py      # pytest unit tests for the JSONC merge and the .vscode / .claude/settings.json merges
+        ├── test_sync_platforms.py   # pytest unit tests for the prompt-adapter rules in sync-platforms.py
         └── validate-upgrade-script.py
 ```
 
-### Skills Architecture — Directory Junctions
+### Skills Architecture — One Source, Per-Tool Adapters
 
-Skills, agents, prompts and instructions live in `.ai/skills/`, `.ai/agents/`, `.ai/prompts/` and `.ai/instructions/` (single source of truth). All platforms read the exact same files through directory junctions — no wrappers, no copies, no sync.
+No agent reads `.ai/` directly: every tool hardcodes the project paths it scans. VS Code
+(Copilot) enumerates `.agents/skills`, `.github/skills` and `.claude/skills`; Claude Code
+reads `.claude/skills`; OpenAI Codex reads `.agents/skills`. There is no setting that adds
+`.ai/skills` to those lists.
+
+So the template keeps **one copy** of every file in `.ai/` and exposes it through links:
 
 ```
-.ai/skills/              ← Edit here (canonical source)
-.ai/agents/              ← Agent definitions with runAs: subagent
-.ai/prompts/             ← Copilot prompt files
-.ai/instructions/        ← Copilot instruction files
+.ai/skills/              ← the only copy — edit here (prompts are skills too)
+.ai/agents/              ← agent definitions with runAs: subagent
+.ai/instructions/        ← path-scoped rules (*.instructions.md)
 
-.claude/skills/   → junction → .ai/skills/
-.claude/agents/   → junction → .ai/agents/
-.claude/commands/ → junction → .ai/prompts/
-.claude/instructions/ → junction → .ai/instructions/
-.github/skills/   → junction → .ai/skills/
-.github/agents/   → junction → .ai/agents/
-.github/prompts/  → junction → .ai/prompts/
-.github/instructions/ → junction → .ai/instructions/
-.reasonix/skills/ → junction → .ai/skills/
-.reasonix/agents/ → junction → .ai/agents/
+.claude/skills/          → link → .ai/skills/
+.claude/agents/          → link → .ai/agents/
+.claude/rules/*.instructions.md   ← generated copies of .ai/instructions/ (paths: frontmatter)
+.github/skills/          → link → .ai/skills/
+.github/agents/          → link → .ai/agents/
+.github/instructions/    → link → .ai/instructions/
+.agents/skills/          → link → .ai/skills/
 ```
 
-Git cannot track Windows junctions (or symlinks, with the common `core.symlinks=false` default), so a fresh clone has **none** of these 10 paths until they're created locally. A `SessionStart` hook in `.claude/settings.json` runs the sync automatically the moment a Claude Code session opens in the repo, and a `PostToolUse` hook re-runs it whenever `.ai/skills/`, `.ai/agents/`, `.ai/prompts/` or `.ai/instructions/` files change — so Claude Code sessions self-heal with no manual step.
+Nothing is copied into the adapter folders, so editing `.ai/` changes every tool at once.
+The one exception is `.claude/rules/`: Claude Code reads path-scoped rules only from that
+folder, not from a link, so `sync-platforms.py` writes regular copies there. Those copies
+are gitignored and carry a generated-from marker. Do not edit them.
 
-Reasonix Code and GitHub Copilot don't have an equivalent session-start hook, so after cloning — or before using one of those tools for the first time — run once manually:
+VS Code labels each source separately in the Customizations editor, which is why the same
+skill can be listed twice — once per adapter path. Each tool still resolves only its own
+paths, so the model receives the skill once.
+
+Git cannot track junctions (or symlinks, with the common `core.symlinks=false` default),
+so a fresh clone has **none** of these six folder links. Four mechanisms create them:
+
+| Trigger | Covers |
+|---|---|
+| `SessionStart` hook in `.claude/settings.json` | Claude Code session start (runs the sync before the session context is printed) |
+| `PostToolUse` hook in `.claude/settings.json` | Claude Code edits under `.ai/skills/`, `.ai/agents/`, `.ai/instructions/` |
+| `Link .ai into the paths tools read` in `.vscode/tasks.json` | VS Code, on demand (Terminal → Run Task). No automatic run on folder open |
+| `python .ai/scripts/sync-platforms.py` | CLI tools, CI, Copilot when an adapter path is missing, and anything else |
+
+The task is run on demand, not on folder open. A repository that runs a script as soon as it
+is opened is an auto-execution surface, and the architecture council decided against adding one.
+If you prefer automatic linking, VS Code also needs `task.allowAutomaticTasks` allowed once
+per user; the template does not set it.
 
 ```bash
-python .ai/scripts/sync-platforms.py
+python .ai/scripts/sync-platforms.py                  # every supported tool
+python .ai/scripts/sync-platforms.py --tools claude    # only the paths you use
 ```
 
-This creates (or repairs) all 10 junctions; it's idempotent and safe to re-run at any time.
+The script is idempotent, repairs broken links, and removes junctions left behind by
+unsupported platforms. If a real directory holding files appears at an adapter path it
+reports `CONFLICT` instead of deleting it — a copy of the canonical content is the one
+thing this layout does not allow.
 
 `sync-skills.py` remains as a deprecated alias for hooks created before the
 rename; new instructions should call `sync-platforms.py`.
@@ -554,6 +655,7 @@ All code and design work is delegated to specialized subagents — the main conv
 
 | Agent | Role |
 |-------|------|
+| `orchestrator` | GitHub Copilot entry point. Select it in the VS Code agent dropdown; it runs the nine specialist agents below. Not a delegation target |
 | `architect` | Feature design, pattern selection, component boundaries, architecture analysis |
 | `reviewer` | Code quality, SOLID, CQRS compliance, security review, architecture audit, ISO/IEC 25010 finding attribution |
 | `security` | Blast-radius and exposure analysis, threat modelling, OWASP review, dependency and secret audits |
@@ -566,7 +668,7 @@ All code and design work is delegated to specialized subagents — the main conv
 
 Each agent's `model:` frontmatter in `.ai/agents/` carries the tier alias (`sonnet` or `haiku`); the concrete model bound to that tier is chosen by the backend runtime outside this repository.
 
-Agents are defined in `.ai/agents/` — each carries `runAs: subagent` — and every tool reads them through a folder-level junction (`.claude/agents/`, `.github/agents/`, `.reasonix/agents/`). Designers and UI developers self-test with Playwright before handoff.
+Agents are defined in `.ai/agents/`. The nine specialist agents carry `runAs: subagent`; `orchestrator` does not, because it is the Copilot entry point and not a delegation target. Every tool reads them through a folder-level junction (`.claude/agents/`, `.github/agents/`). Each agent body starts with a "Before starting, read:" list of the skills and rules it needs. Copilot ignores the Claude-only `skills:` frontmatter, so that list is what carries the rules into Copilot's delegated agents. Designers and UI developers self-test with Playwright before handoff.
 
 ## Testing
 
@@ -618,7 +720,11 @@ CI installs the hash-pinned `requirements-dev.lock` (with `--require-hashes --on
 | `smoke-test.py` | Skills loadable, names/descriptions unique |
 | `validate-traceability.py` | Identifier integrity across stories, criteria, `@AC-` scenario tags and `[TestCategory]` attributes |
 | `validate-standards.py` | Standards-compatibility surfaces agree with `.ai/reference/standards.md` and its validator runs |
-| `validate-upgrade-script.py` | Upgrade script classification and integration — pytest only |
+| `validate-adapters.py` | Copilot-parity layout (suite 15, 10 tests): no `${…}` prompt variables in skills, the template ships no `.ai/prompts/`, prompt adapters link to `.ai/prompts/` only while it has files, `.claude/instructions` absent, every agent body lists its skills and rules, the runtime block is embedded in `copilot-instructions.md`, `.claude/rules/` matches its source, hook commands resolve, `.vscode/tasks.json` is tracked and not auto-run, `chat.useAgentsMdFile` is off, and the VS Code fragments and `merge-rules.json` are valid and contained in the template's own `.vscode` files |
+| `test_hooks.py` | pytest only: unit tests for the shared hook scripts in `.ai/scripts/hooks/` and the rules generator, run against temporary directories |
+| `test_jsonc_merge.py` | pytest only: unit tests for `jsonc_merge.py` (comment and format preservation, invalid input, edits) and the `.vscode` and `.claude/settings.json` merges |
+| `test_sync_platforms.py` | pytest only: prompt-adapter behaviour of `sync-platforms.py` (linked only while `.ai/prompts/` has files; legacy otherwise), in temporary directories |
+| `validate-upgrade-script.py` | Upgrade script classification and integration (14 tests), including that `.vscode/settings.json` and `tasks.json` are merged rather than template-owned — pytest only |
 
 ## Usage Examples
 
@@ -665,6 +771,8 @@ Claude will:
 /upgrade-template        # Interactive: review each changed file before accepting
                          # AGENTS.md is updated (diffed), project-owned files are never touched
 ```
+
+The upgrade does not copy `.vscode/settings.json` or `.vscode/tasks.json`. It merges the template's fragments into them, and merges the template's `.claude/settings.json` into the project's copy. Project values win on conflicts, except the pinned Copilot keys. Details are in [Shared Settings Merge](#shared-settings-merge).
 
 ### High-Stakes Decisions (Council)
 
@@ -719,7 +827,7 @@ Claude loads these files automatically based on your task type:
 
 ## Session Management
 
-Every session (Claude Code, GitHub Copilot, and Reasonix Code):
+Every session (Claude Code and GitHub Copilot):
 1. **Start** — Read `.ai/session-context.md`
 2. **Review** — Check `.ai/completed/` for relevant prior work
 3. **Track** — Write progress to `.ai/progress/{task-slug}.md` in real time (MANDATORY — `todo_write` is ephemeral and does NOT replace `.ai/progress/` files)
@@ -751,7 +859,7 @@ Every session (Claude Code, GitHub Copilot, and Reasonix Code):
 | File | Purpose |
 |------|---------|
 | `README.md` | This file — overview and quick reference |
-| `AGENTS.md` | AI orchestration (auto-loaded by all tools) |
+| `AGENTS.md` | AI orchestration (the source for `.github/copilot-instructions.md`) |
 | `TEMPLATE-USAGE.md` | Detailed usage and customization guide |
 | `TEMPLATE-FAQ.md` | Frequently asked questions |
 | `.ai/reference/critical-rules.md` | Non-negotiable coding patterns |
@@ -761,6 +869,7 @@ Every session (Claude Code, GitHub Copilot, and Reasonix Code):
 | `.ai/reference/quality-model.md` | ISO/IEC 25010:2023 review vocabulary and severity taxonomy |
 | `.ai/reference/test-documentation.md` | Which ISO/IEC/IEEE 29119-3 test documents are produced — and which are deliberate omissions |
 | `.ai/reference/standards.md` | Standards-compatibility manifest read by `verify-config` |
+| `.ai/reference/copilot-integration.md` | Copilot adapters, sync behaviour and troubleshooting when Copilot ignores the rules or agents |
 | `.ai/project/` | Project-specific context files |
 
 ## Release Versioning

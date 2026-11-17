@@ -10,15 +10,15 @@ A **generic, modular .NET project template** with:
 - Clean Architecture + CQRS + DDD patterns
 - Comprehensive development guidelines
 - Code templates for rapid development
-- Specialized agent skills for Claude Code, GitHub Copilot, and Reasonix Code
+- Specialized agent skills for Claude Code and GitHub Copilot
 - Quality checklists and best practices
-- All platforms read `.ai/skills/` and `.ai/agents/` through directory junctions — zero duplication
+- All tools read `.ai/skills/` and `.ai/agents/` through per-tool adapters — zero duplication
 
 ## Quick Start
 
 ### New Project — Install a Selection (Recommended)
 
-Do not copy the whole catalog. AI Workspace Manager installs only the skills, agents, prompts and instructions the project needs, records the selection, and reports drift against upstream:
+Do not copy the whole catalog. AI Workspace Manager installs only the skills, agents and instructions the project needs, records the selection, and reports drift against upstream:
 
 1. Install [AI Workspace Manager](#ai-workspace-manager-extension-recommended) from the Extensions view (or `code --install-extension I-Synergy.aiworkspacemanager`).
 2. Open the project folder and choose a preset or individual items.
@@ -26,7 +26,7 @@ Do not copy the whole catalog. AI Workspace Manager installs only the skills, ag
 
 ### New Project — Manual Fallback (Copy Everything)
 
-Use this only when the extension cannot be used — an air-gapped machine, no VS Code, or a deliberate full-library checkout. It copies every skill, agent, prompt and instruction into the project.
+Use this only when the extension cannot be used — an air-gapped machine, no VS Code, or a deliberate full-library checkout. It copies every skill, agent and instruction into the project.
 
 ```bash
 # Copy the AI context directory to your project root
@@ -43,7 +43,7 @@ cp /path/to/Template/.github/copilot-instructions.md /path/to/YourProject/.githu
 
 ### What Is Always Copied
 
-The resolver selects skills, agents, prompts and instructions only. These paths sit outside the selection because `AGENTS.md`, the agents and the skills cite them by literal path, so every project must carry them:
+The resolver selects skills, agents and instructions only. These paths sit outside the selection because `AGENTS.md`, the agents and the skills cite them by literal path, so every project must carry them:
 
 | Path | Why it is always present |
 |------|--------------------------|
@@ -51,16 +51,24 @@ The resolver selects skills, agents, prompts and instructions only. These paths 
 | `.ai/patterns/` | CQRS, API, testing, MVVM and other patterns are cited by path |
 | `.ai/checklists/` | Pre-submission gate used by the agent workflow |
 | `.ai/project/`, `.ai/session-context.md` | Project-owned context and session memory |
-| `.ai/scripts/`, `.ai/tests/` | Junction sync, upgrade and the validation suites |
+| `.ai/scripts/`, `.ai/tests/` | Adapter sync, upgrade and the validation suites |
 
-### Create Junctions
+### Create the Tool Adapters
 
 ```bash
 cd /path/to/YourProject
-python .ai/scripts/sync-platforms.py
+python .ai/scripts/sync-platforms.py                 # every supported tool
+python .ai/scripts/sync-platforms.py --tools claude   # only the paths you use
 ```
 
-This creates 10 directory junctions so all tools read from the same `.ai/skills/`, `.ai/agents/`, `.ai/prompts/` and `.ai/instructions/` source. Junction targets are gitignored, so junctions are local: create them on a fresh clone and re-run this after the extension installs or updates a selection. (The extension does it once on first activation.)
+This creates six folder links so every tool reads the same `.ai/skills/`, `.ai/agents/`
+and `.ai/instructions/` source — `.claude/` and `.github/` for Claude Code and Copilot, plus
+`.agents/skills/` for Codex-style agents. It also generates `.claude/rules/` (copies of
+`.ai/instructions/`, with `applyTo` mapped to `paths:`). Adapter paths are gitignored, so
+they are local: Claude Code recreates them on session start, the **Link .ai into the paths
+tools read** VS Code task (`.vscode/tasks.json`) runs this command on demand, and you can
+re-run it at any time. A real directory holding files at an adapter path is reported as
+`CONFLICT` and left alone, because that would be a second copy.
 
 `.github/copilot-instructions.md` is generated from `AGENTS.md`. After editing `AGENTS.md`, regenerate it with:
 
@@ -168,21 +176,26 @@ Edit `.ai/session-context.md` to establish your project's initial context:
 ## Directory Structure Explained
 
 ```
-AGENTS.md                        # AI orchestration instructions (auto-loaded)
+AGENTS.md                        # AI orchestration instructions (Claude Code loads it; VS Code reads it via copilot-instructions.md)
+
+.vscode/
+├── settings.json                # Template's own: pytest discovery, PIP_CONFIG_FILE; projects receive the Copilot keys and terminal env by merge
+└── tasks.json                   # "Link .ai into the paths tools read" (run on demand); projects receive it by merge
 
 .claude/
-├── settings.json                # Claude Code configuration (hooks, permissions)
+├── settings.json                # Claude Code configuration (SessionStart, PostToolUse, Stop hooks; permissions)
 ├── skills/  → .ai/skills/       # Junction — reads source directly
-└── agents/  → .ai/agents/       # Junction — reads source directly
+├── agents/  → .ai/agents/       # Junction — reads source directly
+└── rules/                       # Generated copies of .ai/instructions/ (gitignored)
 
 .github/
-├── copilot-instructions.md      # GitHub Copilot instructions
+├── copilot-instructions.md      # GitHub Copilot instructions — generated from AGENTS.md + copilot-runtime.md
 ├── skills/  → .ai/skills/       # Junction — reads source directly
-└── agents/  → .ai/agents/       # Junction — reads source directly
+├── agents/  → .ai/agents/       # Junction — reads source directly
+└── instructions/  → .ai/instructions/  # Junction — reads source directly
 
-.reasonix/
-├── skills/  → .ai/skills/       # Junction — reads source directly
-└── agents/  → .ai/agents/       # Junction — reads source directly (agents have runAs: subagent)
+.agents/
+└── skills/  → .ai/skills/       # Junction — read by Codex and other skills-standard agents
 
 .ai/                            # All AI context (vendor-neutral, canonical source)
 ├── session-context.md          # Working session memory
@@ -199,10 +212,10 @@ AGENTS.md                        # AI orchestration instructions (auto-loaded)
 │   ├── testing-patterns.md     # Testing patterns
 │   └── ...                     # 8 patterns total
 ├── scripts/                    # Automation scripts
-│   ├── sync-platforms.py       # Create folder-level junctions for all platforms
+│   ├── sync-platforms.py       # Link .ai/ into the paths each tool reads (--tools to limit)
 │   └── upgrade-template.py     # Safely upgrade existing projects
 ├── skills/                     # Specialized agent personas (source of truth)
-├── agents/                     # Specialized subagents (each has runAs: subagent)
+├── agents/                     # Specialized subagents (runAs: subagent) and the orchestrator (Copilot entry point)
 ├── checklists/
 │   └── pre-submission.md       # Comprehensive quality checklist
 ├── project/                    # CUSTOMIZE THESE FOR YOUR PROJECT
@@ -470,19 +483,33 @@ Template-owned paths are copied when missing and diffed when they differ:
 | `.sonarcloud.properties` | SonarCloud analysis scope + UTF-8 encoding |
 | `pytest.ini` | `testpaths = .ai/tests` |
 | `pip.ini` | Project-scoped PyPI index |
-| `.vscode/settings.json` | `PIP_CONFIG_FILE` and pytest discovery |
 | `.gitignore` | Junction, `__pycache__` and `.ai/tmp/` ignores |
 | `.github/workflows/validate-template.yml` | CI validation job |
 | `.github/workflows/ci.yml` | Release versioning, tagging and publishing on merge to `main` |
 
-`.claude/settings.json` is handled separately: it is created if absent, otherwise
-merged (hooks, permissions and `plansDirectory` are unioned, your values are kept).
+Three files are merged, not copied or diffed. The template's shipped configuration is added to
+your copy and your values are kept:
+
+| Project file | What is merged | Result |
+|---|---|---|
+| `.vscode/settings.json` | The fragment `.ai/reference/templates/vscode/settings.json`: `chat.useAgentsMdFile: false` for the Local harness, `customAgents.enabled`, `chat.useClaudeHooks`, pinned skill and instruction loading, and the `terminal.integrated.env.*` build variables | Missing keys added; pinned Copilot keys set to the template value (your comment on that line is kept); other conflicts keep your value and are reported |
+| `.vscode/tasks.json` | The fragment `.ai/reference/templates/vscode/tasks.json`: the **Link .ai into the paths tools read** task (run on demand, no folder-open run) | Tasks merged by `label`; a task with an existing label is kept unchanged |
+| `.claude/settings.json` | The template's `.claude/settings.json` | Legacy hook commands listed in `merge-rules.json` removed; template hooks and `permissions` lists added (union); other keys added when missing; your values win on conflicts |
+
+Pinned keys and the other merge rules are in `.ai/reference/templates/merge-rules.json`. Comments
+and formatting are preserved. Invalid JSON in your file means nothing is written for it and the
+error is reported. The template's own `.vscode/settings.json` also holds template-only settings
+(`python.testing.*`, `PIP_CONFIG_FILE`) that are never shipped. See `.ai/reference/copilot-integration.md`,
+section "How the settings reach a project".
 
 #### What it never touches
 
 `PROJECT_OWNED` paths are skipped with no read and no diff — `.ai/session-context.md`,
 `.ai/project/`, `.ai/progress/`, `.ai/completed/`, `.ai/plans/`, `.ai/analysis/`,
 `COMPLIANCE.md`, `.github/copilot-instructions.md` and `.claude/settings.local.json`.
+The upgrade then regenerates `.github/copilot-instructions.md` from the project's `AGENTS.md`
+(its project-owned `copilot-reference` block survives the regeneration), so the file is
+rebuilt rather than copied or diffed.
 
 `.github/workflows/ci.yml` is template-owned, so an upgrade copies it when missing and
 diffs it when it differs. `CHANGELOG.md` is a normal project file: the release workflow
@@ -495,10 +522,11 @@ still present. The entries the template needs are:
 ```gitignore
 .claude/skills/
 .claude/agents/
+.claude/rules/*.instructions.md
 .github/skills/
 .github/agents/
-.reasonix/skills/
-.reasonix/agents/
+.github/instructions/
+.agents/skills/
 .ai/tmp/
 __pycache__/
 .pytest_cache/
@@ -508,7 +536,7 @@ __pycache__/
 
 ```bash
 pip install -r requirements-dev.txt
-python .ai/scripts/sync-platforms.py      # recreate the 10 platform junctions
+python .ai/scripts/sync-platforms.py      # recreate the six folder adapters and .claude/rules/
 python -m pytest .ai/tests/test_suite.py -q
 ```
 
@@ -553,14 +581,14 @@ python -m pytest .ai/tests/test_suite.py -q
 ### Adding a New Skill
 
 1. Create `.ai/skills/<skill-name>/SKILL.md` with correct YAML frontmatter
-2. Skills are immediately available to all platforms via junctions — no sync needed
-3. A PostToolUse hook ensures junctions stay intact when `.ai/skills/` files change
+2. Skills are immediately available to all tools through the adapters — no copy step
+3. A PostToolUse hook repairs the adapters when `.ai/skills/` files change
 4. Add to the Work-Type Context Mapping table in `AGENTS.md`
 5. Add to `README.md` skills table
 
 ### Updating an Existing Skill
 
-Edit `.ai/skills/<skill-name>/SKILL.md` — changes are instantly visible to all platforms via junctions.
+Edit `.ai/skills/<skill-name>/SKILL.md` — every tool sees the change through its adapter path.
 
 ### After Cloning
 
@@ -568,7 +596,21 @@ Edit `.ai/skills/<skill-name>/SKILL.md` — changes are instantly visible to all
 python .ai/scripts/sync-platforms.py
 ```
 
-This creates the 10 folder-level junctions. On Windows this requires no special permissions (directory junctions are user-level). On macOS/Linux, standard symlinks are used.
+This creates the six folder adapters and generates `.claude/rules/`. On Windows this requires no
+special permissions (directory junctions are user-level). On macOS/Linux, standard symlinks are used.
+Opening the repo in VS Code does not create them: the **Link .ai into the paths tools read** task
+in `.vscode/tasks.json` does, when you run it (Terminal → Run Task). Claude Code creates them at
+session start.
+
+#### Upgrading from an older template
+
+Earlier releases shipped `.ai/prompts/`. Prompts are skills now, so the upgrade does not delete
+`.ai/prompts/` in your project. It prints a notice instead. Move any custom prompts into
+`.ai/skills/<name>/SKILL.md` (with `disable-model-invocation: true` to keep them explicit-only),
+then remove the folder. Prompt adapters follow `.ai/prompts/`: `.claude/commands/` and
+`.github/prompts/` are linked to it only while it holds files, and `sync-platforms.py` removes
+them when it is absent or empty. The retired `.claude/instructions/` is removed the same way when
+it is a link or empty. Real content found at any of these paths is reported and left in place.
 
 ### Contributing Improvements
 

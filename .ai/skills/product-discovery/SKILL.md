@@ -114,7 +114,7 @@ Every question with a bounded answer set is asked as a choice via `AskUserQuesti
 - **Text questions (Mode: text):** Free-text questions without predefined options are asked once per round as a single numbered message. The respondent types an answer in plain chat language and is expected to label their response by question number if they answer multiple text questions in one turn (e.g., "1. Yes. 2. Dispatch managers. 3. Budget is tight."). Parse responses by number before moving to the next phase.
 - **Larger option sets** (languages, countries, integrations, device features): split into a two-step choice (pick a group, then the items) or multi-select over the 4 likeliest items + `Other`.
 - **Pre-filled answers:** when a value can be inferred (from codebase, existing documents, earlier answers, tech-stack.md), propose it as the first option labelled `(from {source})` so the respondent confirms with one click.
-- **Fallback for clients without a choice tool** (Copilot, Reasonix Code, plain chat): render the same options as a lettered list and parse responses the same way. Free text is always accepted.
+- **Fallback for clients without a choice tool** (Copilot, plain chat): render the same options as a lettered list and parse responses the same way. Free text is always accepted.
 - **Pace controls:** a progress line each round (e.g., "Phase 3 of 18 — Users, about 2 rounds left"), *Skip this phase* and *Pause and save* available at playback checkpoints. The respondent can answer several questions with one typed message if they wish.
 
 ## Depth and Completeness

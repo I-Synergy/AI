@@ -4,7 +4,7 @@
 
 **On every non-trivial task (3+ steps or multi-file):**
 
-1. **Create a plan** — use your assistant's planning tool (e.g. `submit_plan` in Reasonix, plan mode in Claude Code). Name the plan with a meaningful slug in `.ai/plans/{task-slug}.md`. Wait for approval before writing any code.
+1. **Create a plan** — use your assistant's planning tool (e.g. plan mode in Claude Code). Name the plan with a meaningful slug in `.ai/plans/{task-slug}.md`. Wait for approval before writing any code.
    - Use the same slug for the progress file (step 2) so both files stay linked
 2. **Create a progress file** — immediately write `.ai/progress/{task-slug}.md` using this structure:
    ```

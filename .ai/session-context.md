@@ -6,7 +6,7 @@ blocks with your project's context, then keep it updated at the end of every ses
 # {ApplicationName} Session Context
 
 **Last Updated:** [DateTime]
-**Updated By:** [Claude Code | Copilot | Reasonix Code | User]
+**Updated By:** [Claude Code | Copilot | User]
 **Project Version:** [Version]
 
 ---
@@ -283,13 +283,13 @@ Copy {Domain}.{Entity} structure exactly - proven and working in production.
 
 ## Next Session Checklist
 
-**For the next session (Claude Code, GitHub Copilot, or Reasonix Code) to read:**
+**For the next session (Claude Code or GitHub Copilot) to read:**
 
 1. **Current Focus:** [What to focus on next]
 2. **Blockers:** [Any blockers to be aware of]
 3. **Recent Decisions:** [Key decisions from this session]
 4. **Patterns Changed:** [Any pattern changes to note]
-5. **Written By:** [Claude Code | Copilot | Reasonix Code] on [DateTime]
+5. **Written By:** [Claude Code | Copilot] on [DateTime]
 
 **Example:**
 
@@ -301,4 +301,4 @@ Copy {Domain}.{Entity} structure exactly - proven and working in production.
 
 ---
 
-**Remember:** Update this file at the end of every session with new learnings, decisions, and context. This is the shared AI context — readable and writable by Claude Code, GitHub Copilot, and Reasonix Code.
+**Remember:** Update this file at the end of every session with new learnings, decisions, and context. This is the shared AI context — readable and writable by Claude Code and GitHub Copilot.
