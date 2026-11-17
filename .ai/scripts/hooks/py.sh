@@ -14,7 +14,7 @@ elif python -c '' >/dev/null 2>&1; then
     PY=python
 fi
 
-if [ -z "$PY" ]; then
+if [[ -z "$PY" ]]; then
     echo "py.sh: no working python3 or python on PATH" >&2
     exit 127
 fi
