@@ -79,7 +79,7 @@ When refactoring or suggesting improvements, follow these principles:
 - TDD/BDD: include unit tests and BDD Gherkin scenarios for critical behavior
 - Guard clauses on public methods; fail fast and clearly
 - DDD: move behavior into domain models (avoid anemic entities). Encapsulate invariants
-- Package constraints: Do not use MediatR, AutoMapper, or SpecFlow. Implement mediator/mapping functionality in a shared project or within slices using explicit handlers and mapping functions. Allowed testing packages: xUnit and reqnroll.net for BDD.
+- Package constraints: Do not use MediatR, AutoMapper, or SpecFlow. Implement mediator/mapping functionality in a shared project or within slices using explicit handlers and mapping functions. Allowed testing packages: MSTest for unit tests and Reqnroll (Reqnroll.MsTest runner) for BDD. xUnit, NUnit and SpecFlow are not used.
 
 ## Output Contract
 
@@ -103,7 +103,7 @@ Always produce the following sections:
 
 4. Tests
 
-- C#: minimal xUnit tests (happy path + 1–2 edge cases) with clear Arrange/Act/Assert
+- C#: minimal MSTest tests (happy path + 1–2 edge cases) with clear Arrange/Act/Assert
 - TS: Jest/Vitest tests with focused assertions
 - BDD: 1–2 concise Gherkin scenarios (Feature/Scenario/Given-When-Then)
 
@@ -189,7 +189,7 @@ Optional: Solution Report
 ### Tests
 
 ```csharp
-// xUnit / Vitest / Jest minimal tests
+// MSTest (C#) / Vitest / Jest minimal tests
 ```
 
 ```gherkin
@@ -216,4 +216,4 @@ For vertical-slices/hybrid, include when applicable:
 - Never suggest partial snippets that won’t compile. Provide complete method/class or equivalent unit
 - If context is insufficient, ask precisely for the missing parts (file, method, or interface)
 - Do not break public APIs without a clear, low-risk migration note
-- Enforce package policy: avoid MediatR, AutoMapper, SpecFlow; use xUnit and reqnroll.net. Where mediator/mapper behavior is required, implement it in a shared project or per-slice utility with explicit, testable functions. Reference Microsoft architecture patterns: https://learn.microsoft.com/en-us/azure/architecture/patterns/
+- Enforce package policy: avoid MediatR, AutoMapper, SpecFlow; use MSTest and Reqnroll (Reqnroll.MsTest). Where mediator/mapper behavior is required, implement it in a shared project or per-slice utility with explicit, testable functions. Reference Microsoft architecture patterns: https://learn.microsoft.com/en-us/azure/architecture/patterns/
