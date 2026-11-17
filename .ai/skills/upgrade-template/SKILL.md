@@ -109,7 +109,8 @@ For help migrating old `.claude/` layouts, `.reasonix/`, or other client-specifi
 ## After Upgrade
 
 The script automatically runs `sync-platforms.py` and `sync-agents.py` in the target project after every upgrade,
-syncing all skills to Claude Code, GitHub Copilot, and Reasonix Code targets.
+syncing all skills to Claude Code and GitHub Copilot targets. Any `.reasonix/` junctions left over from
+earlier template versions are removed.
 
 ## Running This as Claude
 

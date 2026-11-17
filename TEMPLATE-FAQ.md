@@ -43,7 +43,7 @@ Invoke specialized skills directly:
 /gap-review               - Validate solution against design decisions
 /upgrade-template         - Upgrade existing project from template
 /verify-config            - Audit AGENTS.md against actual codebase
-/sync-platforms            - Sync platform junctions for skills, agents, prompts and instructions
+/sync-platforms            - Sync platform junctions for skills, agents and instructions, and generate .claude/rules
 ```
 
 #### 2. Natural Language Requests
@@ -178,7 +178,7 @@ Focus on **what you want done**, not **how** it gets done. The AI handles orches
 
 Three systems work together automatically:
 
-### 1. Skills (Specialized Prompts)
+### 1. Skills
 
 **Skills are invoked when:**
 
@@ -412,7 +412,7 @@ Once pytest is installed, VS Code's Test Explorer panel shows every suite as a c
 | Token Consistency | `{Entity}`, `{Domain}` etc. defined and used consistently |
 | AGENTS.md References | No broken `.ai/` paths in AGENTS.md |
 | Settings & Structure | `.claude/settings.json` structure, no stale paths |
-| Copilot Integration | Three-tier skill sync is correct and in sync |
+| Copilot Integration | Adapter layout, skill sync and the Copilot runtime section are correct and in sync |
 | Smoke Tests | All skills loadable, names and descriptions unique |
 | Upgrade Script | Script classification and integration tests — pytest only |
 
@@ -424,7 +424,7 @@ The authoritative list of suites is in `.ai/tests/run-all-tests.sh` (bash) and `
 
 ### Answer
 
-Yes. [AI Workspace Manager](https://marketplace.visualstudio.com/items?itemName=I-Synergy.aiworkspacemanager) is the supported way to set up a project. It solves the problem of a full catalog being too large to copy into every project: the extension lets you choose a preset or individual skills, agents, prompts and instructions, records the selection, installs only those items, and shows drift and upstream changes against the same resolver CI uses.
+Yes. [AI Workspace Manager](https://marketplace.visualstudio.com/items?itemName=I-Synergy.aiworkspacemanager) is the supported way to set up a project. It solves the problem of a full catalog being too large to copy into every project: the extension lets you choose a preset or individual skills, agents and instructions, records the selection, installs only those items, and shows drift and upstream changes against the same resolver CI uses.
 
 Install it from the Extensions view (search **AI Workspace Manager for VS Code**) or:
 
@@ -432,11 +432,105 @@ Install it from the Extensions view (search **AI Workspace Manager for VS Code**
 code --install-extension I-Synergy.aiworkspacemanager
 ```
 
-The extension keeps its selection and tooling state in `.ai/ai.json`, `.ai/ai.lock.json`, `.ai/tooling.json`, `.ai/catalog/`, `.ai/installed/`, and `*.ai-installed.json`. Those paths are gitignored: they describe the current machine's installed selection, not template content. Only the installed items under `.ai/skills/`, `.ai/agents/`, `.ai/prompts/` and `.ai/instructions/` are committed.
+The extension keeps its selection and tooling state in `.ai/ai.json`, `.ai/ai.lock.json`, `.ai/tooling.json`, `.ai/catalog/`, `.ai/installed/`, and `*.ai-installed.json`. Those paths are gitignored: they describe the current machine's installed selection, not template content. Only the installed items under `.ai/skills/`, `.ai/agents/` and `.ai/instructions/` are committed. Former prompts are skills now, so they install under `.ai/skills/`.
 
-The selection covers skills, agents, prompts and instructions. `.ai/reference/`, `.ai/patterns/`, `.ai/checklists/`, `.ai/project/`, `.ai/scripts/` and `.ai/tests/` always come along, because `AGENTS.md`, the agents and the skills cite them by literal path.
+The selection covers skills, agents and instructions. `.ai/reference/`, `.ai/patterns/`, `.ai/checklists/`, `.ai/project/`, `.ai/scripts/` and `.ai/tests/` always come along, because `AGENTS.md`, the agents and the skills cite them by literal path.
 
-After installing or changing a selection, run `python .ai/scripts/sync-platforms.py` so Claude Code, GitHub Copilot, and Reasonix Code see the updated junctions, then confirm there is no drift (`Installed` view, or the resolver's `sync --check`).
+After installing or changing a selection, run `python .ai/scripts/sync-platforms.py` so Claude Code and GitHub Copilot see the updated links and the generated `.claude/rules/`, then confirm there is no drift (`Installed` view, or the resolver's `sync --check`).
+
+## Q9: What happened to Reasonix Code support?
+
+### Answer
+
+Reasonix Code support was removed because the client is no longer supported. The template targets Claude Code and GitHub Copilot only.
+
+What changed:
+
+- The `.reasonix/skills/` and `.reasonix/agents/` junctions and their `.gitignore` entries are gone.
+- Documentation, the session-handoff pick-lists and `verify-config` list only Claude Code and GitHub Copilot.
+
+Existing projects need no manual migration. `python .ai/scripts/sync-platforms.py` removes any `.reasonix/` junction it finds and reports how many legacy items it removed, and the upgrade script runs that sync after every upgrade.
+
+## Q10: Why can't every tool just read `.ai/` directly?
+
+### Answer
+
+Because no agent supports it. Each tool hardcodes the project directories it scans, and
+`.ai/` is never one of them:
+
+| Tool | Project skill locations it scans |
+|---|---|
+| GitHub Copilot in VS Code | `.agents/skills`, `.github/skills`, `.claude/skills` |
+| Claude Code | `.claude/skills` |
+| OpenAI Codex and other skills-standard agents | `.agents/skills` |
+
+There is no setting that adds `.ai/skills` to those lists (the old
+`chat.agentSkillsLocations` setting is deprecated and applies only to the deprecated
+Local harness). So a repo cannot both keep its content in `.ai/` and be discovered
+natively — the adapter path has to exist.
+
+The template's answer is **one copy, many links**:
+
+- Every file lives once, under `.ai/`.
+- `.claude/`, `.github/` and `.agents/` hold folder links (junctions on Windows,
+  symlinks elsewhere), never copies.
+- Links are gitignored, so they cost no repository space and cannot drift.
+- `sync-platforms.py` creates them on Claude Code session start (a `SessionStart` hook),
+  after an install or upgrade, from the **Link .ai into the paths tools read** VS Code task
+  (run on demand, not on folder open), or manually. It repairs broken links and removes links
+  belonging to unsupported tools.
+- If a real directory with files ever appears at an adapter path, the sync prints
+  `CONFLICT` and refuses to delete it — that would be the forbidden second copy.
+
+If you see the same skill listed twice in VS Code, that is the Customizations editor
+showing the two adapter paths it scans. Editing `.ai/` changes both, and each tool
+resolves only its own path.
+
+A single-tool checkout can avoid the extra paths entirely:
+
+```bash
+python .ai/scripts/sync-platforms.py --tools claude
+```
+
+#### Why `AGENTS.md` appears nowhere in that list
+
+`AGENTS.md` and `.github/copilot-instructions.md` are **project instruction files**, not
+customization items, so the Customizations editor never lists them — that is not the same
+as being ignored. Copilot's supported project instruction files are
+`.github/copilot-instructions.md` or `AGENTS.md`, and this template makes the answer
+unambiguous by generating the Copilot file from `AGENTS.md`, with a validation test that
+fails if the two diverge:
+
+```bash
+python .ai/scripts/sync-instructions.py        # AGENTS.md -> .github/copilot-instructions.md
+python .ai/tests/validate-copilot.py           # asserts AGENTS.md is embedded verbatim
+```
+
+`AGENTS.md` stays the file you edit. Every other artifact — including the Copilot
+instructions and all adapter paths — is generated from it or linked to `.ai/`.
+
+#### Why not point VS Code at `.ai/` with settings?
+
+Because those settings are editor-only. `chat.instructionsFilesLocations`,
+`chat.promptFilesLocations`, `chat.agentFilesLocations` and `chat.hookFilesLocations` add
+search locations for VS Code sessions and are forwarded to Agent Host harnesses, but
+Copilot CLI, the Copilot app, the cloud coding agent and Claude Code do not read them —
+so a settings-based setup would work in this window and fail everywhere else. Skills are
+stricter still: `chat.agentSkillsLocations` is deprecated and Local-harness only, so no
+setting makes `.ai/skills` visible to the Copilot harness. The adapter layer is the only
+mechanism that behaves the same for every tool.
+
+## Q11: Why does GitHub Copilot ignore the rules or the agents?
+
+### Answer
+
+The usual causes are on the Copilot side, not in the repository:
+
+- **The model cannot run tool calls.** Sign in to GitHub Copilot, or choose a model that works in agent mode. A bring-your-own-key DeepSeek model in thinking mode fails with HTTP 400 (`reasoning_content` must be passed back), which ends the agent turn mid-loop.
+- **The wrong agent is active.** In VS Code, select **orchestrator** in the agent dropdown. It has the delegation tool and runs the specialist agents. Run Subagent (Agent mode → Configure Tools) is only needed when you run a different agent.
+- **A setting misleads.** `chat.agentFilesLocations: {"AGENTS.md": true}` does not load `AGENTS.md`, and `chat.agentSkillsLocations` is deprecated. The workspace settings in `.vscode/settings.json` are documented in `.ai/reference/copilot-integration.md` (section "VS Code workspace settings").
+
+The template makes the instructions explicit: `.github/copilot-instructions.md` tells Copilot to read the session context and progress first, how to delegate, and how to hand off. Path-scoped rules in `.ai/instructions/` attach automatically. The full checklist, including how to confirm whether the hooks fire under Copilot, is in [Troubleshooting: Copilot ignores the rules or agents](.ai/reference/copilot-integration.md#troubleshooting-copilot-ignores-the-rules-or-agents).
 
 ## Key Takeaways
 

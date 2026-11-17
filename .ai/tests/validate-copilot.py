@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Validates the GitHub Copilot setup:
+Validates the platform adapters:
   - .github/copilot-instructions.md exists and has no stale .claude/ refs
   - .github/skills/ is a folder-level junction -> .ai/skills/
   - .claude/skills/ is a folder-level junction -> .ai/skills/
+  - .agents/skills/ is a folder-level junction -> .ai/skills/
+  - every adapter resolves to the same canonical directory (no copies)
 """
 
 import io
@@ -26,12 +28,14 @@ subprocess.run([sys.executable, _script], capture_output=True)
 AI_SKILLS     = TEMPLATE_ROOT / ".ai"     / "skills"
 GITHUB_SKILLS = TEMPLATE_ROOT / ".github" / "skills"
 CLAUDE_SKILLS = TEMPLATE_ROOT / ".claude" / "skills"
+AGENTS_SKILLS = TEMPLATE_ROOT / ".agents" / "skills"
 COPILOT_MD    = TEMPLATE_ROOT / ".github" / "copilot-instructions.md"
 AGENTS_MD     = TEMPLATE_ROOT / "AGENTS.md"
 
 GENERATED_MARK  = "<!-- ai-workspace-manager:generated-from-agents -->"
 LEGACY_MARK     = "<!-- ai-manager:generated-from-agents -->"
 REFERENCE_START = "<!-- ai-workspace-manager:copilot-reference:start -->"
+RUNTIME_START   = "<!-- ai-workspace-manager:copilot-runtime:start -->"
 
 STALE_REF_PATTERN = re.compile(
     r'(?<!~/)\.claude/(?!settings\.json|settings\.local\.json)'
@@ -83,9 +87,12 @@ def test_copilot_instructions() -> bool:
         expected = AGENTS_MD.read_text(encoding="utf-8").strip() if AGENTS_MD.is_file() else ""
         body = content.split(GENERATED_MARK, 1)[1]
         body = re.sub(r"<!-- Generated from AGENTS\.md\..*?-->", "", body, count=1)
-        cut = body.find(REFERENCE_START)
-        if cut != -1:
-            body = body[:cut]
+        # The AGENTS.md body ends where the runtime block (or, without one, the
+        # project-owned reference block) starts.
+        cuts = [body.find(marker) for marker in (RUNTIME_START, REFERENCE_START)]
+        cuts = [cut for cut in cuts if cut != -1]
+        if cuts:
+            body = body[:min(cuts)]
         if not expected or body.strip() != expected:
             print("  FAIL: AGENTS.md changed without regenerating the Copilot file")
             print("        run: python .ai/scripts/sync-instructions.py")
@@ -149,6 +156,78 @@ def test_claude_skills() -> bool:
     return True
 
 
+def test_agents_skills() -> bool:
+    print("\nTEST 5: .agents/skills/ is a folder-level junction -> .ai/skills/")
+    print("-" * 40)
+
+    if not AGENTS_SKILLS.exists():
+        print("  FAIL: .agents/skills/ not found — other agents discover no skills")
+        print("  Fix: python .ai/scripts/sync-platforms.py")
+        return False
+
+    if not _is_junction(AGENTS_SKILLS):
+        print("  FAIL: .agents/skills/ is a real directory, not a junction")
+        print("  Fix: move its files into .ai/skills/, delete it, then re-run the sync")
+        return False
+
+    agents_count = sum(1 for d in AGENTS_SKILLS.iterdir() if d.is_dir())
+    ai_count = sum(1 for d in AI_SKILLS.iterdir() if d.is_dir())
+    print(f"  PASS: folder-level junction — {agents_count} skills (source has {ai_count})")
+    return True
+
+
+def test_single_source() -> bool:
+    print("\nTEST 6: every adapter resolves to the same canonical directory")
+    print("-" * 40)
+
+    if not AI_SKILLS.exists():
+        print("  SKIP: .ai/skills/ missing")
+        return False
+
+    canonical = AI_SKILLS.resolve()
+    ok = True
+    for adapter in (GITHUB_SKILLS, CLAUDE_SKILLS, AGENTS_SKILLS):
+        if not adapter.exists():
+            print(f"  FAIL: {adapter.relative_to(TEMPLATE_ROOT)} missing")
+            ok = False
+            continue
+        resolved = adapter.resolve()
+        if resolved != canonical:
+            print(f"  FAIL: {adapter.relative_to(TEMPLATE_ROOT)} resolves to {resolved}")
+            ok = False
+
+    if ok:
+        print("  PASS: one copy of every skill — 3 adapters, 1 directory")
+    return ok
+
+
+def test_agents_md_reaches_copilot() -> bool:
+    print("\nTEST 7: AGENTS.md content reaches Copilot through copilot-instructions.md")
+    print("-" * 40)
+
+    if not AGENTS_MD.is_file():
+        print("  FAIL: AGENTS.md not found")
+        return False
+    if not COPILOT_MD.is_file():
+        print("  FAIL: .github/copilot-instructions.md not found")
+        return False
+
+    # AGENTS.md is the cross-agent source. Copilot always reads
+    # .github/copilot-instructions.md, so that file must embed AGENTS.md
+    # verbatim — that is what makes the editor's "everything is .github"
+    # listing harmless rather than a second, drifting definition.
+    agents_body = AGENTS_MD.read_text(encoding="utf-8").strip()
+    copilot_doc = COPILOT_MD.read_text(encoding="utf-8")
+
+    if agents_body not in copilot_doc:
+        print("  FAIL: .github/copilot-instructions.md is out of date with AGENTS.md")
+        print("  Fix: python .ai/scripts/sync-instructions.py")
+        return False
+
+    print(f"  PASS: AGENTS.md ({len(agents_body)} chars) embedded verbatim in the Copilot file")
+    return True
+
+
 def main():
     print("=" * 60)
     print("  Copilot Integration Validation")
@@ -159,6 +238,9 @@ def main():
         test_github_skills_exist(),
         test_skills_in_sync(),
         test_claude_skills(),
+        test_agents_skills(),
+        test_single_source(),
+        test_agents_md_reaches_copilot(),
     ]
 
     passed = sum(results)

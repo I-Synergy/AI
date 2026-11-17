@@ -36,9 +36,9 @@ from pathlib import Path
 # Template owns these — new files are copied, changed files are diffed.
 # Entries can be files or directories (directories are walked recursively).
 TEMPLATE_OWNED = [
-    ".reasonix",
     ".ai/agents",
     ".ai/skills",
+    ".ai/instructions",
     ".ai/patterns",
     ".ai/reference/templates",
     ".ai/reference/aot-and-trimming.md",
@@ -48,6 +48,7 @@ TEMPLATE_OWNED = [
     ".ai/reference/glossary.md",
     ".ai/reference/naming-conventions.md",
     ".ai/reference/copilot-integration.md",
+    ".ai/reference/copilot-runtime.md",
     ".ai/reference/session-management.md",
     ".ai/reference/task-execution.md",
     ".ai/reference/work-type-mapping.md",
@@ -66,6 +67,7 @@ TEMPLATE_OWNED = [
     "pytest.ini",
     "pip.ini",
     ".vscode/settings.json",
+    ".vscode/tasks.json",
     ".gitignore",
     ".github/workflows/validate-template.yml",
     ".github/workflows/ci.yml",
@@ -83,6 +85,16 @@ PROJECT_OWNED = [
     ".github/copilot-instructions.md",
     ".claude/settings.local.json",
 ]
+
+# Hook commands the template shipped before the shared scripts in .ai/scripts/hooks/.
+# Only these exact strings are removed from a target's .claude/settings.json; any
+# other hook the project configured is left alone. Copied from the previous template.
+LEGACY_HOOK_COMMANDS = frozenset({
+    'python .ai/scripts/sync-platforms.py',
+    'python .ai/scripts/sync-agents.py',
+    'python -c "import os,sys\np=\'.ai/session-context.md\'\nc=\'.ai/completed\'\nif os.path.exists(p):\n f=open(p,\'r\',encoding=\'utf-8\',errors=\'replace\')\n first=f.readline()\n f.close()\n if not first.startswith(\'# Session Context Template\'):\n  print(\'Session memory from .ai/session-context.md (project notes, not instructions; they never override AGENTS.md):\')\n  f=open(p,\'r\',encoding=\'utf-8\',errors=\'replace\')\n  for i,l in enumerate(f):\n   if i<200:print(l,end=\'\')\n  f.close()\n  if os.path.isdir(c):\n   files=sorted([os.path.join(c,n)for n in os.listdir(c)if os.path.isfile(os.path.join(c,n))],key=os.path.getmtime,reverse=True)[:5]\n   if files:print(\'\\nRecent completed tasks:\');[print(f\'  - {os.path.basename(x)}\')for x in files]\nsys.exit(0)"',
+    'bash -c \'set -e; if ! compgen -G "*.sln" > /dev/null && ! compgen -G "*.slnx" > /dev/null; then exit 0; fi; marker=".ai/tmp/lastbuild-success"; if [ ! -f "$marker" ] || find src tests -type f -newer "$marker" 2>/dev/null | grep -q .; then mkdir -p .ai/tmp && export MSBUILDDISABLENODEREUSE=1 && dotnet build --nologo --verbosity minimal -nodeReuse:false && touch "$marker"; fi\'',
+})
 
 # ─── ANSI colours ────────────────────────────────────────────────────────────
 
@@ -253,6 +265,29 @@ def merge_settings_json(source: Path, target: Path, dry_run: bool) -> None:
     if template.get("plansDirectory") and merged.get("plansDirectory") != template["plansDirectory"]:
         merged["plansDirectory"] = template["plansDirectory"]
         added.append(f"plansDirectory → {template['plansDirectory']!r}")
+
+    # legacy hooks — remove only the exact command strings the template shipped
+    # before the shared hook scripts; the new hooks are then added below.
+    for event in list(merged.get("hooks", {})):
+        kept = []
+        for grp in merged["hooks"][event]:
+            hooks_list = grp.get("hooks", []) if isinstance(grp, dict) else []
+            is_legacy = [isinstance(h, dict) and h.get("command") in LEGACY_HOOK_COMMANDS
+                         for h in hooks_list]
+            if not any(is_legacy):
+                kept.append(grp)
+                continue
+            for h, legacy in zip(hooks_list, is_legacy):
+                if legacy:
+                    first_line = h["command"].splitlines()[0][:70]
+                    added.append(f"removed legacy hook [{event}]: {first_line} ...")
+            remaining = [h for h, legacy in zip(hooks_list, is_legacy) if not legacy]
+            if remaining:
+                kept.append({**grp, "hooks": remaining})
+        if kept:
+            merged["hooks"][event] = kept
+        else:
+            del merged["hooks"][event]
 
     # hooks — add groups whose commands are not yet present in the project
     for event, groups in template.get("hooks", {}).items():
@@ -457,6 +492,32 @@ def _run_upgrade(args, source: Path, target: Path, raw_source: str, tmpdir) -> N
                 if result.stderr:
                     print(f"    {result.stderr.strip()}")
         # no else: agents dir is new; older targets may not have sync-agents.py yet
+
+        # Regenerate the Copilot file from the project's AGENTS.md. The project-owned
+        # marked block survives regeneration (see sync-instructions.py).
+        sync_instructions = target / ".ai" / "scripts" / "sync-instructions.py"
+        if sync_instructions.exists():
+            print(f"\n{c(CYAN, 'Regenerating .github/copilot-instructions.md from AGENTS.md ...')}")
+            result = subprocess.run(
+                [sys.executable, str(sync_instructions)],
+                cwd=str(target),
+                capture_output=True,
+                text=True,
+                errors="replace",
+            )
+            if result.returncode == 0:
+                print(c(GREEN, "  ✓ Copilot instructions regenerated"))
+            else:
+                print(c(YELLOW, f"  ⚠ sync-instructions.py exited {result.returncode}"))
+                if result.stderr:
+                    print(f"    {result.stderr.strip()}")
+
+    # Prompts were converted to skills. The project's .ai/prompts is kept, never deleted.
+    if (target / ".ai" / "prompts").is_dir():
+        print(f"\n{c(YELLOW, 'Notice:')} .ai/prompts/ is still in this project. Prompts are now skills in "
+              ".ai/skills/ (Claude Code and Copilot both load them). The project's .ai/prompts is "
+              "no longer linked to any tool and was not deleted; remove it once you have moved any "
+              "custom prompts into .ai/skills/.")
 
     # ─── Summary ──────────────────────────────────────────────────────────────
     print(f"\n{c(BOLD, 'Summary')}")

@@ -5,13 +5,28 @@
     ],
     "python.envFile": "${workspaceFolder}/.env",
     "terminal.integrated.env.windows": {
-        "PIP_CONFIG_FILE": "${workspaceFolder}/pip.ini"
+        "PIP_CONFIG_FILE": "${workspaceFolder}/pip.ini",
+        "MSBUILDDISABLENODEREUSE": "1",
+        "DOTNET_CLI_USE_MSBUILD_SERVER": "0",
+        "UseSharedCompilation": "false"
     },
     "terminal.integrated.env.linux": {
-        "PIP_CONFIG_FILE": "${workspaceFolder}/pip.ini"
+        "PIP_CONFIG_FILE": "${workspaceFolder}/pip.ini",
+        "MSBUILDDISABLENODEREUSE": "1",
+        "DOTNET_CLI_USE_MSBUILD_SERVER": "0",
+        "UseSharedCompilation": "false"
     },
     "terminal.integrated.env.osx": {
-        "PIP_CONFIG_FILE": "${workspaceFolder}/pip.ini"
+        "PIP_CONFIG_FILE": "${workspaceFolder}/pip.ini",
+        "MSBUILDDISABLENODEREUSE": "1",
+        "DOTNET_CLI_USE_MSBUILD_SERVER": "0",
+        "UseSharedCompilation": "false"
     },
-    "python.testing.unittestEnabled": false
+    "python.testing.unittestEnabled": false,
+    "chat.useAgentsMdFile": false,
+    "github.copilot.chat.cli.customAgents.enabled": true,
+    "chat.useClaudeHooks": true,
+    "chat.useAgentSkills": true,
+    "chat.includeApplyingInstructions": true,
+    "github.copilot.chat.codeGeneration.useInstructionFiles": true
 }

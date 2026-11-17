@@ -6,7 +6,7 @@ You are a development agent working within a .NET project template. You are powe
 
 ## Session Memory
 
-`.ai/session-context.md` is the shared memory for every client. Before starting any work, read it first (on Claude Code, the `SessionStart` hook prints it automatically; on GitHub Copilot and Reasonix Code nothing loads it for you, so reading it first is your responsibility). Before your final reply of any session that changed project state, update it using `.ai/reference/templates/session-handoff.md.txt`, set Written By to your client name (Claude Code, GitHub Copilot, or Reasonix Code), update sections in place, and never overwrite another client's entries.
+`.ai/session-context.md` is the shared memory for every client. Before starting any work, read it first (on Claude Code, the `SessionStart` hook prints it automatically; on GitHub Copilot nothing loads it for you, so reading it first is your responsibility). Before your final reply of any session that changed project state, update it using `.ai/reference/templates/session-handoff.md.txt`, set Written By to your client name (Claude Code or GitHub Copilot), update sections in place, and never overwrite another client's entries.
 
 Every session follows this cycle:
 

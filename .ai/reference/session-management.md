@@ -4,9 +4,9 @@
 
 `.ai/session-context.md` is the shared memory for every client. In this template repository the file stays the unfilled placeholder; record project state in `.ai/progress/` and `.ai/completed/` instead.
 
-**Reading (every session):** Before starting any work, read `.ai/session-context.md` first. On Claude Code, the `SessionStart` hook prints it automatically (skipped while it is still the placeholder). On GitHub Copilot and Reasonix Code, reading is an instruction only — they have no hook mechanism.
+**Reading (every session):** Before starting any work, read `.ai/session-context.md` first. On Claude Code, the `SessionStart` hook prints it automatically (skipped while it is still the placeholder). On GitHub Copilot, reading is an instruction only — it has no hook mechanism.
 
-**Writing (end of session):** Before your final reply of any session that changed project state, update the file using `.ai/reference/templates/session-handoff.md.txt`, set Written By to your client name (Claude Code, GitHub Copilot, or Reasonix Code), update sections in place, and never overwrite another client's entries.
+**Writing (end of session):** Before your final reply of any session that changed project state, update the file using `.ai/reference/templates/session-handoff.md.txt`, set Written By to your client name (Claude Code or GitHub Copilot), update sections in place, and never overwrite another client's entries.
 
 ## Every Session
 
@@ -25,9 +25,9 @@ Start a new session when:
 
 ## Session Handoff
 
-Before ending a session that changed project state: Use `.ai/reference/templates/session-handoff.md.txt` as your template. Write to `.ai/session-context.md`. Always set **Written By: [assistant name]** in the handoff (e.g. "Claude Code", "GitHub Copilot", or "Reasonix Code").
+Before ending a session that changed project state: Use `.ai/reference/templates/session-handoff.md.txt` as your template. Write to `.ai/session-context.md`. Always set **Written By: [assistant name]** in the handoff (e.g. "Claude Code" or "GitHub Copilot").
 
-The session context is shared — all clients (Claude Code, GitHub Copilot, Reasonix Code) read and write the same `.ai/session-context.md`. When picking up after another client's session:
+The session context is shared — all clients (Claude Code and GitHub Copilot) read and write the same `.ai/session-context.md`. When picking up after another client's session:
 - Read `.ai/session-context.md` for full context
 - Check `.ai/progress/` for in-progress tasks
 - Check `.ai/plans/` for approved plans not yet executed

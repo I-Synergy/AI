@@ -26,9 +26,18 @@ __pycache__/
 .claude/agents/
 .github/skills/
 .github/agents/
-.reasonix/skills/
-.reasonix/agents/
 .github/instructions/
+.agents/skills/
+
+# Retired adapter links, kept ignored so stale links never get committed
 .github/prompts/
 .claude/commands/
 .claude/instructions/
+
+# Claude Code rules generated from .ai/instructions/ (sync-platforms.py).
+# Only the generated files are ignored; hand-written rules in .claude/rules/ are tracked.
+.claude/rules/*.instructions.md
+
+# AI Workspace Manager: resolver cache and platform junctions
+.reasonix/skills/
+.reasonix/agents/

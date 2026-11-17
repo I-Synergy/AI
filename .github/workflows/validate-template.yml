@@ -60,11 +60,17 @@ jobs:
       - name: Run release versioning validation
         run: python .ai/tests/validate-release.py
 
+      - name: Link .ai into the tool paths
+        run: python .ai/scripts/sync-platforms.py
+
+      - name: Run adapter layout validation
+        run: python .ai/tests/validate-adapters.py
+
       - name: Run all tests together
         run: bash .ai/tests/run-all-tests.sh
 
       - name: Run pytest suite
-        run: python -m pytest .ai/tests/test_suite.py -q
+        run: python -m pytest .ai/tests/test_suite.py .ai/tests/test_hooks.py -q
 
       - name: Upload test results
         if: always()
