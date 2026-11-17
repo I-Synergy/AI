@@ -16,7 +16,7 @@ Secundair:
 - Performance inefficiënties: N+1 / overmatige data calls, onnodige loops, blocking sync IO / ontbrekende timeouts, inefficiënte string / alloc patronen
 - Maintainability: complexiteit, duplicatie, slechte modulariteit, fan-out, te veel parameters, circular dependencies
 - Quick-fixes en prioritering met impact/risico score
-- Optioneel test skeletons voor high-risk refactors (C# xUnit)
+- Optioneel test skeletons voor high-risk refactors (C# MSTest)
 - Aggregated metrics & effort inschatting
 
 Ondersteunde talen: C#, TypeScript, SQL (focus op C# .NET 8). Multi-bestand en cross-file analyse (max 40 relevante bestanden automatisch, heuristisch geselecteerd). 
@@ -134,7 +134,7 @@ Voor elk issue >= threshold: genereer BEFORE/AFTER + unified diff. Combineer kle
 
 ## Test Skeletons (indien includeTests == true)
 - Alleen voor C# high-risk (RiskScore >= 5.0) refactors
-- xUnit stijl; Arrange / Act / Assert; focus op reproduceren oude fout en verifiëren nieuwe behavior
+- MSTest stijl; Arrange / Act / Assert; focus op reproduceren oude fout en verifiëren nieuwe behavior
 - Geen externe I/O (mock interfaces)
 
 ## Fallback Gedrag

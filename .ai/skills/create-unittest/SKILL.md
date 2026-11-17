@@ -1,6 +1,6 @@
 ---
 name: create-unittest
-description: "Get best practices for MSTest unit testing, including data-driven tests Use when writing MSTest unit tests, including data-driven tests and test organization."
+description: "Get best practices for MSTest unit testing, including data-driven tests. Use when writing MSTest unit tests, including data-driven tests and test organization."
 disable-model-invocation: true
 ---
 

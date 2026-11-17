@@ -129,7 +129,7 @@ model: "[only if specific model required]"
 The generated prompt will follow patterns observed in high-quality prompts like:
 - **Comprehensive blueprints** (architecture-blueprint-generator)
 - **Structured specifications** (create-github-action-workflow-specification)  
-- **Best practice guides** (dotnet-best-practices, csharp-xunit)
+- **Best practice guides** (dotnet-best-practices, create-unittest)
 - **Implementation plans** (create-implementation-plan)
 - **Code generation** (playwright-generate-test)
 

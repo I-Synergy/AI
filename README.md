@@ -168,9 +168,9 @@ the built-in `aspire-skills` source, and the `Aspire` preset selects all seven:
 | **upgrade-template** | Sync template improvements to existing projects without losing context |
 | **verify-config** | Audit config drift and generate the standards-compatibility view |
 
-#### Explicit-Only Skills (20, formerly prompts)
+#### Explicit-Only Skills (19, formerly prompts)
 
-These 20 skills were prompt files (`.ai/prompts/*.prompt.md`) until this release. The
+These 19 skills were prompt files (`.ai/prompts/*.prompt.md`) until this release. The
 Copilot harness does not load prompt files, so each one is now a skill with
 `disable-model-invocation: true`: an agent never picks it up on its own. Invoke it by
 name, for example `/ef-core`. Claude Code and Copilot both load them through
@@ -186,7 +186,6 @@ name, for example `/ef-core`. Claude Code and Copilot both load them through
 | **create-unittest** | MSTest unit-test patterns, including data-driven tests |
 | **csharp-async** | C# async programming best practices |
 | **csharp-docs** | XML documentation for C# types |
-| **csharp-xunit** | xUnit unit-test patterns, including data-driven tests |
 | **documentation-writer** | Diátaxis technical documentation |
 | **dotnet-best-practices** | .NET/C# solution best practices |
 | **dotnet-design-pattern-review** | Design-pattern review for C#/.NET code |
