@@ -5,6 +5,9 @@
     "chat.useAgentSkills": true,
     "chat.includeApplyingInstructions": true,
     "github.copilot.chat.codeGeneration.useInstructionFiles": true,
+    "chat.defaultConfiguration": {
+        "approvals": "manual"
+    },
     "terminal.integrated.env.windows": {
         "MSBUILDDISABLENODEREUSE": "1",
         "DOTNET_CLI_USE_MSBUILD_SERVER": "0",

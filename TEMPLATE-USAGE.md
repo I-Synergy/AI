@@ -492,7 +492,7 @@ your copy and your values are kept:
 
 | Project file | What is merged | Result |
 |---|---|---|
-| `.vscode/settings.json` | The fragment `.ai/reference/templates/vscode/settings.json`: `chat.useAgentsMdFile: false` for the Local harness, `customAgents.enabled`, `chat.useClaudeHooks`, pinned skill and instruction loading, and the `terminal.integrated.env.*` build variables | Missing keys added; pinned Copilot keys set to the template value (your comment on that line is kept); other conflicts keep your value and are reported |
+| `.vscode/settings.json` | The fragment `.ai/reference/templates/vscode/settings.json`: `chat.useAgentsMdFile: false` for the Local harness, `customAgents.enabled`, `chat.useClaudeHooks`, pinned skill and instruction loading, `chat.defaultConfiguration` with manual tool approval for new sessions, and the `terminal.integrated.env.*` build variables | Missing keys added; pinned Copilot keys set to the template value (your comment on that line is kept); other conflicts keep your value and are reported |
 | `.vscode/tasks.json` | The fragment `.ai/reference/templates/vscode/tasks.json`: the **Link .ai into the paths tools read** task (run on demand, no folder-open run) | Tasks merged by `label`; a task with an existing label is kept unchanged |
 | `.claude/settings.json` | The template's `.claude/settings.json` | Legacy hook commands listed in `merge-rules.json` removed; template hooks and `permissions` lists added (union); other keys added when missing; your values win on conflicts |
 

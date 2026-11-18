@@ -28,5 +28,8 @@
     "chat.useClaudeHooks": true,
     "chat.useAgentSkills": true,
     "chat.includeApplyingInstructions": true,
-    "github.copilot.chat.codeGeneration.useInstructionFiles": true
+    "github.copilot.chat.codeGeneration.useInstructionFiles": true,
+    "chat.defaultConfiguration": {
+        "approvals": "manual"
+    }
 }
