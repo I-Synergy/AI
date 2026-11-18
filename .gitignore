@@ -41,3 +41,6 @@ __pycache__/
 # AI Workspace Manager: resolver cache and platform junctions
 .reasonix/skills/
 .reasonix/agents/
+
+# AI Workspace Manager: resolver cache and platform links
+.github/hooks/

@@ -169,6 +169,7 @@ settings take precedence over user settings, so a user setting does not turn the
 | `chat.useAgentSkills` | `true` | Loads the skills under `.github/skills/` | Local harness (pinned) |
 | `chat.includeApplyingInstructions` | `true` | Attaches path-scoped `.ai/instructions/` files by `applyTo` | Local harness (pinned) |
 | `github.copilot.chat.codeGeneration.useInstructionFiles` | `true` | Uses instruction files during code generation | Local harness (pinned) |
+| `chat.defaultConfiguration` | `{ "approvals": "manual" }` | New sessions start with manual tool approval instead of Assisted Permissions (see "What stays per-user") | Local harness and agent host (not pinned) |
 
 "Pinned" means the workspace sets the value to `true` so a user setting cannot disable it. The
 three pinned settings are Local-harness settings.
@@ -217,6 +218,18 @@ GitHub account:
 - **Sign-in and model choice.** Sign in to GitHub Copilot, or pick a model whose tool calls work in
   agent mode. Bring-your-own-key credentials are account-level.
 - **Tool auto-approval.** The template deliberately does not set it.
+- **Permission mode per session.** The workspace makes new sessions start in manual approval, but
+  the permission picker in the chat input can still switch a session to Assisted or Allow all.
+  Assisted Permissions asks a safety judge to approve each tool call, and the judge runs on the
+  session's model. With a bring-your-own-key model (for example DeepSeek) every tool call then
+  costs an extra request, billed to that key, that grows with the conversation and rarely hits
+  the provider's prompt cache. Observed in VS Code 1.147: about 3k uncached input tokens per tool
+  call in a new session, about 40k in a long one. With such a model, prefer manual approval for
+  long sessions.
+- **Session titles with a bring-your-own-key model.** `chat.agentHost.experimental.titleGeneration`
+  is application-scoped, so it works only in user settings. VS Code experiments can set it to
+  `activeAgent`, which generates titles with the session's model. Set it to `utility` to use
+  Copilot's built-in utility model instead.
 - **Old user settings that mislead.** Remove `chat.agentFilesLocations` with an `AGENTS.md` entry,
   `chat.agentSkillsLocations` (deprecated, ignored by the Copilot harness), and any
   `chat.planAgent.defaultModel` or `inlineChat.defaultModel` that points at a model that fails tool calls.
