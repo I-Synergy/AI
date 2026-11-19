@@ -388,7 +388,7 @@ The template's `.vscode/settings.json` is tracked and sets the workspace-level C
 
 Copilot CLI and the cloud agent do not read the Local-harness settings. Some settings can only be set per user, so they are not in the workspace: Copilot sign-in and model choice (bring-your-own-key credentials are account-level), and tool auto-approval, which the template deliberately leaves unset.
 
-**Run sessions in the orchestrator agent.** Select **orchestrator** in the VS Code agent dropdown. It always has the delegation tool and may run the nine specialist agents, so you do not need to enable **Run Subagent** for them. Enable Run Subagent (Agent mode → Configure Tools) only when you run a different agent. `orchestrator` is the Copilot entry point, not a delegation target: specialist agents and Claude Code do not delegate to it. If Copilot ignores the rules or the agents, see the section "Troubleshooting: Copilot ignores the rules or agents" in `.ai/reference/copilot-integration.md`.
+**Run sessions in the orchestrator agent.** Select **orchestrator** in the VS Code agent dropdown. It always has the delegation tool and may run every specialist agent the project has, so you do not need to enable **Run Subagent** for them. Enable Run Subagent (Agent mode → Configure Tools) only when you run a different agent. `orchestrator` is the Copilot entry point, not a delegation target: specialist agents and Claude Code do not delegate to it. It carries no `agents:` list, so agents you install in `.ai/agents/` are available to it without editing a template-owned file. If Copilot ignores the rules or the agents, see the section "Troubleshooting: Copilot ignores the rules or agents" in `.ai/reference/copilot-integration.md`.
 
 Neither file is listed in VS Code's Customizations editor, because that editor lists customization items (skills, agents, `*.instructions.md`) rather than project instruction files — "not listed" does not mean ignored.
 
@@ -656,7 +656,7 @@ All code and design work is delegated to specialized subagents — the main conv
 
 | Agent | Role |
 |-------|------|
-| `orchestrator` | GitHub Copilot entry point. Select it in the VS Code agent dropdown; it runs the nine specialist agents below. Not a delegation target |
+| `orchestrator` | GitHub Copilot entry point. Select it in the VS Code agent dropdown; it runs every specialist agent the project has, including agents you install. Not a delegation target |
 | `architect` | Feature design, pattern selection, component boundaries, architecture analysis |
 | `reviewer` | Code quality, SOLID, CQRS compliance, security review, architecture audit, ISO/IEC 25010 finding attribution |
 | `security` | Blast-radius and exposure analysis, threat modelling, OWASP review, dependency and secret audits |
@@ -669,7 +669,7 @@ All code and design work is delegated to specialized subagents — the main conv
 
 Each agent's `model:` frontmatter in `.ai/agents/` carries the tier alias (`sonnet` or `haiku`); the concrete model bound to that tier is chosen by the backend runtime outside this repository.
 
-Agents are defined in `.ai/agents/`. The nine specialist agents carry `runAs: subagent`; `orchestrator` does not, because it is the Copilot entry point and not a delegation target. Every tool reads them through a folder-level junction (`.claude/agents/`, `.github/agents/`). Each agent body starts with a "Before starting, read:" list of the skills and rules it needs. Copilot ignores the Claude-only `skills:` frontmatter, so that list is what carries the rules into Copilot's delegated agents. Designers and UI developers self-test with Playwright before handoff.
+Agents are defined in `.ai/agents/`. The nine specialist agents carry `runAs: subagent`; `orchestrator` does not, because it is the Copilot entry point and not a delegation target. `orchestrator` also carries no `agents:` list: the inventory belongs to the project, so an agent installed from another source is available to it, and an upgrade never writes the template's list back over yours. Every tool reads them through a folder-level junction (`.claude/agents/`, `.github/agents/`). Each agent body starts with a "Before starting, read:" list of the skills and rules it needs. Copilot ignores the Claude-only `skills:` frontmatter, so that list is what carries the rules into Copilot's delegated agents. Designers and UI developers self-test with Playwright before handoff.
 
 ## Testing
 
@@ -721,11 +721,11 @@ CI installs the hash-pinned `requirements-dev.lock` (with `--require-hashes --on
 | `smoke-test.py` | Skills loadable, names/descriptions unique |
 | `validate-traceability.py` | Identifier integrity across stories, criteria, `@AC-` scenario tags and `[TestCategory]` attributes |
 | `validate-standards.py` | Standards-compatibility surfaces agree with `.ai/reference/standards.md` and its validator runs |
-| `validate-adapters.py` | Copilot-parity layout (suite 15, 10 tests): no `${…}` prompt variables in skills, the template ships no `.ai/prompts/`, prompt adapters link to `.ai/prompts/` only while it has files, `.claude/instructions` absent, every agent body lists its skills and rules, the runtime block is embedded in `copilot-instructions.md`, `.claude/rules/` matches its source, hook commands resolve, `.vscode/tasks.json` is tracked and not auto-run, `chat.useAgentsMdFile` is off, and the VS Code fragments and `merge-rules.json` are valid and contained in the template's own `.vscode` files |
+| `validate-adapters.py` | Copilot-parity layout (suite 15, 10 tests): no `${…}` prompt variables in skills, the template ships no `.ai/prompts/`, prompt adapters link to `.ai/prompts/` only while it has files, `.claude/instructions` absent, every agent body lists its skills and rules, the runtime block is embedded in `copilot-instructions.md`, `.claude/rules/` matches its source, hook commands resolve, `.vscode/tasks.json` is tracked and not auto-run, `chat.useAgentsMdFile` is off, `orchestrator.md` pins no agent inventory, and the VS Code fragments and `merge-rules.json` are valid and contained in the template's own `.vscode` files |
 | `test_hooks.py` | pytest only: unit tests for the shared hook scripts in `.ai/scripts/hooks/` and the rules generator, run against temporary directories |
 | `test_jsonc_merge.py` | pytest only: unit tests for `jsonc_merge.py` (comment and format preservation, invalid input, edits) and the `.vscode` and `.claude/settings.json` merges |
 | `test_sync_platforms.py` | pytest only: prompt-adapter behaviour of `sync-platforms.py` (linked only while `.ai/prompts/` has files; legacy otherwise), in temporary directories |
-| `validate-upgrade-script.py` | Upgrade script classification and integration (14 tests), including that `.vscode/settings.json` and `tasks.json` are merged rather than template-owned — pytest only |
+| `validate-upgrade-script.py` | Upgrade script classification and integration (15 tests), including that a project which installs extra agents keeps an identical `orchestrator.md`, and that `.vscode/settings.json` and `tasks.json` are merged rather than template-owned — pytest only |
 
 ## Usage Examples
 

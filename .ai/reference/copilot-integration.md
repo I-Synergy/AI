@@ -237,9 +237,14 @@ GitHub account:
 ## The orchestrator agent
 
 `.ai/agents/orchestrator.md` is the coordinator and the entry point for GitHub Copilot. In VS Code,
-select **orchestrator** in the agent dropdown. It always has the delegation tool and may run the nine
-specialist agents, so you no longer need to tick **Run Subagent** for them.
+select **orchestrator** in the agent dropdown. It always has the delegation tool and may run every
+specialist agent the project has — including the ones you install from another source — so you no
+longer need to tick **Run Subagent** for them.
 
+- It carries no `agents:` list. The inventory belongs to the project (`AGENTS.md` and `.ai/agents/`),
+  and VS Code lets a coordinator use every available agent when the field is omitted. A pinned list
+  would be wrong for any project that installs extra agents, and an upgrade would write the
+  template's list back over it.
 - It is **not a delegation target**. Specialist agents do not delegate to it.
 - Claude Code does not delegate to it. Claude's main conversation already acts as the orchestrator.
 - If another agent or mode is active and no delegation tool is available, the runtime section

@@ -528,7 +528,7 @@ mechanism that behaves the same for every tool.
 The usual causes are on the Copilot side, not in the repository:
 
 - **The model cannot run tool calls.** Sign in to GitHub Copilot, or choose a model that works in agent mode. A bring-your-own-key DeepSeek model in thinking mode fails with HTTP 400 (`reasoning_content` must be passed back), which ends the agent turn mid-loop.
-- **The wrong agent is active.** In VS Code, select **orchestrator** in the agent dropdown. It has the delegation tool and runs the specialist agents. Run Subagent (Agent mode → Configure Tools) is only needed when you run a different agent.
+- **The wrong agent is active.** In VS Code, select **orchestrator** in the agent dropdown. It has the delegation tool and runs the specialist agents, including any you install yourself. Run Subagent (Agent mode → Configure Tools) is only needed when you run a different agent.
 - **A setting misleads.** `chat.agentFilesLocations: {"AGENTS.md": true}` does not load `AGENTS.md`, and `chat.agentSkillsLocations` is deprecated. The workspace settings in `.vscode/settings.json` are documented in `.ai/reference/copilot-integration.md` (section "VS Code workspace settings").
 
 The template makes the instructions explicit: `.github/copilot-instructions.md` tells Copilot to read the session context and progress first, how to delegate, and how to hand off. Path-scoped rules in `.ai/instructions/` attach automatically. The full checklist, including how to confirm whether the hooks fire under Copilot, is in [Troubleshooting: Copilot ignores the rules or agents](.ai/reference/copilot-integration.md#troubleshooting-copilot-ignores-the-rules-or-agents).
