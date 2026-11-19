@@ -285,11 +285,11 @@ Copy {Domain}.{Entity} structure exactly - proven and working in production.
 
 **For the next session (Claude Code or GitHub Copilot) to read:**
 
-1. **Current Focus:** [What to focus on next]
-2. **Blockers:** [Any blockers to be aware of]
-3. **Recent Decisions:** [Key decisions from this session]
-4. **Patterns Changed:** [Any pattern changes to note]
-5. **Written By:** [Claude Code | Copilot] on [DateTime]
+1. **Current Focus:** Issue #53 is fixed on the working tree (orchestrator.md no longer pins an agent inventory; validate-adapters TEST 9 and validate-upgrade-script TEST 13 guard it). Next: review and commit it.
+2. **Blockers:** None.
+3. **Recent Decisions:** The agent inventory belongs to the project, not to a template-owned file, so `agents:` is omitted rather than generated.
+4. **Patterns Changed:** None.
+5. **Written By:** GitHub Copilot on 2026-11-19
 
 **Example:**
 
