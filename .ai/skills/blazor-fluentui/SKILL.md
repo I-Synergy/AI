@@ -1,7 +1,7 @@
 ---
 name: blazor-fluentui
 description: >-
-  Production-ready Blazor patterns exactly as implemented inside the I-Synergy Framework UI (View<TViewModel>, ConfigureServices bootstrapper, CommonServices, Dialog/Navigation services). Use when building or debugging I-Synergy Blazor UI with View<TViewModel>, the ConfigureServices bootstrapper, CommonServices, or the Dialog/Navigation services.
+  OPTIONAL ADD-ON, not used by the generated web head. Reference for the I-Synergy Framework Blazor UI library (View<TViewModel>, ConfigureServices bootstrapper, CommonServices, Dialog/Navigation services) and Microsoft Fluent UI. Load only when a solution deliberately adds Fluent UI components; the generated head is plain Razor described in ui-blazor. Use when building or debugging I-Synergy Blazor UI with View<TViewModel>, the ConfigureServices bootstrapper, CommonServices, or the Dialog/Navigation services.
 version: 2026.02.10
 sources:
   - src/ISynergy.Framework.UI.Blazor
@@ -12,6 +12,10 @@ sources:
   - samples/Sample.WPF
 license: See license.md in repository root
 ---
+
+> **Optional add-on.** The generated web head (`{ApplicationName}.App.Web`) is plain Razor with no component library, and it does not use `View<TViewModel>` or the I-Synergy `ConfigureServices` bootstrapper. Read this file only when a solution adds Microsoft Fluent UI components. The I-Synergy-specific sections below describe the I-Synergy Blazor UI library, which is a separate design; see `.ai/skills/ui-blazor/SKILL.md` for the generated head.
+
+> **Scope.** Everything below this line documents the I-Synergy Blazor UI library. It is not the architecture of `{ApplicationName}.App.Web`, and no rule in `AGENTS.md` requires `View<TViewModel>`; for the generated head read `.ai/skills/ui-blazor/SKILL.md` first.
 
 # I-Synergy Framework Blazor Skill (SKILL.md)
 

@@ -1,0 +1,61 @@
+using {ApplicationName}.Data;
+using {ApplicationName}.Data.Abstractions;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+
+namespace {ApplicationName}.Service.Tests;
+
+/// <summary>
+/// Boots the real <c>{ApplicationName}.Service.Api</c> host (via <c>WebApplicationFactory</c>) but swaps the
+/// provider-backed <see cref="DataContext"/> for an in-memory one, so tests need no reachable database.
+/// </summary>
+/// <remarks>
+/// <para>
+/// <c>Program</c> is public: the host declares <c>public partial class Program</c> in its own file, so this
+/// assembly needs no <c>InternalsVisibleTo</c> grant. The host's <c>DatabaseInitializer</c> returns early for the
+/// in-memory provider, which has no migrations.
+/// </para>
+/// <para>
+/// Every factory gets its own store (a fresh name), and every test creates its own factory, so tests are
+/// isolated from each other.
+/// </para>
+/// </remarks>
+public class CustomWebApplicationFactory : WebApplicationFactory<Program>
+{
+    /// <inheritdoc />
+    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    {
+        builder.ConfigureServices(services =>
+        {
+            // Remove the registrations the host made for the real provider and re-register the context
+            // against the in-memory provider.
+            services.RemoveAll<DataContext>();
+            services.RemoveAll<DbContextOptions<DataContext>>();
+            services.RemoveAll<IDataContext>();
+            // The host's registration also adds an IDbContextOptionsConfiguration<DataContext> that calls
+            // the real provider and fails without a connection string.
+            services.RemoveAll<IDbContextOptionsConfiguration<DataContext>>();
+
+            // A pooled registration makes DbContextOptions<DataContext> a singleton. Register the
+            // replacement options with the same lifetime so the leftover pool singleton does not try to
+            // consume a scoped options service (which fails container validation).
+            services.AddDbContext<DataContext>(
+                options =>
+                {
+                    options.UseInMemoryDatabase(Guid.NewGuid().ToString())
+                        // The in-memory provider would otherwise throw TransactionIgnoredWarning as an
+                        // error for any handler that opens a transaction.
+                        .ConfigureWarnings(warnings => warnings.Ignore(InMemoryEventId.TransactionIgnoredWarning));
+                },
+                contextLifetime: ServiceLifetime.Scoped,
+                optionsLifetime: ServiceLifetime.Singleton);
+
+            services.AddScoped<IDataContext>(provider => provider.GetRequiredService<DataContext>());
+        });
+    }
+}

@@ -1,0 +1,32 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace {ApplicationName}.Data.Initializers;
+
+/// <summary>
+/// Brings the database up to date at startup.
+/// </summary>
+public static class DatabaseInitializer
+{
+    /// <summary>
+    /// Applies pending migrations. The migration runs through the context's execution strategy, so a transient
+    /// failure while the server is starting is retried. The Aspire SQL Server client enables that retry by default.
+    /// </summary>
+    /// <param name="services">The application's root service provider.</param>
+    /// <param name="cancellationToken">Cancels the migration.</param>
+    public static async Task InitializeAsync(IServiceProvider services, CancellationToken cancellationToken = default)
+    {
+        using var scope = services.CreateScope();
+        var dataContext = scope.ServiceProvider.GetRequiredService<DataContext>();
+
+        // Migrations exist only for relational providers. A non-relational store (the in-memory test store)
+        // has nothing to apply, so the call returns before it touches the relational-only members below.
+        if (!dataContext.Database.IsRelational())
+            return;
+
+        dataContext.Database.SetCommandTimeout(TimeSpan.FromMinutes(5));
+
+        var strategy = dataContext.Database.CreateExecutionStrategy();
+        await strategy.ExecuteAsync(token => dataContext.Database.MigrateAsync(token), cancellationToken);
+    }
+}

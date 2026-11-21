@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json.schemastore.org/launchsettings.json",
+  "profiles": {
+    "Aspire": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": true,
+      "applicationUrl": "https://localhost:{AppHostHttpsPort}",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "DOTNET_ENVIRONMENT": "Development",
+        "ASPIRE_RESOURCE_SERVICE_ENDPOINT_URL": "https://localhost:22134",
+        "ASPIRE_DASHBOARD_OTLP_ENDPOINT_URL": "https://localhost:21214",
+        "MSBUILDTERMINALLOGGER": "false"
+      }
+    }
+  }
+}

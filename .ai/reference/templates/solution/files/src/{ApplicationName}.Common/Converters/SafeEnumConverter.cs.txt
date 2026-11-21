@@ -1,0 +1,41 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
+namespace {ApplicationName}.Common.Converters;
+
+/// <summary>
+/// A JSON converter for enums that always serializes as strings.
+/// Defined enum values use their name; undefined values use their numeric value as a string (e.g. "2").
+/// This prevents System.Text.Json from falling back to numeric JSON for out-of-range enum values,
+/// which would break generated client deserialization.
+/// </summary>
+public sealed class SafeEnumConverter<T> : JsonConverter<T> where T : struct, Enum
+{
+    /// <inheritdoc />
+    public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        return reader.TokenType switch
+        {
+            JsonTokenType.String => Enum.TryParse(typeof(T), reader.GetString(), ignoreCase: true, out var result)
+                ? (T)result!
+                : (T)Enum.ToObject(typeof(T), 0),
+            JsonTokenType.Number => (T)Enum.ToObject(typeof(T), reader.GetInt32()),
+            _ => default
+        };
+    }
+
+    /// <inheritdoc />
+    public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)
+    {
+        var name = Enum.GetName(typeof(T), value);
+        if (name is not null)
+        {
+            writer.WriteStringValue(name);
+        }
+        else
+        {
+            // Undefined enum value: write the numeric value as a string so generated clients can read it.
+            writer.WriteStringValue(Convert.ToInt32(value).ToString());
+        }
+    }
+}

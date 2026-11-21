@@ -42,6 +42,9 @@ python3 .ai/tests/validate-traceability.py
 # Standards
 python3 .ai/tests/validate-standards.py
 
+# Solution scaffold (add SCAFFOLD_BUILD_SMOKE=1 for the opt-in build smoke)
+python3 .ai/tests/validate-scaffold.py
+
 # Upgrade script (pytest only — not run by run-all-tests.sh)
 python3 .ai/tests/validate-upgrade-script.py
 ```
@@ -72,6 +75,7 @@ The runner computes its own totals — `run-all-tests.sh` is the list of record.
 | **Copilot** | copilot-instructions + `.github/skills/` junction |
 | **Traceability** | Identifier chain: story → criterion → scenario → slice → test |
 | **Standards** | `.ai/reference/standards.md` + the generated compatibility surfaces |
+| **Scaffold** | `scaffold-solution.py` and its templates: render matrix, template rules, forbidden terms |
 | **Smoke** | Integration tests |
 | **Upgrade Script** | `upgrade-template.py` (pytest only) |
 

@@ -1,0 +1,25 @@
+<Project>
+  <PropertyGroup>
+    <LangVersion>15.0</LangVersion>
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <DefaultLanguage>en-US</DefaultLanguage>
+    <Authors>{Company}</Authors>
+    <Company>{Company}</Company>
+    <Product>{ApplicationName}</Product>
+    <Copyright>© {Year} {Company}. All rights reserved.</Copyright>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <!-- Version stamp written at scaffold time. A CI build overrides it from the build number. -->
+    <AssemblyVersion>{Version}.0</AssemblyVersion>
+    <FileVersion>{Version}.0</FileVersion>
+    <Version>{Version}</Version>
+    <NoWarn>1701;1702;CS1591;CS8002;NETSDK1023;1705;CS0809;1591;2008;UXAML0002;S1135;CA2254;</NoWarn>
+    <IsPackable>false</IsPackable>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <AccelerateBuildsInVisualStudio>true</AccelerateBuildsInVisualStudio>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="readme.md" />
+  </ItemGroup>
+</Project>

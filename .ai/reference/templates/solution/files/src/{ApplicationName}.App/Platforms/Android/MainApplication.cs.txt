@@ -1,0 +1,14 @@
+using Android.App;
+using Android.Runtime;
+
+namespace {ApplicationName}.Platforms.Android;
+
+/// <summary>
+/// The Android application object. It creates the MAUI application through the shared <see cref="MauiProgram"/>.
+/// </summary>
+[Application]
+public class MainApplication(IntPtr handle, JniHandleOwnership ownership) : MauiApplication(handle, ownership)
+{
+    /// <inheritdoc />
+    protected override MauiApp CreateMauiApp() => MauiProgram.CreateMauiApp();
+}

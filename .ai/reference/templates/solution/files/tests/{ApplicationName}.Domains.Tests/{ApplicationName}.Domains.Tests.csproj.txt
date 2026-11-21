@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net11.0</TargetFramework>
+		<EnableMSTestRunner>true</EnableMSTestRunner>
+		<OutputType>Exe</OutputType>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="MSTest.TestAdapter" />
+		<PackageReference Include="Microsoft.Testing.Extensions.TrxReport" />
+		<!-- Handlers are tested against a real EF Core provider, not a mocked DataContext. The in-memory
+		     provider is the fast one; it enforces no indexes and no foreign keys, so anything that depends
+		     on those belongs in the Data.{Provider}.Tests project. Moq is deliberately not referenced: add
+		     it only for a narrow seam (an external service) that a handler must not call. -->
+		<PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\src\{ApplicationName}.Common\{ApplicationName}.Common.csproj" />
+		<ProjectReference Include="..\..\src\{ApplicationName}.Domains\{ApplicationName}.Domains.csproj" />
+		<ProjectReference Include="..\..\src\{ApplicationName}.Entities\{ApplicationName}.Entities.csproj" />
+		<ProjectReference Include="..\..\src\{ApplicationName}.Models\{ApplicationName}.Models.csproj" />
+		<!-- The concrete DataContext: handlers depend on IDataContext, and the tests hand them the real one. -->
+		<ProjectReference Include="..\..\src\{ApplicationName}.Data.{Provider}\{ApplicationName}.Data.{Provider}.csproj" />
+	</ItemGroup>
+</Project>

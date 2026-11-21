@@ -8,7 +8,7 @@ Baseline secure-coding rules plus SQL injection, XSS and CSRF prevention pattern
 #### Data Annotations Validation
 
 ```csharp
-// File: {ApplicationName}.Domain.{Domain}/Features/{Entity}/Commands/Create{Entity}Command.cs
+// File: {ApplicationName}.Domains/Features/{Entities}/Commands/Create{Entity}Command.cs
 
 using System.ComponentModel.DataAnnotations;
 
@@ -228,7 +228,7 @@ public async Task<List<{Entity}>> Search{Entities}Safe(string searchTerm)
 ### Content Security Policy (CSP)
 
 ```csharp
-// File: {ApplicationName}.Services.API/Middleware/SecurityHeadersMiddleware.cs
+// File: {ApplicationName}.Service.Api/Middleware/SecurityHeadersMiddleware.cs
 
 public sealed class SecurityHeadersMiddleware
 {
@@ -297,7 +297,7 @@ app.UseMiddleware<SecurityHeadersMiddleware>();
 ### Anti-Forgery Tokens
 
 ```csharp
-// File: {ApplicationName}.Services.API/Program.cs
+// File: {ApplicationName}.Service.Api/Program.cs
 
 var builder = WebApplication.CreateBuilder(args);
 

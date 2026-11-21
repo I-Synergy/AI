@@ -4,55 +4,73 @@
 
 | Element | Convention | Example |
 |---------|-----------|----------|
-| **Namespace** | `{ApplicationName}.{Layer}.{Domain}` | `{ApplicationName}.Domain.{Domain}` |
+| **Namespace** | `{ApplicationName}.{Project}` plus the folder path | `{ApplicationName}.Domains.Features.{Entities}.Commands.Create{Entity}` |
 | **Command** | `{Action}{Entity}Command` | `Create{Entity}Command` |
 | **Query** | `Get{Entity}{Criteria}Query` | `Get{Entity}ByIdQuery` |
 | **Handler** | `{Action}{Entity}CommandHandler` / `Get{Entity}{Criteria}QueryHandler` | `Create{Entity}CommandHandler` |
 | **Response** | `{Action}{Entity}Response` | `Create{Entity}Response` |
-| **DTO / Model** | `{Entity}` (no suffix — never `{Entity}Dto`) | `{Entity}` |
+| **Model** | `{Entity}` (no suffix — never `{Entity}Dto`); request bodies `Create{Entity}Request`, `Update{Entity}Request` | `{Entity}` |
 | **Interface** | `I{Type}` | `ICommandHandler<T>` |
-| **Interface location** | `Abstractions/` folder in the highest shared project, namespace mirrors folder | `{ApplicationName}.Core.Abstractions.ITest` |
-| **Classes** | PascalCase | `{Entity}Endpoints` |
+| **Interface location** | `Abstractions/` folder in the highest shared project, namespace mirrors folder | `{ApplicationName}.Data.Abstractions.IDataContext` |
+| **Classes** | PascalCase | `{Entities}Endpoints` |
 | **Methods** | PascalCase + `Async` suffix | `Get{Entity}ByIdAsync` |
 | **Properties** | PascalCase | `{Entity}Id`, `CreatedDate` |
 | **Private fields** | `_camelCase` | `_dataContext`, `_logger` |
 | **Parameters/locals** | camelCase | `{entity}Id`, `cancellationToken` |
 | **Constants** | PascalCase | `Max{Entity}Amount` |
-| **Enums** | PascalCase (type and values) | `{Entity}Status.Active` |
+| **Enums** | PascalCase (type and values), plural unless `Status`; in `Common/Enumerations/` | `{Entity}Status.Active` |
+
+## Project Names
+
+One flat set of projects per solution. Folders under `src/` and `tests/` use these names. `Domains` is always plural. `Service.Api` is the one singular host name.
+
+| Project | Holds |
+|---------|-------|
+| `{ApplicationName}.Common` | Constants, converters, enumerations, factories, shared models |
+| `{ApplicationName}.Resources` | `Properties/Resources.resx` |
+| `{ApplicationName}.Entities` | EF Core POCOs and their `IEntityTypeConfiguration` |
+| `{ApplicationName}.Models` | Read models (`BaseModel`) and request records |
+| `{ApplicationName}.Data` | `Abstractions/IDataContext.cs` |
+| `{ApplicationName}.Data.SqlServer` or `{ApplicationName}.Data.Postgres` | `DataContext`, design-time factory, `Initializers/` |
+| `{ApplicationName}.Data.Sqlite` | Device store (optional) |
+| `{ApplicationName}.Domains` | Commands, queries and handlers under `Features/{Entities}/` |
+| `{ApplicationName}.Services` | Endpoint groups (`Endpoints/{Entities}Endpoints.cs`) |
+| `{ApplicationName}.Service.Api` | Host (`Program.cs`) |
+| `{ApplicationName}.Clients` | Kiota client (`Api/`) |
+| `{ApplicationName}.App.Shared`, `{ApplicationName}.App`, `{ApplicationName}.App.Web` | Shared head services, MAUI head, Blazor head |
+| `{ApplicationName}.AppHost` | Aspire orchestration |
+| `{ApplicationName}.Domains.Tests`, `.Service.Tests`, `.Data.{Provider}.Tests`, `.AcceptanceTests`, `.UI.Tests` | Tests, by the layer they test |
 
 ## Namespace Patterns
 
+The namespace follows the folder, relative to the project's RootNamespace.
+
 ```csharp
-// Domain layer
-{ApplicationName}.Domain.{Domain}
-{ApplicationName}.Domain.{Domain}.Features.{Entity}.Commands
-{ApplicationName}.Domain.{Domain}.Features.{Entity}.Queries
-{ApplicationName}.Domain.{Domain}.Features.{Entity}.Events
-
-// Application layer
-{ApplicationName}.Services.{Domain}
-{ApplicationName}.Services.{Domain}.Endpoints
-
-// Infrastructure layer
-{ApplicationName}.Entities.{Domain}
-{ApplicationName}.Models.{Domain}
-{ApplicationName}.Data
-
-// Abstractions (interfaces mirror their folder)
-{ApplicationName}.{Layer}.Abstractions
-{ApplicationName}.{Layer}.Abstractions.{Group}
-
-// Examples
-{ApplicationName}.Domain.{Domain}
-{ApplicationName}.Domain.{Domain}.Features.{Entity}.Commands
-{ApplicationName}.Services.{Domain}.Endpoints
-{ApplicationName}.Core.Abstractions
-{ApplicationName}.Entities.{Domain}
+{ApplicationName}.Domains.Features.{Entities}.Commands.Create{Entity}   // Domains/Features/{Entities}/Commands/Create{Entity}/
+{ApplicationName}.Domains.Features.{Entities}.Queries.Get{Entity}ById  // Domains/Features/{Entities}/Queries/Get{Entity}ById/
+{ApplicationName}.Services.Endpoints                                   // Services/Endpoints/{Entities}Endpoints.cs
+{ApplicationName}.Entities                                             // Entities/{Entity}.cs
+{ApplicationName}.Models                                               // Models/{Entity}.cs
+{ApplicationName}.Data.Abstractions                                    // Data/Abstractions/IDataContext.cs
+{ApplicationName}.Common.Enumerations                                  // Common/Enumerations/{Entity}Status.cs
+{ApplicationName}.Abstractions.Services                                // App.Shared/Abstractions/Services/ (RootNamespace {ApplicationName})
 ```
+
+The feature folder is plural, so `Acme.Domains.Features.Items.Commands.CreateItem` never collides with the `Item` entity (`Acme.Entities.Item`) or the `Item` model.
 
 ## File Naming
 
 **One top-level type per file.** A file declares exactly one class, record, struct, interface, or enum and is named after it — never place two types in one file. Model files are named after the concept (`{Entity}.cs`), never `{Entity}Dto.cs`.
+
+### Folders
+
+Each operation gets its own subfolder. The feature folder is plural; the operation names use the singular entity.
+
+```
+Features/{Entities}/Commands/Create{Entity}/Create{Entity}Command.cs
+Features/{Entities}/Commands/Create{Entity}/Create{Entity}CommandHandler.cs
+Features/{Entities}/Queries/Get{Entities}List/Get{Entities}ListQuery.cs
+```
 
 ### Commands
 
@@ -107,33 +125,33 @@ Create{Entity}Response.cs
 ### Endpoints
 
 ```
-{Entity}Endpoints.cs
+{Entities}Endpoints.cs
 
 Examples:
-{Entity}Endpoints.cs
-{ChildEntity}Endpoints.cs
+{Entities}Endpoints.cs
+{ChildEntities}Endpoints.cs
 ```
 
 
-## Database (PostgreSQL)
+## Database
 
-- **Tables:** snake_case (managed by EF Core conventions)
-- **Columns:** snake_case (managed by EF Core conventions)
-
-EF Core automatically handles C# PascalCase to database snake_case conversion.
+- **Schema:** `{applicationname}`, set once in `DataContext.OnModelCreating` with `HasDefaultSchema`. The migrations history sits in the `system` schema.
+- **Tables:** lower-case plural, set in the entity configuration with `ToTable`.
+- **Columns:** the property names. No snake_case mapping is applied by default.
+- **Configuration:** `IEntityTypeConfiguration<T>` in its own file beside the entity.
 
 ```csharp
-// C# Entity
+// {ApplicationName}.Entities/{Entity}.cs
 public class {Entity}
 {
     public Guid {Entity}Id { get; set; }
-    public string Name { get; set; }
-    public decimal TotalAmount { get; set; }
+    public string Name { get; set; } = string.Empty;
 }
 
-// Database table (automatic)
-Table: {entities}
-Columns: {entity}_id, name, total_amount
+// {ApplicationName}.Entities/{Entity}Configuration.cs
+builder.ToTable("{entities}");
+builder.HasKey(e => e.{Entity}Id);
+builder.Property(e => e.Name).IsRequired().HasMaxLength(100);
 ```
 
 ## API Endpoints
@@ -157,13 +175,10 @@ DELETE /{entities}/123e4567-e89b-12d3-a456-426614174000
 
 ### Versioning
 
-```
-/v1/{entities}
-/v2/{entities}
+The API is versioned with the `api-version` query string (default `1.0`). Routes carry no version segment.
 
-Examples:
-/v1/{entities}
-/v2/{entities}
+```
+GET /{entities}?api-version=1.0
 ```
 
 ## Test Naming
@@ -224,7 +239,7 @@ public async Task<Create{Entity}Response> HandleAsync(
 ### Data Access (EF Core Primitives)
 
 ```csharp
-// Use named DbSet properties on DataContext directly — no repositories, no extension methods
+// Use named DbSet properties on IDataContext directly — no repositories, no extension methods
 // Create
 dataContext.{Entities}.Add(entity);
 await dataContext.SaveChangesAsync(cancellationToken);
@@ -276,9 +291,8 @@ public async Task DoSomething(
 
 ```csharp
 // _camelCase with underscore prefix
-private readonly DataContext _dataContext;
+private readonly IDataContext _dataContext;
 private readonly ILogger<Create{Entity}CommandHandler> _logger;
-private readonly IMapper _mapper;
 ```
 
 ## Constants and Enums

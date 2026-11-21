@@ -1,0 +1,1221 @@
+[
+  {
+    "template": "files/.config/dotnet-tools.json.txt",
+    "output": ".config/dotnet-tools.json",
+    "when": []
+  },
+  {
+    "template": "files/.editorconfig.txt",
+    "output": ".editorconfig",
+    "when": []
+  },
+  {
+    "template": "files/.gitattributes.txt",
+    "output": ".gitattributes",
+    "when": []
+  },
+  {
+    "template": "files/.gitignore.txt",
+    "output": ".gitignore",
+    "when": []
+  },
+  {
+    "template": "files/Directory.Build.props.txt",
+    "output": "Directory.Build.props",
+    "when": []
+  },
+  {
+    "template": "files/Directory.Packages.props.txt",
+    "output": "Directory.Packages.props",
+    "when": []
+  },
+  {
+    "template": "files/README.md.txt",
+    "output": "README.md",
+    "when": []
+  },
+  {
+    "template": "files/aspire.config.json.txt",
+    "output": "aspire.config.json",
+    "when": [
+      "apphost"
+    ]
+  },
+  {
+    "template": "files/global.json.txt",
+    "output": "global.json",
+    "when": []
+  },
+  {
+    "template": "files/nuget.config.txt",
+    "output": "nuget.config",
+    "when": []
+  },
+  {
+    "template": "files/openapi/.gitkeep.txt",
+    "output": "openapi/.gitkeep",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.App.Shared/Abstractions/Services/ISqliteLocalDataService.cs.txt",
+    "output": "src/{ApplicationName}.App.Shared/Abstractions/Services/ISqliteLocalDataService.cs",
+    "when": [
+      "sqlite-device"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App.Shared/Abstractions/Services/I{ApplicationName}ApiService.cs.txt",
+    "output": "src/{ApplicationName}.App.Shared/Abstractions/Services/I{ApplicationName}ApiService.cs",
+    "when": [],
+    "whenAny": [
+      "maui",
+      "web",
+      "sqlite-device"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App.Shared/Extensions/HostApplicationBuilderExtensions.cs.txt",
+    "output": "src/{ApplicationName}.App.Shared/Extensions/HostApplicationBuilderExtensions.cs",
+    "when": [],
+    "whenAny": [
+      "maui",
+      "web",
+      "sqlite-device"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App.Shared/Models/Favorite.cs.txt",
+    "output": "src/{ApplicationName}.App.Shared/Models/Favorite.cs",
+    "when": [
+      "sqlite-device"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App.Shared/Models/GlobalSettings.cs.txt",
+    "output": "src/{ApplicationName}.App.Shared/Models/GlobalSettings.cs",
+    "when": [],
+    "whenAny": [
+      "maui",
+      "web",
+      "sqlite-device"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App.Shared/Models/LocalSettings.cs.txt",
+    "output": "src/{ApplicationName}.App.Shared/Models/LocalSettings.cs",
+    "when": [],
+    "whenAny": [
+      "maui",
+      "web",
+      "sqlite-device"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App.Shared/Models/RoamingSettings.cs.txt",
+    "output": "src/{ApplicationName}.App.Shared/Models/RoamingSettings.cs",
+    "when": [],
+    "whenAny": [
+      "maui",
+      "web",
+      "sqlite-device"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App.Shared/Services/CommonServices.cs.txt",
+    "output": "src/{ApplicationName}.App.Shared/Services/CommonServices.cs",
+    "when": [],
+    "whenAny": [
+      "maui",
+      "web",
+      "sqlite-device"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App.Shared/Services/ExceptionHandlerService.cs.txt",
+    "output": "src/{ApplicationName}.App.Shared/Services/ExceptionHandlerService.cs",
+    "when": [],
+    "whenAny": [
+      "maui",
+      "web",
+      "sqlite-device"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App.Shared/Services/{ApplicationName}ApiService.cs.txt",
+    "output": "src/{ApplicationName}.App.Shared/Services/{ApplicationName}ApiService.cs",
+    "when": [],
+    "whenAny": [
+      "maui",
+      "web",
+      "sqlite-device"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App.Shared/readme.md.txt",
+    "output": "src/{ApplicationName}.App.Shared/readme.md",
+    "when": [],
+    "whenAny": [
+      "maui",
+      "web",
+      "sqlite-device"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App.Shared/{ApplicationName}.App.Shared.csproj.txt",
+    "output": "src/{ApplicationName}.App.Shared/{ApplicationName}.App.Shared.csproj",
+    "when": [],
+    "whenAny": [
+      "maui",
+      "web",
+      "sqlite-device"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App.Web/App.razor.txt",
+    "output": "src/{ApplicationName}.App.Web/App.razor",
+    "when": [
+      "web"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App.Web/Components/LoadingSpinner.razor.txt",
+    "output": "src/{ApplicationName}.App.Web/Components/LoadingSpinner.razor",
+    "when": [
+      "web"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App.Web/Extensions/ServiceCollectionExtensions.cs.txt",
+    "output": "src/{ApplicationName}.App.Web/Extensions/ServiceCollectionExtensions.cs",
+    "when": [
+      "web"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App.Web/HealthChecks/ApiHealthCheck.cs.txt",
+    "output": "src/{ApplicationName}.App.Web/HealthChecks/ApiHealthCheck.cs",
+    "when": [
+      "web"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App.Web/Layouts/MainLayout.razor.txt",
+    "output": "src/{ApplicationName}.App.Web/Layouts/MainLayout.razor",
+    "when": [
+      "web"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App.Web/Pages/{Entities}/{Entities}List.razor.txt",
+    "output": "src/{ApplicationName}.App.Web/Pages/{Entities}/{Entities}List.razor",
+    "when": [
+      "web"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App.Web/Program.cs.txt",
+    "output": "src/{ApplicationName}.App.Web/Program.cs",
+    "when": [
+      "web"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App.Web/Properties/launchSettings.json.txt",
+    "output": "src/{ApplicationName}.App.Web/Properties/launchSettings.json",
+    "when": [
+      "web"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App.Web/Routes.razor.txt",
+    "output": "src/{ApplicationName}.App.Web/Routes.razor",
+    "when": [
+      "web"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App.Web/_Imports.razor.txt",
+    "output": "src/{ApplicationName}.App.Web/_Imports.razor",
+    "when": [
+      "web"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App.Web/appsettings.Development.json.txt",
+    "output": "src/{ApplicationName}.App.Web/appsettings.Development.json",
+    "when": [
+      "web"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App.Web/appsettings.Production.json.txt",
+    "output": "src/{ApplicationName}.App.Web/appsettings.Production.json",
+    "when": [
+      "web"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App.Web/appsettings.json.txt",
+    "output": "src/{ApplicationName}.App.Web/appsettings.json",
+    "when": [
+      "web"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App.Web/readme.md.txt",
+    "output": "src/{ApplicationName}.App.Web/readme.md",
+    "when": [
+      "web"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App.Web/wwwroot/css/app.css.txt",
+    "output": "src/{ApplicationName}.App.Web/wwwroot/css/app.css",
+    "when": [
+      "web"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App.Web/{ApplicationName}.App.Web.csproj.txt",
+    "output": "src/{ApplicationName}.App.Web/{ApplicationName}.App.Web.csproj",
+    "when": [
+      "web"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App/App.xaml.txt",
+    "output": "src/{ApplicationName}.App/App.xaml",
+    "when": [
+      "maui"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App/App.xaml.cs.txt",
+    "output": "src/{ApplicationName}.App/App.xaml.cs",
+    "when": [
+      "maui"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App/Context.cs.txt",
+    "output": "src/{ApplicationName}.App/Context.cs",
+    "when": [
+      "maui"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App/Extensions/ServiceCollectionExtensions.cs.txt",
+    "output": "src/{ApplicationName}.App/Extensions/ServiceCollectionExtensions.cs",
+    "when": [
+      "maui",
+      "sqlite-device"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App/MauiProgram.cs.txt",
+    "output": "src/{ApplicationName}.App/MauiProgram.cs",
+    "when": [
+      "maui"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App/Platforms/Android/AndroidManifest.xml.txt",
+    "output": "src/{ApplicationName}.App/Platforms/Android/AndroidManifest.xml",
+    "when": [
+      "maui"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App/Platforms/Android/MainActivity.cs.txt",
+    "output": "src/{ApplicationName}.App/Platforms/Android/MainActivity.cs",
+    "when": [
+      "maui"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App/Platforms/Android/MainApplication.cs.txt",
+    "output": "src/{ApplicationName}.App/Platforms/Android/MainApplication.cs",
+    "when": [
+      "maui"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App/Platforms/MacCatalyst/AppDelegate.cs.txt",
+    "output": "src/{ApplicationName}.App/Platforms/MacCatalyst/AppDelegate.cs",
+    "when": [
+      "maui"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App/Platforms/MacCatalyst/Entitlements.plist.txt",
+    "output": "src/{ApplicationName}.App/Platforms/MacCatalyst/Entitlements.plist",
+    "when": [
+      "maui"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App/Platforms/MacCatalyst/Info.plist.txt",
+    "output": "src/{ApplicationName}.App/Platforms/MacCatalyst/Info.plist",
+    "when": [
+      "maui"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App/Platforms/MacCatalyst/PrivacyInfo.xcprivacy.txt",
+    "output": "src/{ApplicationName}.App/Platforms/MacCatalyst/PrivacyInfo.xcprivacy",
+    "when": [
+      "maui"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App/Platforms/MacCatalyst/Program.cs.txt",
+    "output": "src/{ApplicationName}.App/Platforms/MacCatalyst/Program.cs",
+    "when": [
+      "maui"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App/Platforms/MacCatalyst/SceneDelegate.cs.txt",
+    "output": "src/{ApplicationName}.App/Platforms/MacCatalyst/SceneDelegate.cs",
+    "when": [
+      "maui"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App/Platforms/Windows/App.xaml.txt",
+    "output": "src/{ApplicationName}.App/Platforms/Windows/App.xaml",
+    "when": [
+      "maui"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App/Platforms/Windows/App.xaml.cs.txt",
+    "output": "src/{ApplicationName}.App/Platforms/Windows/App.xaml.cs",
+    "when": [
+      "maui"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App/Platforms/Windows/Package.appxmanifest.txt",
+    "output": "src/{ApplicationName}.App/Platforms/Windows/Package.appxmanifest",
+    "when": [
+      "maui"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App/Platforms/Windows/app.manifest.txt",
+    "output": "src/{ApplicationName}.App/Platforms/Windows/app.manifest",
+    "when": [
+      "maui"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App/Platforms/iOS/AppDelegate.cs.txt",
+    "output": "src/{ApplicationName}.App/Platforms/iOS/AppDelegate.cs",
+    "when": [
+      "maui"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App/Platforms/iOS/Info.plist.txt",
+    "output": "src/{ApplicationName}.App/Platforms/iOS/Info.plist",
+    "when": [
+      "maui"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App/Platforms/iOS/PrivacyInfo.xcprivacy.txt",
+    "output": "src/{ApplicationName}.App/Platforms/iOS/PrivacyInfo.xcprivacy",
+    "when": [
+      "maui"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App/Platforms/iOS/Program.cs.txt",
+    "output": "src/{ApplicationName}.App/Platforms/iOS/Program.cs",
+    "when": [
+      "maui"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App/Platforms/iOS/SceneDelegate.cs.txt",
+    "output": "src/{ApplicationName}.App/Platforms/iOS/SceneDelegate.cs",
+    "when": [
+      "maui"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App/Resources/AppIcon/appicon.svg.txt",
+    "output": "src/{ApplicationName}.App/Resources/AppIcon/appicon.svg",
+    "when": [
+      "maui"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App/Resources/AppIcon/appiconfg.svg.txt",
+    "output": "src/{ApplicationName}.App/Resources/AppIcon/appiconfg.svg",
+    "when": [
+      "maui"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App/Resources/Splash/splash.svg.txt",
+    "output": "src/{ApplicationName}.App/Resources/Splash/splash.svg",
+    "when": [
+      "maui"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App/Resources/Styles/Colors.xaml.txt",
+    "output": "src/{ApplicationName}.App/Resources/Styles/Colors.xaml",
+    "when": [
+      "maui"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App/Resources/Styles/Styles.xaml.txt",
+    "output": "src/{ApplicationName}.App/Resources/Styles/Styles.xaml",
+    "when": [
+      "maui"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App/Services/SettingsJsonContext.cs.txt",
+    "output": "src/{ApplicationName}.App/Services/SettingsJsonContext.cs",
+    "when": [
+      "maui"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App/Services/SettingsService.cs.txt",
+    "output": "src/{ApplicationName}.App/Services/SettingsService.cs",
+    "when": [
+      "maui"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App/ViewModels/ShellViewModel.cs.txt",
+    "output": "src/{ApplicationName}.App/ViewModels/ShellViewModel.cs",
+    "when": [
+      "maui"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App/ViewModels/{Entities}ViewModel.cs.txt",
+    "output": "src/{ApplicationName}.App/ViewModels/{Entities}ViewModel.cs",
+    "when": [
+      "maui"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App/ViewModels/{Entity}DetailViewModel.cs.txt",
+    "output": "src/{ApplicationName}.App/ViewModels/{Entity}DetailViewModel.cs",
+    "when": [
+      "maui"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App/Views/ShellView.xaml.txt",
+    "output": "src/{ApplicationName}.App/Views/ShellView.xaml",
+    "when": [
+      "maui"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App/Views/ShellView.xaml.cs.txt",
+    "output": "src/{ApplicationName}.App/Views/ShellView.xaml.cs",
+    "when": [
+      "maui"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App/Views/{Entities}View.xaml.txt",
+    "output": "src/{ApplicationName}.App/Views/{Entities}View.xaml",
+    "when": [
+      "maui"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App/Views/{Entities}View.xaml.cs.txt",
+    "output": "src/{ApplicationName}.App/Views/{Entities}View.xaml.cs",
+    "when": [
+      "maui"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App/Views/{Entity}DetailView.xaml.txt",
+    "output": "src/{ApplicationName}.App/Views/{Entity}DetailView.xaml",
+    "when": [
+      "maui"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App/Views/{Entity}DetailView.xaml.cs.txt",
+    "output": "src/{ApplicationName}.App/Views/{Entity}DetailView.xaml.cs",
+    "when": [
+      "maui"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App/appsettings.Development.json.txt",
+    "output": "src/{ApplicationName}.App/appsettings.Development.json",
+    "when": [
+      "maui"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App/appsettings.Production.json.txt",
+    "output": "src/{ApplicationName}.App/appsettings.Production.json",
+    "when": [
+      "maui"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App/appsettings.json.txt",
+    "output": "src/{ApplicationName}.App/appsettings.json",
+    "when": [
+      "maui"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App/readme.md.txt",
+    "output": "src/{ApplicationName}.App/readme.md",
+    "when": [
+      "maui"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.App/{ApplicationName}.App.csproj.txt",
+    "output": "src/{ApplicationName}.App/{ApplicationName}.App.csproj",
+    "when": [
+      "maui"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.AppHost/Program.cs.txt",
+    "output": "src/{ApplicationName}.AppHost/Program.cs",
+    "when": [
+      "apphost"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.AppHost/Properties/launchSettings.json.txt",
+    "output": "src/{ApplicationName}.AppHost/Properties/launchSettings.json",
+    "when": [
+      "apphost"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.AppHost/readme.md.txt",
+    "output": "src/{ApplicationName}.AppHost/readme.md",
+    "when": [
+      "apphost"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.AppHost/{ApplicationName}.AppHost.csproj.txt",
+    "output": "src/{ApplicationName}.AppHost/{ApplicationName}.AppHost.csproj",
+    "when": [
+      "apphost"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.Clients/Api/ApiClient.cs.txt",
+    "output": "src/{ApplicationName}.Clients/Api/ApiClient.cs",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Clients/Api/Models/Create{Entity}Request.cs.txt",
+    "output": "src/{ApplicationName}.Clients/Api/Models/Create{Entity}Request.cs",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Clients/Api/Models/HttpValidationProblemDetails.cs.txt",
+    "output": "src/{ApplicationName}.Clients/Api/Models/HttpValidationProblemDetails.cs",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Clients/Api/Models/HttpValidationProblemDetails_errors.cs.txt",
+    "output": "src/{ApplicationName}.Clients/Api/Models/HttpValidationProblemDetails_errors.cs",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Clients/Api/Models/Update{Entity}Request.cs.txt",
+    "output": "src/{ApplicationName}.Clients/Api/Models/Update{Entity}Request.cs",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Clients/Api/Models/{Entity}.cs.txt",
+    "output": "src/{ApplicationName}.Clients/Api/Models/{Entity}.cs",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Clients/Api/Models/{Entity}Status.cs.txt",
+    "output": "src/{ApplicationName}.Clients/Api/Models/{Entity}Status.cs",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Clients/Api/{Entities}/Item/{Entities}ItemRequestBuilder.cs.txt",
+    "output": "src/{ApplicationName}.Clients/Api/{Entities}/Item/{Entities}ItemRequestBuilder.cs",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Clients/Api/{Entities}/{Entities}RequestBuilder.cs.txt",
+    "output": "src/{ApplicationName}.Clients/Api/{Entities}/{Entities}RequestBuilder.cs",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Clients/readme.md.txt",
+    "output": "src/{ApplicationName}.Clients/readme.md",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Clients/{ApplicationName}.Clients.csproj.txt",
+    "output": "src/{ApplicationName}.Clients/{ApplicationName}.Clients.csproj",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Common/Constants/AspireNames.cs.txt",
+    "output": "src/{ApplicationName}.Common/Constants/AspireNames.cs",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Common/Constants/ConnectionStrings.cs.txt",
+    "output": "src/{ApplicationName}.Common/Constants/ConnectionStrings.cs",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Common/Constants/DatabaseConstants.cs.txt",
+    "output": "src/{ApplicationName}.Common/Constants/DatabaseConstants.cs",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Common/Constants/RateLimits.cs.txt",
+    "output": "src/{ApplicationName}.Common/Constants/RateLimits.cs",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Common/Converters/SafeEnumConverter.cs.txt",
+    "output": "src/{ApplicationName}.Common/Converters/SafeEnumConverter.cs",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Common/Enumerations/{Entity}Status.cs.txt",
+    "output": "src/{ApplicationName}.Common/Enumerations/{Entity}Status.cs",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Common/Factories/SafeEnumConverterFactory.cs.txt",
+    "output": "src/{ApplicationName}.Common/Factories/SafeEnumConverterFactory.cs",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Common/Models/HttpClientSettings.cs.txt",
+    "output": "src/{ApplicationName}.Common/Models/HttpClientSettings.cs",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Common/readme.md.txt",
+    "output": "src/{ApplicationName}.Common/readme.md",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Common/{ApplicationName}.Common.csproj.txt",
+    "output": "src/{ApplicationName}.Common/{ApplicationName}.Common.csproj",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Data.Postgres/DataContext.cs.txt",
+    "output": "src/{ApplicationName}.Data.Postgres/DataContext.cs",
+    "when": [
+      "postgres"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.Data.Postgres/DataContextFactory.cs.txt",
+    "output": "src/{ApplicationName}.Data.Postgres/DataContextFactory.cs",
+    "when": [
+      "postgres"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.Data.Postgres/Initializers/DatabaseInitializer.cs.txt",
+    "output": "src/{ApplicationName}.Data.Postgres/Initializers/DatabaseInitializer.cs",
+    "when": [
+      "postgres"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.Data.Postgres/readme.md.txt",
+    "output": "src/{ApplicationName}.Data.Postgres/readme.md",
+    "when": [
+      "postgres"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.Data.Postgres/{ApplicationName}.Data.Postgres.csproj.txt",
+    "output": "src/{ApplicationName}.Data.Postgres/{ApplicationName}.Data.Postgres.csproj",
+    "when": [
+      "postgres"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.Data.SqlServer/DataContext.cs.txt",
+    "output": "src/{ApplicationName}.Data.SqlServer/DataContext.cs",
+    "when": [
+      "sqlserver"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.Data.SqlServer/DataContextFactory.cs.txt",
+    "output": "src/{ApplicationName}.Data.SqlServer/DataContextFactory.cs",
+    "when": [
+      "sqlserver"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.Data.SqlServer/Initializers/DatabaseInitializer.cs.txt",
+    "output": "src/{ApplicationName}.Data.SqlServer/Initializers/DatabaseInitializer.cs",
+    "when": [
+      "sqlserver"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.Data.SqlServer/readme.md.txt",
+    "output": "src/{ApplicationName}.Data.SqlServer/readme.md",
+    "when": [
+      "sqlserver"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.Data.SqlServer/{ApplicationName}.Data.SqlServer.csproj.txt",
+    "output": "src/{ApplicationName}.Data.SqlServer/{ApplicationName}.Data.SqlServer.csproj",
+    "when": [
+      "sqlserver"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.Data.Sqlite/Entities/Favorite.cs.txt",
+    "output": "src/{ApplicationName}.Data.Sqlite/Entities/Favorite.cs",
+    "when": [
+      "sqlite-device"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.Data.Sqlite/Entities/FavoriteConfiguration.cs.txt",
+    "output": "src/{ApplicationName}.Data.Sqlite/Entities/FavoriteConfiguration.cs",
+    "when": [
+      "sqlite-device"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.Data.Sqlite/Extensions/ServiceCollectionExtensions.cs.txt",
+    "output": "src/{ApplicationName}.Data.Sqlite/Extensions/ServiceCollectionExtensions.cs",
+    "when": [
+      "sqlite-device"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.Data.Sqlite/LocalDataContext.cs.txt",
+    "output": "src/{ApplicationName}.Data.Sqlite/LocalDataContext.cs",
+    "when": [
+      "sqlite-device"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.Data.Sqlite/Services/SqliteLocalDataService.cs.txt",
+    "output": "src/{ApplicationName}.Data.Sqlite/Services/SqliteLocalDataService.cs",
+    "when": [
+      "sqlite-device"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.Data.Sqlite/readme.md.txt",
+    "output": "src/{ApplicationName}.Data.Sqlite/readme.md",
+    "when": [
+      "sqlite-device"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.Data.Sqlite/{ApplicationName}.Data.Sqlite.csproj.txt",
+    "output": "src/{ApplicationName}.Data.Sqlite/{ApplicationName}.Data.Sqlite.csproj",
+    "when": [
+      "sqlite-device"
+    ]
+  },
+  {
+    "template": "files/src/{ApplicationName}.Data/Abstractions/IDataContext.cs.txt",
+    "output": "src/{ApplicationName}.Data/Abstractions/IDataContext.cs",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Data/readme.md.txt",
+    "output": "src/{ApplicationName}.Data/readme.md",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Data/{ApplicationName}.Data.csproj.txt",
+    "output": "src/{ApplicationName}.Data/{ApplicationName}.Data.csproj",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Domains/Extensions/ServiceCollectionExtensions.cs.txt",
+    "output": "src/{ApplicationName}.Domains/Extensions/ServiceCollectionExtensions.cs",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Domains/Features/{Entities}/Commands/Create{Entity}/Create{Entity}Command.cs.txt",
+    "output": "src/{ApplicationName}.Domains/Features/{Entities}/Commands/Create{Entity}/Create{Entity}Command.cs",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Domains/Features/{Entities}/Commands/Create{Entity}/Create{Entity}CommandHandler.cs.txt",
+    "output": "src/{ApplicationName}.Domains/Features/{Entities}/Commands/Create{Entity}/Create{Entity}CommandHandler.cs",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Domains/Features/{Entities}/Commands/Create{Entity}/Create{Entity}Response.cs.txt",
+    "output": "src/{ApplicationName}.Domains/Features/{Entities}/Commands/Create{Entity}/Create{Entity}Response.cs",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Domains/Features/{Entities}/Commands/Delete{Entity}/Delete{Entity}Command.cs.txt",
+    "output": "src/{ApplicationName}.Domains/Features/{Entities}/Commands/Delete{Entity}/Delete{Entity}Command.cs",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Domains/Features/{Entities}/Commands/Delete{Entity}/Delete{Entity}CommandHandler.cs.txt",
+    "output": "src/{ApplicationName}.Domains/Features/{Entities}/Commands/Delete{Entity}/Delete{Entity}CommandHandler.cs",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Domains/Features/{Entities}/Commands/Delete{Entity}/Delete{Entity}Response.cs.txt",
+    "output": "src/{ApplicationName}.Domains/Features/{Entities}/Commands/Delete{Entity}/Delete{Entity}Response.cs",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Domains/Features/{Entities}/Commands/Update{Entity}/Update{Entity}Command.cs.txt",
+    "output": "src/{ApplicationName}.Domains/Features/{Entities}/Commands/Update{Entity}/Update{Entity}Command.cs",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Domains/Features/{Entities}/Commands/Update{Entity}/Update{Entity}CommandHandler.cs.txt",
+    "output": "src/{ApplicationName}.Domains/Features/{Entities}/Commands/Update{Entity}/Update{Entity}CommandHandler.cs",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Domains/Features/{Entities}/Commands/Update{Entity}/Update{Entity}Response.cs.txt",
+    "output": "src/{ApplicationName}.Domains/Features/{Entities}/Commands/Update{Entity}/Update{Entity}Response.cs",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Domains/Features/{Entities}/Queries/Get{Entities}List/Get{Entities}ListQuery.cs.txt",
+    "output": "src/{ApplicationName}.Domains/Features/{Entities}/Queries/Get{Entities}List/Get{Entities}ListQuery.cs",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Domains/Features/{Entities}/Queries/Get{Entities}List/Get{Entities}ListQueryHandler.cs.txt",
+    "output": "src/{ApplicationName}.Domains/Features/{Entities}/Queries/Get{Entities}List/Get{Entities}ListQueryHandler.cs",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Domains/Features/{Entities}/Queries/Get{Entities}List/Get{Entities}ListResponse.cs.txt",
+    "output": "src/{ApplicationName}.Domains/Features/{Entities}/Queries/Get{Entities}List/Get{Entities}ListResponse.cs",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Domains/Features/{Entities}/Queries/Get{Entity}ById/Get{Entity}ByIdQuery.cs.txt",
+    "output": "src/{ApplicationName}.Domains/Features/{Entities}/Queries/Get{Entity}ById/Get{Entity}ByIdQuery.cs",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Domains/Features/{Entities}/Queries/Get{Entity}ById/Get{Entity}ByIdQueryHandler.cs.txt",
+    "output": "src/{ApplicationName}.Domains/Features/{Entities}/Queries/Get{Entity}ById/Get{Entity}ByIdQueryHandler.cs",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Domains/Features/{Entities}/Queries/Get{Entity}ById/Get{Entity}ByIdResponse.cs.txt",
+    "output": "src/{ApplicationName}.Domains/Features/{Entities}/Queries/Get{Entity}ById/Get{Entity}ByIdResponse.cs",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Domains/ResourceNotFoundException.cs.txt",
+    "output": "src/{ApplicationName}.Domains/ResourceNotFoundException.cs",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Domains/readme.md.txt",
+    "output": "src/{ApplicationName}.Domains/readme.md",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Domains/{ApplicationName}.Domains.csproj.txt",
+    "output": "src/{ApplicationName}.Domains/{ApplicationName}.Domains.csproj",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Entities/readme.md.txt",
+    "output": "src/{ApplicationName}.Entities/readme.md",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Entities/{ApplicationName}.Entities.csproj.txt",
+    "output": "src/{ApplicationName}.Entities/{ApplicationName}.Entities.csproj",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Entities/{Entity}.cs.txt",
+    "output": "src/{ApplicationName}.Entities/{Entity}.cs",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Entities/{Entity}Configuration.cs.txt",
+    "output": "src/{ApplicationName}.Entities/{Entity}Configuration.cs",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Models/Create{Entity}Request.cs.txt",
+    "output": "src/{ApplicationName}.Models/Create{Entity}Request.cs",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Models/Update{Entity}Request.cs.txt",
+    "output": "src/{ApplicationName}.Models/Update{Entity}Request.cs",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Models/readme.md.txt",
+    "output": "src/{ApplicationName}.Models/readme.md",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Models/{ApplicationName}.Models.csproj.txt",
+    "output": "src/{ApplicationName}.Models/{ApplicationName}.Models.csproj",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Models/{Entity}.cs.txt",
+    "output": "src/{ApplicationName}.Models/{Entity}.cs",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Resources/Properties/Resources.Designer.cs.txt",
+    "output": "src/{ApplicationName}.Resources/Properties/Resources.Designer.cs",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Resources/Properties/Resources.resx.txt",
+    "output": "src/{ApplicationName}.Resources/Properties/Resources.resx",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Resources/readme.md.txt",
+    "output": "src/{ApplicationName}.Resources/readme.md",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Resources/{ApplicationName}.Resources.csproj.txt",
+    "output": "src/{ApplicationName}.Resources/{ApplicationName}.Resources.csproj",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Service.Api/Extensions/DataContextExtensions.cs.txt",
+    "output": "src/{ApplicationName}.Service.Api/Extensions/DataContextExtensions.cs",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Service.Api/HealthChecks/DatabaseHealthCheck.cs.txt",
+    "output": "src/{ApplicationName}.Service.Api/HealthChecks/DatabaseHealthCheck.cs",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Service.Api/Program.Partial.cs.txt",
+    "output": "src/{ApplicationName}.Service.Api/Program.Partial.cs",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Service.Api/Program.cs.txt",
+    "output": "src/{ApplicationName}.Service.Api/Program.cs",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Service.Api/Properties/launchSettings.json.txt",
+    "output": "src/{ApplicationName}.Service.Api/Properties/launchSettings.json",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Service.Api/appsettings.Development.json.txt",
+    "output": "src/{ApplicationName}.Service.Api/appsettings.Development.json",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Service.Api/appsettings.Production.json.txt",
+    "output": "src/{ApplicationName}.Service.Api/appsettings.Production.json",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Service.Api/appsettings.json.txt",
+    "output": "src/{ApplicationName}.Service.Api/appsettings.json",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Service.Api/readme.md.txt",
+    "output": "src/{ApplicationName}.Service.Api/readme.md",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Service.Api/{ApplicationName}.Service.Api.csproj.txt",
+    "output": "src/{ApplicationName}.Service.Api/{ApplicationName}.Service.Api.csproj",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Services/Endpoints/{Entities}Endpoints.cs.txt",
+    "output": "src/{ApplicationName}.Services/Endpoints/{Entities}Endpoints.cs",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Services/Extensions/ValidationExtensions.cs.txt",
+    "output": "src/{ApplicationName}.Services/Extensions/ValidationExtensions.cs",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Services/readme.md.txt",
+    "output": "src/{ApplicationName}.Services/readme.md",
+    "when": []
+  },
+  {
+    "template": "files/src/{ApplicationName}.Services/{ApplicationName}.Services.csproj.txt",
+    "output": "src/{ApplicationName}.Services/{ApplicationName}.Services.csproj",
+    "when": []
+  },
+  {
+    "template": "files/tests/{ApplicationName}.Data.{Provider}.Tests/DataContextModelTests.cs.txt",
+    "output": "tests/{ApplicationName}.Data.{Provider}.Tests/DataContextModelTests.cs",
+    "when": []
+  },
+  {
+    "template": "files/tests/{ApplicationName}.Data.{Provider}.Tests/Infrastructure/ModelProbe.cs.txt",
+    "output": "tests/{ApplicationName}.Data.{Provider}.Tests/Infrastructure/ModelProbe.cs",
+    "when": []
+  },
+  {
+    "template": "files/tests/{ApplicationName}.Data.{Provider}.Tests/Infrastructure/PostgresDatabase.cs.txt",
+    "output": "tests/{ApplicationName}.Data.{Provider}.Tests/Infrastructure/PostgresDatabase.cs",
+    "when": [
+      "postgres"
+    ]
+  },
+  {
+    "template": "files/tests/{ApplicationName}.Data.{Provider}.Tests/Infrastructure/PostgresFixture.cs.txt",
+    "output": "tests/{ApplicationName}.Data.{Provider}.Tests/Infrastructure/PostgresFixture.cs",
+    "when": [
+      "postgres"
+    ]
+  },
+  {
+    "template": "files/tests/{ApplicationName}.Data.{Provider}.Tests/Infrastructure/PostgresServer.cs.txt",
+    "output": "tests/{ApplicationName}.Data.{Provider}.Tests/Infrastructure/PostgresServer.cs",
+    "when": [
+      "postgres"
+    ]
+  },
+  {
+    "template": "files/tests/{ApplicationName}.Data.{Provider}.Tests/Infrastructure/PostgresServerState.cs.txt",
+    "output": "tests/{ApplicationName}.Data.{Provider}.Tests/Infrastructure/PostgresServerState.cs",
+    "when": [
+      "postgres"
+    ]
+  },
+  {
+    "template": "files/tests/{ApplicationName}.Data.{Provider}.Tests/Postgres{Entity}PersistenceTests.cs.txt",
+    "output": "tests/{ApplicationName}.Data.{Provider}.Tests/Postgres{Entity}PersistenceTests.cs",
+    "when": [
+      "postgres"
+    ]
+  },
+  {
+    "template": "files/tests/{ApplicationName}.Data.{Provider}.Tests/readme.md.txt",
+    "output": "tests/{ApplicationName}.Data.{Provider}.Tests/readme.md",
+    "when": []
+  },
+  {
+    "template": "files/tests/{ApplicationName}.Data.{Provider}.Tests/{ApplicationName}.Data.{Provider}.Tests.csproj.txt",
+    "output": "tests/{ApplicationName}.Data.{Provider}.Tests/{ApplicationName}.Data.{Provider}.Tests.csproj",
+    "when": []
+  },
+  {
+    "template": "files/tests/{ApplicationName}.Domains.Tests/Handlers/{Entities}/Create{Entity}CommandHandlerTests.cs.txt",
+    "output": "tests/{ApplicationName}.Domains.Tests/Handlers/{Entities}/Create{Entity}CommandHandlerTests.cs",
+    "when": []
+  },
+  {
+    "template": "files/tests/{ApplicationName}.Domains.Tests/Handlers/{Entities}/Delete{Entity}CommandHandlerTests.cs.txt",
+    "output": "tests/{ApplicationName}.Domains.Tests/Handlers/{Entities}/Delete{Entity}CommandHandlerTests.cs",
+    "when": []
+  },
+  {
+    "template": "files/tests/{ApplicationName}.Domains.Tests/Handlers/{Entities}/Get{Entities}ListQueryHandlerTests.cs.txt",
+    "output": "tests/{ApplicationName}.Domains.Tests/Handlers/{Entities}/Get{Entities}ListQueryHandlerTests.cs",
+    "when": []
+  },
+  {
+    "template": "files/tests/{ApplicationName}.Domains.Tests/Handlers/{Entities}/Get{Entity}ByIdQueryHandlerTests.cs.txt",
+    "output": "tests/{ApplicationName}.Domains.Tests/Handlers/{Entities}/Get{Entity}ByIdQueryHandlerTests.cs",
+    "when": []
+  },
+  {
+    "template": "files/tests/{ApplicationName}.Domains.Tests/Handlers/{Entities}/Update{Entity}CommandHandlerTests.cs.txt",
+    "output": "tests/{ApplicationName}.Domains.Tests/Handlers/{Entities}/Update{Entity}CommandHandlerTests.cs",
+    "when": []
+  },
+  {
+    "template": "files/tests/{ApplicationName}.Domains.Tests/Infrastructure/TestDatabase.cs.txt",
+    "output": "tests/{ApplicationName}.Domains.Tests/Infrastructure/TestDatabase.cs",
+    "when": []
+  },
+  {
+    "template": "files/tests/{ApplicationName}.Domains.Tests/Infrastructure/{Entity}TestData.cs.txt",
+    "output": "tests/{ApplicationName}.Domains.Tests/Infrastructure/{Entity}TestData.cs",
+    "when": []
+  },
+  {
+    "template": "files/tests/{ApplicationName}.Domains.Tests/readme.md.txt",
+    "output": "tests/{ApplicationName}.Domains.Tests/readme.md",
+    "when": []
+  },
+  {
+    "template": "files/tests/{ApplicationName}.Domains.Tests/{ApplicationName}.Domains.Tests.csproj.txt",
+    "output": "tests/{ApplicationName}.Domains.Tests/{ApplicationName}.Domains.Tests.csproj",
+    "when": []
+  },
+  {
+    "template": "files/tests/{ApplicationName}.Service.Tests/CustomWebApplicationFactory.cs.txt",
+    "output": "tests/{ApplicationName}.Service.Tests/CustomWebApplicationFactory.cs",
+    "when": []
+  },
+  {
+    "template": "files/tests/{ApplicationName}.Service.Tests/HealthEndpointTests.cs.txt",
+    "output": "tests/{ApplicationName}.Service.Tests/HealthEndpointTests.cs",
+    "when": []
+  },
+  {
+    "template": "files/tests/{ApplicationName}.Service.Tests/readme.md.txt",
+    "output": "tests/{ApplicationName}.Service.Tests/readme.md",
+    "when": []
+  },
+  {
+    "template": "files/tests/{ApplicationName}.Service.Tests/{ApplicationName}.Service.Tests.csproj.txt",
+    "output": "tests/{ApplicationName}.Service.Tests/{ApplicationName}.Service.Tests.csproj",
+    "when": []
+  },
+  {
+    "template": "files/tests/{ApplicationName}.Service.Tests/{Entities}EndpointsTests.cs.txt",
+    "output": "tests/{ApplicationName}.Service.Tests/{Entities}EndpointsTests.cs",
+    "when": []
+  },
+  {
+    "template": "files/{ApplicationName}.slnx.txt",
+    "output": "{ApplicationName}.slnx",
+    "when": []
+  }
+]

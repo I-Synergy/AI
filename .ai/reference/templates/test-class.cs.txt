@@ -1,111 +1,59 @@
-// File: tests/{ApplicationName}.{Domain}.Tests/Handlers/Create{Entity}CommandHandlerTests.cs
+// File: tests/{ApplicationName}.Domains.Tests/Handlers/{Entities}/Create{Entity}CommandHandlerTests.cs
 // Traces: US-{Domain}-{NNN} / AC-{Domain}-{NNN}.{n}, …
 
+using {ApplicationName}.Domains.Features.{Entities}.Commands.Create{Entity};
+using {ApplicationName}.Domains.Tests.Infrastructure;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Moq;
 
-namespace {ApplicationName}.{Domain}.Tests.Handlers;
+namespace {ApplicationName}.Domains.Tests.Handlers.{Entities};
 
+/// <summary>
+/// Verifies that the create command persists the given values through the real EF Core provider.
+/// </summary>
 [TestClass]
-public class Create{Entity}CommandHandlerTests
+public sealed class Create{Entity}CommandHandlerTests
 {
-    private Mock<DataContext> _dataContextMock;
-    private Mock<DbSet<{Entity}>> _entitiesSetMock;
-    private Mock<ILogger<Create{Entity}CommandHandler>> _loggerMock;
-    private Create{Entity}CommandHandler _handler;
-
-    [TestInitialize]
-    public void Setup()
-    {
-        _dataContextMock = new Mock<DataContext>();
-        _entitiesSetMock = new Mock<DbSet<{Entity}>>();
-        _loggerMock = new Mock<ILogger<Create{Entity}CommandHandler>>();
-
-        _dataContextMock.Setup(x => x.{Entities}).Returns(_entitiesSetMock.Object);
-        _dataContextMock.Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(1);
-
-        _handler = new Create{Entity}CommandHandler(
-            _dataContextMock.Object,
-            _loggerMock.Object);
-    }
-
     [TestMethod]
     [TestCategory("AC-{Domain}-{NNN}.{n}")]
-    public async Task HandleAsync_ValidCommand_Creates{Entity}Successfully()
+    public async Task HandleAsync_ValidCommand_PersistsTheGivenValues()
     {
         // Arrange
-        var command = new Create{Entity}Command(
-            Property1: "Test Value",
-            Property2: 100.50m,
-            Property3: DateTimeOffset.UtcNow);
+        using var db = new TestDatabase();
+        var handler = new Create{Entity}CommandHandler(
+            db.Context,
+            NullLogger<Create{Entity}CommandHandler>.Instance);
+
+        var command = new Create{Entity}Command(Name: "Alpha", Description: "First sample");
 
         // Act
-        var result = await _handler.HandleAsync(command);
+        var result = await handler.HandleAsync(command);
 
         // Assert
-        Assert.IsNotNull(result);
         Assert.AreNotEqual(Guid.Empty, result.{Entity}Id);
 
-        _entitiesSetMock.Verify(
-            x => x.Add(It.IsAny<{Entity}>()),
-            Times.Once);
-        _dataContextMock.Verify(
-            x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
-            Times.Once);
-    }
-
-    [TestMethod]
-    [TestCategory("Unit")]
-    [ExpectedException(typeof(ArgumentNullException))]
-    public async Task HandleAsync_NullCommand_ThrowsArgumentNullException()
-    {
-        // Act
-        await _handler.HandleAsync(null!);
-
-        // Assert - Exception expected
+        var stored = await db.Context.{Entities}.SingleAsync(e => e.{Entity}Id == result.{Entity}Id);
+        Assert.AreEqual("Alpha", stored.Name);
+        Assert.AreEqual("First sample", stored.Description);
     }
 
     [TestMethod]
     [TestCategory("AC-{Domain}-{NNN}.{n}")]
-    [ExpectedException(typeof(ArgumentException))]
-    public async Task HandleAsync_NegativeProperty2_ThrowsArgumentException()
+    public async Task HandleAsync_TwoCommands_PersistTwoRowsWithDistinctIds()
     {
         // Arrange
-        var command = new Create{Entity}Command(
-            Property1: "Test Value",
-            Property2: -100m,
-            Property3: DateTimeOffset.UtcNow);
+        using var db = new TestDatabase();
+        var handler = new Create{Entity}CommandHandler(
+            db.Context,
+            NullLogger<Create{Entity}CommandHandler>.Instance);
 
         // Act
-        await _handler.HandleAsync(command);
-
-        // Assert - Exception expected
-    }
-
-    [TestMethod]
-    [TestCategory("Unit")]
-    public async Task HandleAsync_ValidCommand_LogsInformation()
-    {
-        // Arrange
-        var command = new Create{Entity}Command(
-            Property1: "Test Value",
-            Property2: 100.50m,
-            Property3: DateTimeOffset.UtcNow);
-
-        // Act
-        await _handler.HandleAsync(command);
+        var first = await handler.HandleAsync(new Create{Entity}Command(Name: "One", Description: null));
+        var second = await handler.HandleAsync(new Create{Entity}Command(Name: "Two", Description: null));
 
         // Assert
-        _loggerMock.Verify(
-            x => x.Log(
-                LogLevel.Information,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => true),
-                It.IsAny<Exception>(),
-                It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)),
-            Times.AtLeastOnce);
+        Assert.AreNotEqual(first.{Entity}Id, second.{Entity}Id);
+        Assert.AreEqual(2, await db.Context.{Entities}.CountAsync());
     }
 }

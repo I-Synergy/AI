@@ -1,0 +1,89 @@
+using {ApplicationName}.Common.Enumerations;
+using {ApplicationName}.Domains;
+using {ApplicationName}.Domains.Features.{Entities}.Commands.Update{Entity};
+using {ApplicationName}.Domains.Tests.Infrastructure;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+namespace {ApplicationName}.Domains.Tests.Handlers.{Entities};
+
+// Traces: US-<Domain>-NNN (placeholder; fill in when the story exists, see .ai/reference/traceability.md).
+// Tag each test method with [TestCategory("AC-<Domain>-NNN.n")] once its acceptance criterion is declared.
+/// <summary>
+/// Verifies that the update command applies the new values and refuses a missing row.
+/// </summary>
+[TestClass]
+public sealed class Update{Entity}CommandHandlerTests
+{
+    [TestMethod]
+    public async Task HandleAsync_Existing{Entity}_UpdatesTheFieldsAndReportsSuccess()
+    {
+        // Arrange
+        using var db = new TestDatabase();
+        var id = await {Entity}TestData.AddAsync(db.Context, name: "Old name", description: "Old description");
+        var handler = new Update{Entity}CommandHandler(
+            db.Context,
+            NullLogger<Update{Entity}CommandHandler>.Instance);
+
+        var command = new Update{Entity}Command(
+            {Entity}Id: id,
+            Name: "New name",
+            Description: "New description",
+            Status: {Entity}Status.Active);
+
+        // Act
+        var result = await handler.HandleAsync(command);
+
+        // Assert
+        Assert.IsTrue(result.Success);
+
+        var stored = await db.Context.{Entities}.SingleAsync(e => e.{Entity}Id == id);
+        Assert.AreEqual("New name", stored.Name);
+        Assert.AreEqual("New description", stored.Description);
+        Assert.AreEqual({Entity}Status.Active, stored.Status);
+    }
+
+    [TestMethod]
+    public async Task HandleAsync_Existing{Entity}_LeavesOtherRowsAlone()
+    {
+        // Arrange
+        using var db = new TestDatabase();
+        var id = await {Entity}TestData.AddAsync(db.Context, name: "Target");
+        var otherId = await {Entity}TestData.AddAsync(db.Context, name: "Bystander");
+        var handler = new Update{Entity}CommandHandler(
+            db.Context,
+            NullLogger<Update{Entity}CommandHandler>.Instance);
+
+        // Act
+        await handler.HandleAsync(new Update{Entity}Command(
+            {Entity}Id: id,
+            Name: "Renamed",
+            Description: null,
+            Status: {Entity}Status.Archived));
+
+        // Assert
+        var other = await db.Context.{Entities}.SingleAsync(e => e.{Entity}Id == otherId);
+        Assert.AreEqual("Bystander", other.Name);
+        Assert.AreEqual({Entity}Status.Draft, other.Status);
+    }
+
+    [TestMethod]
+    public async Task HandleAsync_Missing{Entity}_ThrowsResourceNotFoundException()
+    {
+        // Arrange
+        using var db = new TestDatabase();
+        var handler = new Update{Entity}CommandHandler(
+            db.Context,
+            NullLogger<Update{Entity}CommandHandler>.Instance);
+
+        var command = new Update{Entity}Command(
+            {Entity}Id: Guid.NewGuid(),
+            Name: "Name",
+            Description: null,
+            Status: {Entity}Status.Draft);
+
+        // Act & Assert
+        await Assert.ThrowsExactlyAsync<ResourceNotFoundException>(() => handler.HandleAsync(command));
+    }
+}

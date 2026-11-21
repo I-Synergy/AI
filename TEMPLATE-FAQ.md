@@ -2,7 +2,7 @@
 
 This document captures common questions about using the .NET Development Template with Claude Code.
 
-**Last Updated:** 2026-09-25
+**Last Updated:** 2026-11-21
 
 ---
 
@@ -364,6 +364,7 @@ python .ai/scripts/upgrade-template.py /path/to/YourProject --non-interactive
 | **Template-owned** | `.ai/skills/`, `.ai/agents/`, `.ai/patterns/`, `.ai/reference/`, `.ai/checklists/`, `.ai/tests/`, `.ai/scripts/` | Safely updated |
 | **Project-owned** | `.ai/session-context.md`, `.ai/project/`, `.ai/progress/` | Never touched |
 | **Template-managed** | `AGENTS.md` | Updated (diffed) — project-specific info goes in `.ai/project/` |
+| **Scaffolded solution** (`src/`, `tests/`, root build files) | Not template-owned and not project-owned, so never read or written. `.gitignore` is the one overlap and is diffed. See `TEMPLATE-USAGE.md` |
 | **Merged** | `.vscode/settings.json`, `.vscode/tasks.json`, `.claude/settings.json` | Never overwritten. Template keys are added, your values are kept on conflict (pinned Copilot keys excepted), comments survive, invalid JSON is not written. See `TEMPLATE-USAGE.md` |
 
 The authoritative lists are `TEMPLATE_OWNED` and `PROJECT_OWNED` in `.ai/scripts/upgrade-template.py`; the table above is a summary.
@@ -532,6 +533,102 @@ The usual causes are on the Copilot side, not in the repository:
 - **A setting misleads.** `chat.agentFilesLocations: {"AGENTS.md": true}` does not load `AGENTS.md`, and `chat.agentSkillsLocations` is deprecated. The workspace settings in `.vscode/settings.json` are documented in `.ai/reference/copilot-integration.md` (section "VS Code workspace settings").
 
 The template makes the instructions explicit: `.github/copilot-instructions.md` tells Copilot to read the session context and progress first, how to delegate, and how to hand off. Path-scoped rules in `.ai/instructions/` attach automatically. The full checklist, including how to confirm whether the hooks fire under Copilot, is in [Troubleshooting: Copilot ignores the rules or agents](.ai/reference/copilot-integration.md#troubleshooting-copilot-ignores-the-rules-or-agents).
+
+## Q12: How do I add another entity?
+
+### Answer
+
+The scaffold renders one sample entity (`--entity`, default `Item`) and does not add entities later. To add one to a generated solution, copy the sample slice layer by layer, from the bottom up. Search the solution first and reuse any type that already exists (critical rule 16).
+
+1. **`Common`**: the enumerations the entity needs. Plural names, except `*Status`. Give persisted enums explicit values (critical rules 11 and 24).
+2. **`Entities`**: the entity class, with its EF Core configuration in its own file. No reference to `Models`.
+3. **`Models`**: the request and response records, with Data Annotations on the requests (`Create{Entity}Request`, `Update{Entity}Request`, `{Entity}`). No reference to `Entities`.
+4. **`Data.{Provider}`**: a `DbSet` property on `DataContext`. Then create a migration: `dotnet ef migrations add <Name> --project src/{Name}.Data.{Provider} --startup-project src/{Name}.Service.Api`.
+5. **`Domains`**: one folder per operation under `Features/{Entities}/Commands` and `Features/{Entities}/Queries`, each file holding one type. Handlers end in `CommandHandler` or `QueryHandler`, accept a `CancellationToken`, and return models, never entities. The handlers are found by assembly scan, so no registration line is needed.
+6. **`Services`**: an endpoints class for the entity, in the same style as `ItemsEndpoints`, with `.Produces` for every status code and `.WithValidation<T>()` on POST and PUT routes.
+7. **`Service.Api`**: call the new `Map{Entities}Endpoints()` extension from `Program.cs`, next to `app.MapItemsEndpoints()`.
+8. **`Clients`**: build `Service.Api` in Debug. Kiota regenerates `Api/` from the OpenAPI document. Commit the result (see Q15).
+9. **Heads (optional)**: models and services in `App.Shared`, then view models and views in `App`, or pages in `App.Web`.
+10. **Tests**: handler tests in `Domains.Tests`, endpoint tests in `Service.Tests`, and persistence tests in the `Data.*.Tests` project.
+
+---
+
+## Q13: Why is the layout flat?
+
+### Answer
+
+Every project sits directly under `src/` or `tests/` and is named `{Name}.{Layer}`: `Acme.Entities`, `Acme.Models`, `Acme.Domains`. There are no per-context folders. The reasons:
+
+- **The layer rules show up in the project graph.** `Common` is shared by every layer (critical rule 13). `Entities` and `Models` never reference each other (critical rule 14), so a reference that breaks that rule is visible in a project file and in review.
+- **Each layer has one project.** Names in the templates, the tests and the Kiota client stay predictable, and a new developer finds every layer in the same place.
+- **Feature folders do the separation inside a layer.** Operations live in `Domains/Features/{Entities}/`, so entities stay apart without extra projects.
+- **Nested context folders would multiply the layer projects.** Splitting a solution into bounded contexts changes the project structure, which is an architecture decision. `AGENTS.md` routes that through the architect skill and, when the decision is hard to reverse, the council (`.ai/reference/council.md`).
+
+---
+
+## Q14: How do I bump package versions in `package-versions.json`?
+
+### Answer
+
+`.ai/reference/templates/solution/package-versions.json` holds one entry per package: `id`, `version` and `groups`.
+
+1. Edit the entry. Keep one entry per `id` (ids are unique regardless of case). Use only known groups: `core` and `tests` (always emitted), and the flag groups `sqlserver`, `postgres`, `apphost`, `maui`, `web`, `worker`, `sqlite-device`, `tests-acceptance` and `tests-ui`.
+2. Check the template set: `python .ai/scripts/scaffold-solution.py --check-templates`.
+3. Render into a scratch folder and run `dotnet tool restore`, `dotnet restore`, `dotnet build -nodeReuse:false` and `dotnet test`. `SCAFFOLD_BUILD_SMOKE=1` makes `validate-scaffold.py` restore, build and test the SQL Server and AppHost render for you.
+4. Prefer stable versions. Keep a preview only when no stable release exists, and confirm the version exists on the feed you restore from.
+
+A new version reaches only solutions rendered afterwards. An existing solution updates its own `Directory.Packages.props`, and the upgrade script never edits that file. The Kiota CLI and `dotnet-ef` versions are in the template file `.config/dotnet-tools.json`, and the SDK pin is in `global.json`; neither is in `package-versions.json`.
+
+---
+
+## Q15: Why is the Kiota output committed?
+
+### Answer
+
+The client in `src/{Name}.Clients/Api/` is source code of that project, not a build artifact. Committing it means:
+
+- A fresh clone builds the client, the MAUI head and the web head without running the generator. The scaffold ships the Kiota output for the sample entity as templates, which is what makes the first build work.
+- A change to the API contract shows up in review as a diff of `Api/` and `openapi/Acme.Service.Api.json`.
+- CI and release builds do not need the Kiota tool.
+
+A Debug build of `Service.Api` regenerates the client. The generator also writes `kiota-lock.json`, which holds a hash of the document. Kiota sorts members and `using` directives alphabetically, so for an entity whose names sort differently from `Item`, the first Debug build can reorder members in the generated models and request builders. The code is equivalent; only the order changes. To build without regenerating, pass `-p:{Name}GenerateApiClient=false` (for example `-p:AcmeGenerateApiClient=false`).
+
+---
+
+## Q16: How do I add a second database provider?
+
+### Answer
+
+The scaffold renders one provider per solution (`--database sqlserver` or `postgres`) and has no switch to add a second one later. To add the other provider by hand:
+
+1. Copy the existing provider project (`Data.SqlServer` or `Data.Postgres`) to a new `Data.{Provider}` project: `DataContext`, `DataContextFactory` (for design-time migrations) and `Initializers/DatabaseInitializer`. Add the project to the solution file.
+2. Copy the provider's tests project to a new `Data.{Provider}.Tests` project, and point it at the new provider.
+3. Change the provider registration in `Service.Api/Program.cs` (the `Add{Provider}{Name}DataContext` call and its `Use...` options), and the AppHost resource if it runs the database locally.
+4. Generate migrations inside each provider project. Migrations are provider specific and are not portable between providers.
+
+Adding a provider changes persistence and host wiring, so treat it as an architecture decision: run the architect skill first. A choice that changes the persistence technology goes to the council (`AGENTS.md`).
+
+---
+
+## Q17: What MAUI heads build where?
+
+### Answer
+
+The `App` project lists its target frameworks depending on the host (`src/{Name}.App/{Name}.App.csproj`):
+
+| Host | Target frameworks listed | Notes |
+|---|---|---|
+| Windows | `net11.0-windows10.0.26100.0`, `net11.0-android`, `net11.0-ios`, `net11.0-maccatalyst` | Android is always listed on Windows. The iOS and Mac Catalyst frameworks are listed on every non-Linux host, and building them needs their workloads |
+| macOS | `net11.0-ios`, `net11.0-maccatalyst`, and `net11.0-android` when `ANDROID_HOME` is set | iOS and Mac Catalyst link and sign only with Xcode |
+| Linux | `net11.0-android` when `ANDROID_HOME` is set; no head otherwise | iOS, Mac Catalyst and Windows are not listed |
+
+To build a single head, pass its framework: `dotnet build src/{Name}.App -f net11.0-android`.
+
+- The Windows head needs the Windows 10.0.26100 SDK, which comes with the Windows development workload in Visual Studio or with the standalone Windows SDK.
+- The Android head needs the Android workload or SDK and a JDK.
+- `App.Web` and `AppHost` have no workload requirement and build on any host.
+
+---
 
 ## Key Takeaways
 

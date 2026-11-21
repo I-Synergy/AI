@@ -1,0 +1,40 @@
+using {ApplicationName}.Data.Abstractions;
+using ISynergy.Framework.CQRS.Abstractions.Commands;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+
+namespace {ApplicationName}.Domains.Features.{Entities}.Commands.Update{Entity};
+
+/// <summary>
+/// Handles updating the {entity}.
+/// </summary>
+public sealed class Update{Entity}CommandHandler(
+    IDataContext dataContext,
+    ILogger<Update{Entity}CommandHandler> logger)
+    : ICommandHandler<Update{Entity}Command, Update{Entity}Response>
+{
+    /// <inheritdoc />
+    public async Task<Update{Entity}Response> HandleAsync(
+        Update{Entity}Command command,
+        CancellationToken cancellationToken = default)
+    {
+        var entity = await dataContext.{Entities}.FirstOrDefaultAsync(e => e.{Entity}Id == command.{Entity}Id, cancellationToken);
+
+        if (entity is null)
+        {
+            logger.LogWarning("{Entity} {EntityId} was not found for update", command.{Entity}Id);
+            throw new ResourceNotFoundException("The {entity} was not found.");
+        }
+
+        // The change tracker detects the mutations; no Update() call is needed. SaveChanges reports zero rows
+        // when the values did not change, which is not a failure, so the row count is not checked here.
+        entity.Name = command.Name;
+        entity.Description = command.Description;
+        entity.Status = command.Status;
+
+        await dataContext.SaveChangesAsync(cancellationToken);
+
+        logger.LogInformation("Updated {Entity} {EntityId}", command.{Entity}Id);
+        return new Update{Entity}Response(true);
+    }
+}

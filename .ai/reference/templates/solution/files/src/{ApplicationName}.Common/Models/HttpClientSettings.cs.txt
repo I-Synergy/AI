@@ -1,0 +1,25 @@
+namespace {ApplicationName}.Common.Models;
+
+/// <summary>
+/// Settings for the named HTTP client that calls the API.
+/// </summary>
+public class HttpClientSettings
+{
+    /// <summary>The name the typed client is registered under.</summary>
+    public const string Name = "{ApplicationName}Api";
+
+    /// <summary>Gets or sets the base address. It may be an Aspire service-discovery URI.</summary>
+    public string BaseAddress { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the address used when the base address is a service-discovery URI and no resolver is present,
+    /// for example a localhost address in development. Leave it empty where the host always resolves the service.
+    /// </summary>
+    public string FallbackBaseAddress { get; set; } = string.Empty;
+
+    /// <summary>Gets or sets the request timeout in seconds.</summary>
+    public int TimeoutSeconds { get; set; } = 30;
+
+    /// <summary>Gets or sets headers added to every request.</summary>
+    public Dictionary<string, string> DefaultHeaders { get; set; } = [];
+}

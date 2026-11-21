@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<c:View
+    xmlns:c="clr-namespace:ISynergy.Framework.UI.Controls;assembly=ISynergy.Framework.UI.Maui"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:m="clr-namespace:ISynergy.Framework.UI.Markup;assembly=ISynergy.Framework.UI.Maui"
+    xmlns:viewmodels="clr-namespace:{ApplicationName}.ViewModels"
+    x:Class="{ApplicationName}.Views.{Entity}DetailView"
+    x:DataType="viewmodels:{Entity}DetailViewModel">
+
+    <Grid RowDefinitions="Auto,*" Padding="16" RowSpacing="12">
+        <ActivityIndicator Grid.RowSpan="2"
+                           IsRunning="{Binding IsLoading}"
+                           IsVisible="{Binding IsLoading}"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center"
+                           SemanticProperties.Description="{m:GetString Loading}" />
+
+        <VerticalStackLayout Grid.Row="0"
+                             IsVisible="{Binding HasError}"
+                             Spacing="12">
+            <Label Text="{Binding ErrorMessage}"
+                   Style="{StaticResource MutedLabel}" />
+            <Button Text="{m:GetString Retry}"
+                    Command="{Binding RetryCommand}"
+                    HorizontalOptions="Start"
+                    SemanticProperties.Hint="{m:GetString Retry}" />
+        </VerticalStackLayout>
+
+        <VerticalStackLayout Grid.Row="1" Spacing="10">
+            <Label Text="{Binding {Entity}.Name}"
+                   Style="{StaticResource PageHeadingLabel}"
+                   SemanticProperties.HeadingLevel="Level1" />
+            <Label Text="{Binding {Entity}.Description}"
+                   Style="{StaticResource MutedLabel}" />
+
+            <Label Text="{m:GetString Status}" Style="{StaticResource MutedLabel}" />
+            <Label Text="{Binding {Entity}.Status}" />
+
+            <Label Text="{m:GetString Created}" Style="{StaticResource MutedLabel}" />
+            <Label Text="{Binding {Entity}.CreatedAt, StringFormat='{0:d}'}" />
+        </VerticalStackLayout>
+    </Grid>
+</c:View>

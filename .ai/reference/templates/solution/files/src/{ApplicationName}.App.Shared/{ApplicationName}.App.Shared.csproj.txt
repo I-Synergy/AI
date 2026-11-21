@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net11.0</TargetFramework>
+    <!-- The project is named App.Shared; its namespace stays at the application root, like the other UI projects. -->
+    <RootNamespace>{ApplicationName}</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="I-Synergy.Framework.UI" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
+    <PackageReference Include="Microsoft.Extensions.ServiceDiscovery" />
+    <!--
+    The Kiota runtime is referenced directly because this project uses its types. PrivateAssets="compile"
+    keeps those types out of the compile graph of the heads, which only use the application service interface.
+    -->
+    <PackageReference Include="Microsoft.Kiota.Bundle" PrivateAssets="compile" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- PrivateAssets="compile" keeps the generated client types out of the heads' compile graph. -->
+    <ProjectReference Include="..\{ApplicationName}.Clients\{ApplicationName}.Clients.csproj" PrivateAssets="compile" />
+    <ProjectReference Include="..\{ApplicationName}.Common\{ApplicationName}.Common.csproj" />
+    <ProjectReference Include="..\{ApplicationName}.Models\{ApplicationName}.Models.csproj" />
+  </ItemGroup>
+
+</Project>

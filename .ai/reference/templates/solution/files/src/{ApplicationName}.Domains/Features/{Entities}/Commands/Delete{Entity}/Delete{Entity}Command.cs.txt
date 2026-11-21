@@ -1,0 +1,9 @@
+using ISynergy.Framework.CQRS.Commands;
+
+namespace {ApplicationName}.Domains.Features.{Entities}.Commands.Delete{Entity};
+
+/// <summary>
+/// Command to delete one {entity}.
+/// </summary>
+/// <param name="{Entity}Id">The identifier of the {entity} to delete.</param>
+public sealed record Delete{Entity}Command(Guid {Entity}Id) : ICommand<Delete{Entity}Response>;

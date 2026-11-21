@@ -1,0 +1,16 @@
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Error"
+    }
+  },
+  "Telemetry": {
+    "Debug": false,
+    "SamplingRatio": 1.0,
+    "TracesPerSecond": 5,
+    "EnableTraceBasedLogsSampler": false,
+    "EnableLiveMetrics": true,
+    "EnablePerformanceCounters": true,
+    "EnableStandardMetrics": true
+  }
+}

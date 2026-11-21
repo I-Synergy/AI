@@ -36,11 +36,11 @@ Complete patterns for implementing Command Query Responsibility Segregation.
 
 ## File Organization
 
-Each operation gets its own subfolder with three separate files:
+Each operation gets its own subfolder with three separate files. Slices live in the flat `{ApplicationName}.Domains` project; models, entities and enumerations live in their own projects:
 
 ```
-src/{ApplicationName}.Domain.{Domain}/
-  Features/{Entity}/
+src/{ApplicationName}.Domains/
+  Features/{Entities}/
     Commands/
       Create{Entity}/
         Create{Entity}Command.cs
@@ -63,10 +63,13 @@ src/{ApplicationName}.Domain.{Domain}/
         Get{Entities}ListQuery.cs
         Get{Entities}ListQueryHandler.cs
         Get{Entities}ListResponse.cs
-  Models/
-    {Entity}.cs                    (positional record)
   Extensions/
-    ServiceCollectionExtensions.cs
+    ServiceCollectionExtensions.cs  (With{ApplicationName}DomainHandlers)
+  ResourceNotFoundException.cs     (signals a missing target; endpoints answer 404)
+
+src/{ApplicationName}.Models/       (read models and request bodies, one type per file)
+src/{ApplicationName}.Entities/     (EF Core entities and their configurations)
+src/{ApplicationName}.Common/Enumerations/  (shared enums)
 ```
 
 ---
@@ -79,7 +82,7 @@ src/{ApplicationName}.Domain.{Domain}/
 // File: Create{Entity}Command.cs
 using ISynergy.Framework.CQRS.Commands;
 
-namespace {ApplicationName}.Domain.{Domain}.Features.{Entity}.Commands.Create{Entity};
+namespace {ApplicationName}.Domains.Features.{Entities}.Commands.Create{Entity};
 
 public sealed record Create{Entity}Command(
     string Description,
@@ -89,7 +92,7 @@ public sealed record Create{Entity}Command(
 
 ```csharp
 // File: Create{Entity}Response.cs
-namespace {ApplicationName}.Domain.{Domain}.Features.{Entity}.Commands.Create{Entity};
+namespace {ApplicationName}.Domains.Features.{Entities}.Commands.Create{Entity};
 
 public sealed record Create{Entity}Response(Guid {Entity}Id);
 ```
@@ -100,7 +103,7 @@ public sealed record Create{Entity}Response(Guid {Entity}Id);
 // File: Update{Entity}Command.cs
 using ISynergy.Framework.CQRS.Commands;
 
-namespace {ApplicationName}.Domain.{Domain}.Features.{Entity}.Commands.Update{Entity};
+namespace {ApplicationName}.Domains.Features.{Entities}.Commands.Update{Entity};
 
 public sealed record Update{Entity}Command(
     Guid {Entity}Id,
@@ -111,7 +114,7 @@ public sealed record Update{Entity}Command(
 
 ```csharp
 // File: Update{Entity}Response.cs
-namespace {ApplicationName}.Domain.{Domain}.Features.{Entity}.Commands.Update{Entity};
+namespace {ApplicationName}.Domains.Features.{Entities}.Commands.Update{Entity};
 
 public sealed record Update{Entity}Response(bool Success);
 ```
@@ -122,14 +125,14 @@ public sealed record Update{Entity}Response(bool Success);
 // File: Delete{Entity}Command.cs
 using ISynergy.Framework.CQRS.Commands;
 
-namespace {ApplicationName}.Domain.{Domain}.Features.{Entity}.Commands.Delete{Entity};
+namespace {ApplicationName}.Domains.Features.{Entities}.Commands.Delete{Entity};
 
 public sealed record Delete{Entity}Command(Guid {Entity}Id) : ICommand<Delete{Entity}Response>;
 ```
 
 ```csharp
 // File: Delete{Entity}Response.cs
-namespace {ApplicationName}.Domain.{Domain}.Features.{Entity}.Commands.Delete{Entity};
+namespace {ApplicationName}.Domains.Features.{Entities}.Commands.Delete{Entity};
 
 public sealed record Delete{Entity}Response(bool Success);
 ```
@@ -144,16 +147,16 @@ public sealed record Delete{Entity}Response(bool Success);
 // File: Get{Entity}ByIdQuery.cs
 using ISynergy.Framework.CQRS.Queries;
 
-namespace {ApplicationName}.Domain.{Domain}.Features.{Entity}.Queries.Get{Entity}ById;
+namespace {ApplicationName}.Domains.Features.{Entities}.Queries.Get{Entity}ById;
 
 public sealed record Get{Entity}ByIdQuery(Guid {Entity}Id) : IQuery<Get{Entity}ByIdResponse>;
 ```
 
 ```csharp
 // File: Get{Entity}ByIdResponse.cs
-using {ApplicationName}.Domain.{Domain}.Models;
+using {ApplicationName}.Models;
 
-namespace {ApplicationName}.Domain.{Domain}.Features.{Entity}.Queries.Get{Entity}ById;
+namespace {ApplicationName}.Domains.Features.{Entities}.Queries.Get{Entity}ById;
 
 public sealed record Get{Entity}ByIdResponse({Entity}? {Entity});
 ```
@@ -164,16 +167,16 @@ public sealed record Get{Entity}ByIdResponse({Entity}? {Entity});
 // File: Get{Entities}ListQuery.cs
 using ISynergy.Framework.CQRS.Queries;
 
-namespace {ApplicationName}.Domain.{Domain}.Features.{Entity}.Queries.Get{Entities}List;
+namespace {ApplicationName}.Domains.Features.{Entities}.Queries.Get{Entities}List;
 
 public sealed record Get{Entities}ListQuery() : IQuery<Get{Entities}ListResponse>;
 ```
 
 ```csharp
 // File: Get{Entities}ListResponse.cs
-using {ApplicationName}.Domain.{Domain}.Models;
+using {ApplicationName}.Models;
 
-namespace {ApplicationName}.Domain.{Domain}.Features.{Entity}.Queries.Get{Entities}List;
+namespace {ApplicationName}.Domains.Features.{Entities}.Queries.Get{Entities}List;
 
 public sealed record Get{Entities}ListResponse(IReadOnlyList<{Entity}> {Entities});
 ```
@@ -206,10 +209,10 @@ using ISynergy.Data;
 using ISynergy.Framework.CQRS.Abstractions.Commands;
 using Microsoft.Extensions.Logging;
 
-namespace {ApplicationName}.Domain.{Domain}.Features.{Entity}.Commands.Create{Entity};
+namespace {ApplicationName}.Domains.Features.{Entities}.Commands.Create{Entity};
 
 public sealed class Create{Entity}CommandHandler(
-    DataContext dataContext,
+    IDataContext dataContext,
     ILogger<Create{Entity}CommandHandler> logger)
     : ICommandHandler<Create{Entity}Command, Create{Entity}Response>
 {
@@ -219,7 +222,7 @@ public sealed class Create{Entity}CommandHandler(
     {
         logger.LogInformation("Creating {entity} with description {Description}", command.Description);
 
-        var entity = new Entities.{Domain}.{Entity}
+        var entity = new Entities.{Entity}
         {
             {Entity}Id = Guid.NewGuid(),
             Description = command.Description,
@@ -250,10 +253,10 @@ using ISynergy.Data;
 using ISynergy.Framework.CQRS.Abstractions.Commands;
 using Microsoft.Extensions.Logging;
 
-namespace {ApplicationName}.Domain.{Domain}.Features.{Entity}.Commands.Update{Entity};
+namespace {ApplicationName}.Domains.Features.{Entities}.Commands.Update{Entity};
 
 public sealed class Update{Entity}CommandHandler(
-    DataContext dataContext,
+    IDataContext dataContext,
     ILogger<Update{Entity}CommandHandler> logger)
     : ICommandHandler<Update{Entity}Command, Update{Entity}Response>
 {
@@ -298,10 +301,10 @@ using ISynergy.Framework.CQRS.Abstractions.Commands;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace {ApplicationName}.Domain.{Domain}.Features.{Entity}.Commands.Delete{Entity};
+namespace {ApplicationName}.Domains.Features.{Entities}.Commands.Delete{Entity};
 
 public sealed class Delete{Entity}CommandHandler(
-    DataContext dataContext,
+    IDataContext dataContext,
     ILogger<Delete{Entity}CommandHandler> logger)
     : ICommandHandler<Delete{Entity}Command, Delete{Entity}Response>
 {
@@ -337,14 +340,14 @@ public sealed class Delete{Entity}CommandHandler(
 ```csharp
 // File: Get{Entity}ByIdQueryHandler.cs
 using ISynergy.Data;
-using {ApplicationName}.Domain.{Domain}.Models;
+using {ApplicationName}.Models;
 using ISynergy.Framework.CQRS.Queries;
 using Microsoft.Extensions.Logging;
 
-namespace {ApplicationName}.Domain.{Domain}.Features.{Entity}.Queries.Get{Entity}ById;
+namespace {ApplicationName}.Domains.Features.{Entities}.Queries.Get{Entity}ById;
 
 public sealed class Get{Entity}ByIdQueryHandler(
-    DataContext dataContext,
+    IDataContext dataContext,
     ILogger<Get{Entity}ByIdQueryHandler> logger)
     : IQueryHandler<Get{Entity}ByIdQuery, Get{Entity}ByIdResponse>
 {
@@ -381,15 +384,15 @@ public sealed class Get{Entity}ByIdQueryHandler(
 ```csharp
 // File: Get{Entities}ListQueryHandler.cs
 using ISynergy.Data;
-using {ApplicationName}.Domain.{Domain}.Models;
+using {ApplicationName}.Models;
 using ISynergy.Framework.CQRS.Queries;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace {ApplicationName}.Domain.{Domain}.Features.{Entity}.Queries.Get{Entities}List;
+namespace {ApplicationName}.Domains.Features.{Entities}.Queries.Get{Entities}List;
 
 public sealed class Get{Entities}ListQueryHandler(
-    DataContext dataContext,
+    IDataContext dataContext,
     ILogger<Get{Entities}ListQueryHandler> logger)
     : IQueryHandler<Get{Entities}ListQuery, Get{Entities}ListResponse>
 {
@@ -444,26 +447,35 @@ public async Task<Get{Entities}ByFilterResponse> HandleAsync(
 
 ## Model Pattern
 
-Models are positional records in the domain project's `Models/` folder.
+Read models live in the `{ApplicationName}.Models` project, in the `{ApplicationName}.Models` namespace. Handlers return them; entities never leave the handler.
 
 ```csharp
-// File: {ApplicationName}.Domain.{Domain}/Models/{Entity}.cs
-namespace {ApplicationName}.Domain.{Domain}.Models;
+// File: {ApplicationName}.Models/{Entity}.cs
+using ISynergy.Framework.Core.Base;
+
+namespace {ApplicationName}.Models;
 
 /// <summary>
-/// Represents a {entity}.
+/// Read model of the {entity}. Derives from BaseModel so UI bindings receive change notification.
 /// </summary>
-public sealed record {Entity}(
-    Guid {Entity}Id,
-    string Description,
-    DateTimeOffset StartingDate,
-    DateTimeOffset EndingDate);
+public class {Entity} : BaseModel
+{
+    public Guid {Entity}Id { get => GetValue<Guid>(); set => SetValue(value); }
+    public string Name { get => GetValue<string>(); set => SetValue(value); }
+
+    public {Entity}(Guid {entity}Id, string name)
+    {
+        {Entity}Id = {entity}Id;
+        Name = name;
+    }
+}
 ```
 
 Key rules:
-- No "Model" suffix (just `{Entity}`, not `{Entity}Model`)
-- Positional record syntax
-- Lives in `{ApplicationName}.Domain.{Domain}.Models` namespace (inside domain project, not separate project)
+- No "Model" suffix (`{Entity}`, not `{Entity}Model`), and never a `Dto` suffix
+- A project of its own. The entities project and the models project never reference each other; a type both need goes to `{ApplicationName}.Common`
+- Derives from `BaseModel` when a head binds to it. Request bodies (`Create{Entity}Request`, `Update{Entity}Request`) are sealed records with Data Annotations instead
+- Handlers project straight into the model with a constructor call in the query: `.Select(e => new Models.{Entity}(e.{Entity}Id, e.Name))`
 
 ---
 
@@ -473,7 +485,7 @@ Key rules:
 
 ```csharp
 // Create — named DbSet Add, SaveChanges
-var entity = new Entities.{Domain}.{Entity} { {Entity}Id = Guid.NewGuid(), ... };
+var entity = new Entities.{Entity} { {Entity}Id = Guid.NewGuid(), ... };
 dataContext.{Entities}.Add(entity);
 var rowsAffected = await dataContext.SaveChangesAsync(cancellationToken);
 
@@ -536,11 +548,11 @@ await _repository.Add(model);
 using ISynergy.Framework.CQRS.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace {ApplicationName}.Domain.{Domain}.Extensions;
+namespace {ApplicationName}.Domains.Extensions;
 
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection With{Domain}DomainHandlers(
+    public static IServiceCollection With{ApplicationName}DomainHandlers(
         this IServiceCollection services)
     {
         var assembly = typeof(ServiceCollectionExtensions).Assembly;
@@ -562,12 +574,12 @@ Some domains layer event sourcing on top of the standard CQRS pattern. These dom
 ### Project Structure (event-sourced domain)
 
 ```
-src/{ApplicationName}.Domain.{Domain}/
+src/{ApplicationName}.Domains/
   Aggregates/
     {Entity}Aggregate.cs           (extends aggregate base, raises events)
   Events/
     {Entity}Events.cs              (domain event records)
-  Features/{Entity}/
+  Features/{Entities}/
     Commands/Create{Entity}/
       Create{Entity}CommandHandler.cs   (uses both aggregate repo + EF read model)
     ...
@@ -577,7 +589,7 @@ src/{ApplicationName}.Domain.{Domain}/
 
 ```csharp
 public sealed class Create{Entity}CommandHandler(
-    DataContext dataContext,
+    IDataContext dataContext,
     IAggregateRepository<{Entity}Aggregate, Guid> {entity}Repository,
     ILogger<Create{Entity}CommandHandler> logger)
     : ICommandHandler<Create{Entity}Command, Create{Entity}Response>
@@ -594,7 +606,7 @@ public sealed class Create{Entity}CommandHandler(
         await {entity}Repository.SaveAsync(aggregate, cancellationToken);
 
         // 3. Project aggregate state into EF Core read model.
-        var entity = new Entities.{Domain}.{Entity}
+        var entity = new Entities.{Entity}
         {
             {Entity}Id = aggregate.Id,
             Prop1 = aggregate.Prop1,
@@ -698,7 +710,7 @@ public sealed class Get{Entity}ByIdQueryHandler : IQueryHandler<...>
 
 ```csharp
 // WRONG - Returns domain entity
-public async Task<Entities.{Domain}.{Entity}> HandleAsync(...) { return entity; }
+public async Task<Entities.{Entity}> HandleAsync(...) { return entity; }
 
 // CORRECT - Returns response wrapping model
 public async Task<Get{Entity}ByIdResponse> HandleAsync(...)

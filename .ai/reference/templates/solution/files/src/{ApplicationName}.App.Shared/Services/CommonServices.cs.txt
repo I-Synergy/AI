@@ -1,0 +1,45 @@
+using ISynergy.Framework.Core.Abstractions.Services;
+using ISynergy.Framework.Globalization.Abstractions.Services;
+
+namespace {ApplicationName}.Services;
+
+/// <summary>
+/// Groups the framework services that every head needs. Restart and quit depend on the host process, so they are
+/// virtual: a head that supports them overrides them.
+/// </summary>
+public class CommonServices(
+    IInfoService infoService,
+    IBusyService busyService,
+    ILanguageService languageService,
+    IMessengerService messengerService,
+    IExceptionHandlerService exceptionHandlerService) : ICommonServices
+{
+    /// <inheritdoc />
+    public IInfoService InfoService { get; } = infoService;
+
+    /// <inheritdoc />
+    public IBusyService BusyService { get; } = busyService;
+
+    /// <inheritdoc />
+    public ILanguageService LanguageService { get; } = languageService;
+
+    /// <inheritdoc />
+    public IMessengerService MessengerService { get; } = messengerService;
+
+    /// <inheritdoc />
+    public IExceptionHandlerService ExceptionHandlerService { get; } = exceptionHandlerService;
+
+    /// <summary>
+    /// Restarts the application. The shared layer has no host process to restart, so this throws unless a head overrides it.
+    /// </summary>
+    /// <exception cref="PlatformNotSupportedException">Thrown by the shared implementation.</exception>
+    public virtual void RestartApplication() =>
+        throw new PlatformNotSupportedException("Restarting the application is not supported by the shared layer. The head must override RestartApplication.");
+
+    /// <summary>
+    /// Quits the application. The shared layer has no host process to stop, so this throws unless a head overrides it.
+    /// </summary>
+    /// <exception cref="PlatformNotSupportedException">Thrown by the shared implementation.</exception>
+    public virtual void QuitApplication() =>
+        throw new PlatformNotSupportedException("Quitting the application is not supported by the shared layer. The head must override QuitApplication.");
+}

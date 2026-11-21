@@ -1,0 +1,10 @@
+namespace {ApplicationName}.Common.Constants;
+
+/// <summary>
+/// Names of the rate-limiter policies registered in the host.
+/// </summary>
+public static class RateLimits
+{
+    /// <summary>The fixed-window policy applied to the public API.</summary>
+    public const string Api = "api";
+}

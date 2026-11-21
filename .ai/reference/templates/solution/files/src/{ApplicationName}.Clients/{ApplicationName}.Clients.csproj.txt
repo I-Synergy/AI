@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net11.0</TargetFramework>
+    <RootNamespace>{ApplicationName}.Clients</RootNamespace>
+    <!-- The compile list is built at compile time by IncludeGeneratedApiClient below, never from the default glob. -->
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Http" />
+    <PackageReference Include="Microsoft.Kiota.Bundle" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+    Build-order reference only. The client is generated from the API's OpenAPI document during the API's
+    Debug build, so this project must build after that build finishes. ReferenceOutputAssembly="false"
+    adds no assembly reference.
+    -->
+    <ProjectReference Include="..\{ApplicationName}.Service.Api\{ApplicationName}.Service.Api.csproj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <!--
+  The files under Api/ can be rewritten by the API build that runs before this project. A wildcard item is
+  expanded from MSBuild's file-enumeration cache, which can still hold a listing taken before that build, so the
+  directory is read through a property function at compile time instead. The list then matches the files on disk,
+  including files the generator removed.
+  -->
+  <Target Name="IncludeGeneratedApiClient" BeforeTargets="CoreCompile">
+    <ItemGroup>
+      <Compile Include="$([System.IO.Directory]::GetFiles('$(MSBuildProjectDirectory)/Api', '*.cs', System.IO.SearchOption.AllDirectories))" Condition="Exists('$(MSBuildProjectDirectory)/Api')" />
+    </ItemGroup>
+  </Target>
+</Project>

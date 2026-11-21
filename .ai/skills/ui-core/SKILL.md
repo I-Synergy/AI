@@ -11,6 +11,8 @@ sources:
 license: See license.md in repository root
 ---
 
+> **Name collision.** `IAuthenticationProvider` exists twice: this skill's I-Synergy interface (command and UI authorization) and Kiota's `Microsoft.Kiota.Abstractions.Authentication.IAuthenticationProvider`, which the generated `{ApplicationName}.App.Shared` registers as a singleton for the API client. Alias one of them where both are in scope. The generated sample has no sign-in, so its command guards are empty.
+
 # I-Synergy Framework UI Core Skill (SKILL.md)
 
 Use this skill whenever you need to wire up *platform-agnostic* UI services. The base UI package supplies the abstractions consumed by WPF, WinUI, UWP, MAUI, and Blazor shells.

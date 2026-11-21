@@ -1,0 +1,54 @@
+using ISynergy.Framework.Core.Abstractions.Base;
+using ISynergy.Framework.Core.Base;
+
+namespace {ApplicationName}.Models;
+
+/// <summary>
+/// Settings that apply to the whole installation rather than to one user.
+/// </summary>
+public class GlobalSettings : BaseModel, IGlobalSettings
+{
+    /// <summary>Initializes a new instance with the default values.</summary>
+    public GlobalSettings()
+    {
+        IsFirstRun = true;
+        Decimals = 2;
+        CurrencyName = string.Empty;
+        CurrencySymbol = string.Empty;
+    }
+
+    /// <summary>Gets or sets a value indicating whether the first-run setup still has to be completed.</summary>
+    public bool IsFirstRun
+    {
+        get => GetValue<bool>();
+        set => SetValue(value);
+    }
+
+    /// <summary>Gets or sets the number of decimal places shown for amounts.</summary>
+    public int Decimals
+    {
+        get => GetValue<int>();
+        set => SetValue(value);
+    }
+
+    /// <summary>Gets or sets the identifier of the currency.</summary>
+    public int CurrencyId
+    {
+        get => GetValue<int>();
+        set => SetValue(value);
+    }
+
+    /// <summary>Gets or sets the name of the currency.</summary>
+    public string CurrencyName
+    {
+        get => GetValue<string>();
+        set => SetValue(value);
+    }
+
+    /// <summary>Gets or sets the symbol of the currency.</summary>
+    public string CurrencySymbol
+    {
+        get => GetValue<string>();
+        set => SetValue(value);
+    }
+}

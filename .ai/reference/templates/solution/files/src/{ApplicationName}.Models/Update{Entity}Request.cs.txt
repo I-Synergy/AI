@@ -1,0 +1,26 @@
+using System.ComponentModel.DataAnnotations;
+using {ApplicationName}.Common.Enumerations;
+
+namespace {ApplicationName}.Models;
+
+/// <summary>
+/// Request body that updates one {Entity}. The type is not positional, and its annotations sit on its
+/// properties, so <c>.WithValidation&lt;Update{Entity}Request&gt;()</c> evaluates them.
+/// </summary>
+public sealed record Update{Entity}Request
+{
+    /// <summary>Gets the identifier of the {entity} to update. The update route has no identifier segment, so it travels in the body.</summary>
+    public Guid {Entity}Id { get; init; }
+
+    /// <summary>Gets the new display name, required and at most 100 characters.</summary>
+    [Required, MaxLength(100)]
+    public string Name { get; init; } = string.Empty;
+
+    /// <summary>Gets the new optional description, at most 500 characters.</summary>
+    [MaxLength(500)]
+    public string? Description { get; init; }
+
+    /// <summary>Gets the new lifecycle state. Undefined values fail validation.</summary>
+    [EnumDataType(typeof({Entity}Status))]
+    public {Entity}Status Status { get; init; } = {Entity}Status.Draft;
+}

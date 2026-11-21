@@ -69,12 +69,12 @@ var query = new GetDepositsTotalAmountQuery(id, true);
 
 ## 4. Data Access: Use EF Core Primitives on DataContext
 
-**NO explicit Repository interfaces. NO extension methods like AddItemAsync/GetItemByIdAsync.** Use EF Core directly.
+**NO explicit Repository interfaces. NO extension methods like AddItemAsync/GetItemByIdAsync.** Use EF Core directly. Handlers depend on `IDataContext` (`{ApplicationName}.Data/Abstractions/`), which exposes the same named DbSet properties.
 
 ```csharp
 // CORRECT — Use named DbSet properties from DataContext for all operations
 // Create
-var entity = new Entities.{Entities}.{Entity} { {Entity}Id = Guid.NewGuid(), ... };
+var entity = new Entities.{Entity} { {Entity}Id = Guid.NewGuid(), ... };
 dataContext.{Entities}.Add(entity);
 await dataContext.SaveChangesAsync(cancellationToken);
 
@@ -148,7 +148,7 @@ public async Task<Get{Entity}ByIdResponse> HandleAsync(...)
 }
 
 // WRONG - Return domain entity directly
-public async Task<Entities.{Entities}.{Entity}> HandleAsync(...)
+public async Task<Entities.{Entity}> HandleAsync(...)
 {
     return await dataContext.{Entities}.FirstOrDefaultAsync(e => e.{Entity}Id == id, ct);
 }
@@ -188,8 +188,8 @@ public sealed class Get{Entity}ByIdHandler : IQueryHandler<...>
 **Every top-level type gets its own file.** A file contains exactly one class, record, struct, interface, or enum — never two, however small or closely related they are. A private nested type is part of its parent type, not a second top-level type.
 
 ```
-// CORRECT - Each operation gets its own subfolder with separate files
-Features/{Entity}/
+// CORRECT - Plural feature folder, singular entity in operation names, one subfolder per operation
+{ApplicationName}.Domains/Features/{Entities}/
   Commands/Create{Entity}/
     Create{Entity}Command.cs
     Create{Entity}CommandHandler.cs
@@ -203,16 +203,18 @@ Features/{Entity}/
     Get{Entity}ByIdQueryHandler.cs
     Get{Entity}ByIdResponse.cs
 
-// WRONG - Flat folders or combined files
-Features/{Entity}/Commands/
+// WRONG - Singular feature folder, flat operation folders, or combined files
+{ApplicationName}.Domains/Features/{Entity}/Commands/
   Create{Entity}Command.cs      (command + response combined)
-  Create{Entity}Handler.cs
+  Create{Entity}Handler.cs      (also: no operation subfolder, and no Command suffix)
 
 // WRONG - two top-level types in one file, anywhere in the solution
 Create{Entity}Response.cs
   public sealed record Create{Entity}Response(Guid {Entity}Id);
   public sealed record Update{Entity}Response(bool Success);   // belongs in its own file
 ```
+
+The feature folder is plural (`Features/{Entities}/`) and the namespace follows it (`Acme.Domains.Features.Items.Commands.CreateItem`), which keeps the feature apart from the `Item` entity type. The entity mapping `IEntityTypeConfiguration<T>` is a separate file beside the entity (`Item.cs` and `ItemConfiguration.cs` in `{ApplicationName}.Entities`), not a nested type.
 
 ## 11. Enum Naming: Always Plural (except *Status)
 
@@ -258,25 +260,26 @@ public int StatusId { get; set; }
 
 ## 13. Common Project: Centralize Shared Types
 
-Every solution MUST include a `{ApplicationName}.Common` project. Shared types — especially enumerations — MUST live in Common, never scattered across domain/data projects where they create circular or cross-dependency issues.
+Every solution MUST include `{ApplicationName}.Common` and `{ApplicationName}.Resources`. `Common` references `Resources`. Every other project references `Common`, directly or transitively. Shared types, especially enumerations, MUST live in `Common`, never in a domain or data project where they create cross-dependencies.
 
-All projects MUST reference `{ApplicationName}.Common` either directly or transitively (e.g., Services → Domain → Common).
+`Common` folders: `Constants/` (`AspireNames`, `ConnectionStrings`, `DatabaseConstants`, `RateLimits`), `Converters/`, `Enumerations/`, `Factories/`, `Models/` (`HttpClientSettings`). Resource strings live in `{ApplicationName}.Resources` (`Properties/Resources.resx`, default namespace `{ApplicationName}.Resources`).
 
 ```
 // CORRECT — Enum defined once in Common, consumed everywhere
-// {ApplicationName}.Common/Enums/PaymentStatus.cs
-public enum PaymentStatus { Pending, Succeeded, Failed }
+// {ApplicationName}.Common/Enumerations/PaymentStatus.cs
+public enum PaymentStatus { Pending = 0, Succeeded = 1, Failed = 2 }
 
-// {ApplicationName}.Domain.{Domain} references Common
-// {ApplicationName}.Data references Domain (transitively gets Common)
-// {ApplicationName}.Services references Domain (transitively gets Common)
+// {ApplicationName}.Entities, {ApplicationName}.Models: reference Common
+// {ApplicationName}.Data: references Entities (transitively Common)
+// {ApplicationName}.Domains: references Entities, Models, Data.{Provider}
+// {ApplicationName}.Services: references Domains, Models
 
-// WRONG — Enum defined in a domain project, forcing Data → Domain dependency for enums
-// {ApplicationName}.Domain.{Domain}/Enums/{Entity}Status.cs
+// WRONG — Enum defined in the Entities project, forcing Models or the heads to reference Entities to use it
+// {ApplicationName}.Entities/Enumerations/{Entity}Status.cs
 
 // WRONG — Duplicate enum definitions across projects
-// {ApplicationName}.Domain.{Domain}: {Entity}Status
-// {ApplicationName}.Models.{Domain}: {Entity}Status  (duplicate)
+// {ApplicationName}.Entities: {Entity}Status
+// {ApplicationName}.Models: {Entity}Status  (duplicate)
 ```
 
 Other types that belong in Common: shared constants, common interfaces (e.g., `IEntity`, `IAuditable`), reusable value objects, and extension methods used across multiple projects.
@@ -287,23 +290,23 @@ An entity MUST never reference a model, and a model MUST never reference an enti
 
 ```
 // CORRECT — Shared type extracted to Common
-// {ApplicationName}.Common/Enums/PaymentStatus.cs
-public enum PaymentStatus { Pending, Succeeded, Failed }
+// {ApplicationName}.Common/Enumerations/PaymentStatus.cs
+public enum PaymentStatus { Pending = 0, Succeeded = 1, Failed = 2 }
 
-// {ApplicationName}.Entities.{Domain}/{Entity}.cs
-public class {Entity} { public {Entity}Status Status { get; set; } }
+// {ApplicationName}.Entities/Payment.cs
+public class Payment { public PaymentStatus Status { get; set; } }
 
-// {ApplicationName}.Models.{Domain}/{Entity}Model.cs
-public sealed record PaymentModel(PaymentStatus Status);
+// {ApplicationName}.Models/Payment.cs
+public sealed record Payment { public PaymentStatus Status { get; init; } }   // named after the concept (rule 28)
 
-// WRONG — Entity project references Models project for a shared enum
-// {ApplicationName}.Entities.{Domain} has a project reference to {ApplicationName}.Models.Payments
+// WRONG — Entities project references Models for a shared enum
+// {ApplicationName}.Entities has a project reference to {ApplicationName}.Models
 
-// WRONG — Model project references Entities project for a shared enum
-// {ApplicationName}.Models.{Domain} has a project reference to {ApplicationName}.Entities.Payments
+// WRONG — Models project references Entities for a shared enum
+// {ApplicationName}.Models has a project reference to {ApplicationName}.Entities
 ```
 
-A cross-reference between Entities and Models is the canary — it signals a type that should have been extracted to Common.
+A cross-reference between Entities and Models is the canary: it signals a type that should have been extracted to Common.
 
 ## 15. Plan Files: Always in `.ai/plans/`
 
@@ -351,77 +354,75 @@ All agents are defined in `.ai/agents/` and hard-linked to `.claude/agents/` for
 
 ## 18. Endpoint Produces Metadata: Always Explicit
 
-Every API endpoint route MUST explicitly declare every status code it can return via `.Produces<T>()` or `.Produces(statusCode)`. Never rely on inference — OpenAPI/Swagger needs explicit metadata for accurate documentation.
+Every API endpoint route MUST explicitly declare every status code it can return, via `.Produces<T>()`, `.Produces(statusCode)` or `.ProducesValidationProblem()`. Never rely on inference: OpenAPI and the generated client need the metadata.
+
+The scaffold's API is anonymous by default. An anonymous route declares no `401`. A route that requires authentication declares `.Produces(StatusCodes.Status401Unauthorized)`. Every route in the rate-limited group also declares `429`.
 
 ```csharp
-// CORRECT — All possible response types declared
-group.MapPost("", AddEntityAsync)
-    .Accepts<Entity>("application/json")
-    .Produces<Guid>(StatusCodes.Status201Created)        // Success
-    .Produces(StatusCodes.Status401Unauthorized)         // Auth failure
-    .ProducesValidationProblem();                         // Validation failure
+// CORRECT — the rendered Items endpoints (anonymous, rate limited)
+group.MapPost("", AddItemAsync)
+    .Accepts<Models.CreateItemRequest>("application/json")
+    .WithValidation<Models.CreateItemRequest>()
+    .Produces(StatusCodes.Status429TooManyRequests)     // rate limited
+    .Produces<Guid>(StatusCodes.Status201Created)       // success
+    .ProducesValidationProblem();                       // validation
 
-group.MapGet("{id}", GetEntityByIdAsync)
-    .Produces<Entity>(StatusCodes.Status200OK)           // Success
-    .Produces(StatusCodes.Status401Unauthorized)         // Auth failure
-    .Produces(StatusCodes.Status404NotFound);            // Not found
+group.MapGet("{id:guid}", GetItemByIdAsync)
+    .Produces(StatusCodes.Status429TooManyRequests)
+    .Produces<Models.Item>(StatusCodes.Status200OK)     // success
+    .Produces(StatusCodes.Status404NotFound);           // not found
 
-group.MapGet("", GetEntityListAsync)
-    .Produces<List<Entity>>(StatusCodes.Status200OK)     // Success
-    .Produces(StatusCodes.Status401Unauthorized);        // Auth failure
+group.MapDelete("{id:guid}", DeleteItemAsync)
+    .Produces(StatusCodes.Status429TooManyRequests)
+    .Produces(StatusCodes.Status204NoContent)           // success
+    .Produces(StatusCodes.Status404NotFound)            // not found
+    .ProducesValidationProblem();                       // refusal
 
-group.MapPut("", UpdateEntityAsync)
-    .Accepts<Entity>("application/json")
-    .Produces<bool>(StatusCodes.Status200OK)             // Success
-    .Produces(StatusCodes.Status401Unauthorized)         // Auth failure
-    .ProducesValidationProblem();                         // Validation failure
-
-group.MapDelete("{id}", RemoveEntityAsync)
-    .Produces(StatusCodes.Status204NoContent)            // Success
-    .Produces(StatusCodes.Status401Unauthorized)         // Auth failure
-    .Produces(StatusCodes.Status404NotFound);            // Not found
-
-// WRONG — Only error codes declared, success types omitted
-group.MapPost("", AddEntityAsync)
-    .Accepts<Entity>("application/json")
-    .Produces(StatusCodes.Status401Unauthorized)
+// WRONG — only error codes declared, success type omitted
+group.MapPost("", AddItemAsync)
+    .Accepts<Models.CreateItemRequest>("application/json")
     .ProducesValidationProblem();
 
-// WRONG — No produces metadata at all
-group.MapGet("{id}", GetEntityByIdAsync);
+// WRONG — no produces metadata at all
+group.MapGet("{id:guid}", GetItemByIdAsync);
 ```
 
 ## 19. API Projects: OpenAPI Document Generation in .csproj
 
-Every API project `.csproj` MUST include the MSBuild properties and package reference to generate the OpenAPI spec at build time.
+Every API project `.csproj` MUST write the OpenAPI document on Debug builds, so the Kiota client (rule 21) can be regenerated from it. The scaffold's `Service.Api` is the reference: the document is generated in Debug only, and Release builds are not affected by it.
 
 ```xml
-<!-- CORRECT — OpenAPI spec generated on every build -->
+<!-- CORRECT — Service.Api: the document is generated on Debug builds only -->
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
+    <OpenApiGenerateDocuments>false</OpenApiGenerateDocuments>
+    <OpenApiGenerateDocumentsOnBuild>false</OpenApiGenerateDocumentsOnBuild>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
     <OpenApiDocumentsDirectory>../../openapi</OpenApiDocumentsDirectory>
     <OpenApiGenerateDocuments>true</OpenApiGenerateDocuments>
     <OpenApiGenerateDocumentsOnBuild>true</OpenApiGenerateDocumentsOnBuild>
-    <OpenApiGenerateEnvironment>Development</OpenApiGenerateEnvironment>
+    <OpenApiGenerationEnvironment>Development</OpenApiGenerationEnvironment>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.ApiDescription.Server">
+    <PackageReference Include="Microsoft.Extensions.ApiDescription.Server" Condition="'$(Configuration)' == 'Debug'">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
 </Project>
 
-// WRONG — Missing OpenAPI generation configuration and package reference
+<!-- WRONG — Missing OpenAPI generation configuration and package reference -->
 <Project Sdk="Microsoft.NET.Sdk.Web">
   <!-- No OpenApiGenerateDocumentsOnBuild, no OpenApiDocumentsDirectory, -->
   <!-- no Microsoft.Extensions.ApiDescription.Server reference -->
 </Project>
 ```
 
-`OpenApiDocumentsDirectory` is relative to the project file — `../../openapi` puts the spec in a solution-level `openapi/` folder. The package reference uses `PrivateAssets=all` so it doesn't leak to downstream consumers.
+`OpenApiDocumentsDirectory` is relative to the project file: `../../openapi` puts the document in the solution-level `openapi/` folder. The package reference uses `PrivateAssets="all"` so it does not leak to downstream consumers.
 
 ## 20. OpenAPI: Document Transformer (Servers) + Schema Transformer (Types)
 
@@ -512,70 +513,75 @@ builder.Services.AddOpenApi();
 
 ## 21. API Clients: Kiota-Generated, Never Raw HttpClient
 
-Every API project MUST have a corresponding Kiota-generated client project. Never call an internal API with raw `HttpClient` — use the strongly-typed generated client instead.
+Every API has a Kiota-generated client project named `{ApplicationName}.Clients` (no `.Api` or app suffix). Heads never call the API with a raw `HttpClient`. They use the typed client through the shared service in `{ApplicationName}.App.Shared`.
 
 ```csharp
-// CORRECT — Strongly-typed Kiota client injected via constructor
-public sealed class GetEntityListQueryHandler(
-    ApiClient client
-) : IQueryHandler<GetEntityListQuery, GetEntityListResponse>
+// CORRECT — the generated ApiClient is injected into the App.Shared service, which maps the client models
+public sealed class {ApplicationName}ApiService(ApiClient client) : I{ApplicationName}ApiService
 {
-    public async Task<GetEntityListResponse> HandleAsync(
-        GetEntityListQuery query,
-        CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<Item>> GetItemsAsync(CancellationToken cancellationToken = default)
     {
-        var result = await client.Entities.GetAsync(config =>
-        {
-            config.QueryParameters.Page = query.PageIndex;
-            config.QueryParameters.PageSize = query.PageSize;
-        }, cancellationToken);
-
-        return new GetEntityListResponse(
-            result?.Select(e => /* map to model */).ToList() ?? []);
+        var items = await client.Items.GetAsync(cancellationToken: cancellationToken);
+        return items?.Select(Map).ToList() ?? [];
     }
 }
 
-// WRONG — Raw HttpClient with magic strings
-public sealed class GetEntityListQueryHandler(
-    HttpClient httpClient
-) : IQueryHandler<...>
+// WRONG — raw HttpClient with magic strings and hand-written deserialisation
+public sealed class ItemsService(HttpClient httpClient)
 {
-    public async Task<...> HandleAsync(...)
+    public async Task<List<Item>?> GetItemsAsync()
     {
-        var response = await httpClient.GetAsync("/api/entities?page=1");
-        var json = await response.Content.ReadAsStringAsync();
-        var entities = JsonSerializer.Deserialize<List<Entity>>(json);
+        var json = await httpClient.GetStringAsync("/items");
+        return JsonSerializer.Deserialize<List<Item>>(json);
     }
 }
 ```
 
-The client project (`{ApplicationName}.Clients.Api` by default; `{ApplicationName}.Clients.{AppName}` for multi-app) must include:
-- `Microsoft.Kiota.Bundle` and `Microsoft.Extensions.Http` NuGet packages
-- A `ServiceCollectionExtensions` that registers the client in DI with auth provider and base URL
-- Kiota-generated source files (`Api/`, `Models/`, `ApiClient.cs`) are committed — they are the source code of the client project
+The client project:
+- References `Microsoft.Kiota.Bundle` and `Microsoft.Extensions.Http`.
+- References `{ApplicationName}.Service.Api` with `ReferenceOutputAssembly="false"`. The reference orders the builds and adds no assembly dependency.
+- Sets `EnableDefaultCompileItems` to `false`. The compile list is built by the target `IncludeGeneratedApiClient`, which reads `Api/` with `Directory.GetFiles` before compilation. A wildcard item can hold a stale listing after regeneration.
+- Contains `Api/` as the generated source: `ApiClient.cs`, `Items/`, `Models/`. It is committed and never edited by hand. A regeneration overwrites it (`--clean-output`).
+- Has no DI extension class. Registration lives in `{ApplicationName}.App.Shared/Extensions/HostApplicationBuilderExtensions.cs` as `Add{ApplicationName}ApiServices`: named `HttpClient`, service discovery, the anonymous authentication provider and the scoped `ApiClient`.
 
-The API project `.csproj` must include an MSBuild `OpenAPI` target that runs `dotnet kiota generate` after every build, regenerating the client from the latest OpenAPI spec.
+Regeneration:
+- A Debug build of `{ApplicationName}.Service.Api` writes `openapi/{ApplicationName}.Service.Api.json` (rule 19). The target `OpenAPI` then runs `dotnet kiota generate` into `src/{ApplicationName}.Clients/Api`.
+- The Kiota version is pinned in `.config/dotnet-tools.json` with `rollForward: false`.
+- Opt-out: `-p:{ApplicationName}GenerateApiClient=false` skips regeneration. Use it in CI and in test runs that must not rewrite committed files. The API reads the property, so pass it on the top-level command line.
+- `kiota-lock.json` is written by the generator and is not shipped in the template. Once generated, it is committed with `Api/`.
 
-## 22. Input Validation: Data Annotations + Validation Filter
+Documented exception: the web head's health probe (`App.Web/HealthChecks/ApiHealthCheck.cs`) uses the named client from `IHttpClientFactory`, because it only checks reachability.
 
-Every POST/PUT route that accepts a body MUST include `.WithValidation<T>()` and `.ProducesValidationProblem()`. Request models MUST use Data Annotations.
+## 22. Input Validation: Data Annotations on Properties + Validation Filter
+
+Every POST/PUT route that accepts a body MUST include `.WithValidation<T>()` and `.ProducesValidationProblem()`. Request models are the `Models` request records (`Create{Entity}Request`, `Update{Entity}Request`), never entities. Their Data Annotations sit on properties, because a validator reads properties, not constructor parameters.
 
 ```csharp
-// CORRECT — Model with Data Annotations + validation filter on route
-public sealed record CreateEntity([Required, MaxLength(100)] string Name, [Range(1, 100)] int Value);
+// CORRECT — annotated, non-positional request record; the filter evaluates the annotations
+public sealed record CreateItemRequest
+{
+    [Required, MaxLength(100)]
+    public string Name { get; init; } = string.Empty;
 
-group.MapPost("", AddEntityAsync)
-    .Accepts<CreateEntity>("application/json")
-    .WithValidation<CreateEntity>()
+    [MaxLength(500)]
+    public string? Description { get; init; }
+}
+
+group.MapPost("", AddItemAsync)
+    .Accepts<Models.CreateItemRequest>("application/json")
+    .WithValidation<Models.CreateItemRequest>()
     .ProducesValidationProblem();
 
-// WRONG — No validation attributes, no filter
-public sealed record CreateEntity(string Name, int Value);
+// WRONG — positional record: attributes on constructor parameters are not checked
+public sealed record CreateItemRequest([Required, MaxLength(100)] string Name);
 
-group.MapPost("", AddEntityAsync)
-    .Accepts<CreateEntity>("application/json")
-    .ProducesValidationProblem(); // Declared but never executed
+// WRONG — no validation filter; the declared ProducesValidationProblem never runs
+group.MapPost("", AddItemAsync)
+    .Accepts<Models.CreateItemRequest>("application/json")
+    .ProducesValidationProblem();
 ```
+
+A missing or malformed body is answered 400 before the filter runs. Errors are grouped by member, so two errors on one member are reported together.
 
 ## 23. Rate Limiting and HTTPS Enforcement
 
@@ -665,32 +671,31 @@ env:
 **Every interface lives in an `Abstractions/` folder, in the highest project that its consumers and its implementation already depend on.**
 
 ```csharp
-// CORRECT — Test.Implementation already depends on Test.Core, so ITest belongs there
-// src/{ApplicationName}.Core/Abstractions/ITest.cs
-namespace {ApplicationName}.Core.Abstractions;
+// CORRECT — Domains (consumer) and Data.SqlServer (implementation) both reach Data, so IDataContext lives there
+// {ApplicationName}.Data/Abstractions/IDataContext.cs
+namespace {ApplicationName}.Data.Abstractions;
 
-public interface ITest
+public interface IDataContext
 {
-    Task ExecuteAsync(CancellationToken cancellationToken = default);
+    DbSet<Item> Items { get; }
+    Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
 
-// src/{ApplicationName}.Implementation/TestImplementation.cs
-namespace {ApplicationName}.Implementation;
-
-public sealed class TestImplementation(ITest test) : ...   // depends on Core
+// {ApplicationName}.Data.SqlServer/DataContext.cs implements IDataContext
+// {ApplicationName}.Domains handlers take IDataContext and never the concrete DataContext
 
 // WRONG — abstraction buried in the implementing project, forcing every consumer
 // to reference the implementation just to see the contract
-// src/{ApplicationName}.Implementation/ITest.cs
+// {ApplicationName}.Data.SqlServer/IDataContext.cs
 ```
 
 Placement rules:
 
 1. **The abstraction belongs to the consumer side.** The implementing project depends on the interface, never the other way round.
-2. **Choose the highest project that both sides already reference** — directly or transitively. If `Test.Implementation` also depends on `Test.Core`, put `ITest` in `Test.Core`, not in `Test.Implementation`.
+2. **Choose the highest project that both sides already reference**, directly or transitively. `IDataContext` sits in `Data`, not `Data.SqlServer`, because `Domains` and `Data.SqlServer` both reach `Data`.
 3. **Do not create a project or add a reference just to host one interface.** If no shared project exists, place it in the highest consumer project and invert the reference instead.
-4. **`{ApplicationName}.Common` is not the automatic answer.** Only genuinely solution-wide contracts (`IEntity`, `IAuditable`) belong there — see rule 13.
-5. **Folder and namespace mirror each other:** `Abstractions/`, optional grouping subfolder (`Abstractions/Services/`), namespace `{ApplicationName}.{Layer}.Abstractions[.{Group}]`.
+4. **`{ApplicationName}.Common` is not the automatic answer.** Only genuinely solution-wide contracts (`IEntity`, `IAuditable`) belong there. See rule 13.
+5. **Folder and namespace mirror each other**, relative to the project's RootNamespace: `Abstractions/`, optional grouping subfolder (`Abstractions/Services/`), namespace `{ApplicationName}.Data.Abstractions` in `Data`, and `{ApplicationName}.Abstractions.Services` in `App.Shared` (RootNamespace `{ApplicationName}`).
 
 **Exception — implementation-only seams.** If an interface is used only inside a single implementation and never by a consumer, keep it beside that implementation instead of in an `Abstractions/` folder, and make it `internal` when the implementation and its callers are internal. A public interface reachable by external code never qualifies for this exception.
 
@@ -714,6 +719,59 @@ public sealed record {Entity}DtoModel(...);
 
 `Response` and `Request` already state their role and are never `...Dto` either. The rule applies to every model type: entity projections, read models, view models, and API models.
 
+## 29. Package Versions: Central Management and NuGet Audit
+
+Every package version lives in `Directory.Packages.props` (`ManagePackageVersionsCentrally` is `true`). Project files reference packages without a `Version`. No project file, `Version` override or second props file sets a version.
+
+NuGet audit is a build gate: `NuGetAuditMode` is `all`, `NuGetAuditLevel` is `low`, and `NU1900` to `NU1905` are `WarningsAsErrors`. An audit that did not run cannot pass silently.
+
+```xml
+<!-- CORRECT — the version is owned by Directory.Packages.props -->
+<PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="11.0.0" />
+
+<!-- Project file: no version -->
+<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
+
+<!-- WRONG — version in a project file -->
+<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="11.0.0" />
+```
+
+Pre-release pins are listed in `.ai/project/tech-stack.md` with their reason. `global.json` allows pre-release SDKs for them. Remove each pin when a stable release exists.
+
+## 30. MAUI and Blazor Heads: Names and Sharing
+
+The UI projects use three names, and each sets `RootNamespace` to `{ApplicationName}`:
+
+- `{ApplicationName}.App`: the MAUI head.
+- `{ApplicationName}.App.Shared`: the API service interface and implementation, the client registration (`Add{ApplicationName}ApiServices`) and the settings models, shared by both heads.
+- `{ApplicationName}.App.Web`: the Blazor head (plain Razor, no component library).
+
+Heads reference `App.Shared` and never reference `Clients` or use Kiota types. Shared behaviour goes into `App.Shared`. Head-specific UI stays in the head. The device store `{ApplicationName}.Data.Sqlite` is referenced by the MAUI head only, and its types are named `Sqlite*`. No licence key, store identifier or signing identity appears in source (rule 26).
+
+## 31. Tests: Layering and Real-Provider Tests
+
+Test projects follow the layer they test: `{ApplicationName}.Domains.Tests`, `{ApplicationName}.Service.Tests`, `{ApplicationName}.Data.{Provider}.Tests`, and optionally `{ApplicationName}.AcceptanceTests` and `{ApplicationName}.UI.Tests`. Test code uses MSTest only.
+
+- Handler tests run the real `DataContext` on the EF Core in-memory provider, through a per-test helper such as `TestDatabase`. They pass `NullLogger<T>.Instance` as the logger. They do not mock `DataContext`.
+- Provider behaviour (indexes, foreign keys, model configuration, the migrations history table) is tested in `Data.{Provider}.Tests`, against the provider itself.
+- Expected exceptions use `Assert.ThrowsExactly<T>` or `await Assert.ThrowsExactlyAsync<T>(...)`. `[ExpectedException]` is not used.
+- Moq is not referenced by the test projects. Add it only for a narrow external seam that a handler must not call.
+
+```csharp
+// CORRECT — the real provider, a NullLogger, and an exact exception type
+using var db = new TestDatabase();
+var handler = new DeleteItemCommandHandler(db.Context, NullLogger<DeleteItemCommandHandler>.Instance);
+await Assert.ThrowsExactlyAsync<ResourceNotFoundException>(() => handler.HandleAsync(command));
+
+// WRONG — mocked DataContext
+var dataContext = new Mock<DataContext>();
+
+// WRONG — expected-exception attribute
+[ExpectedException(typeof(ResourceNotFoundException))]
+```
+
+`Service.Tests` boots the real `Service.Api` through `WebApplicationFactory<Program>` and replaces the provider `DataContext` with the in-memory one.
+
 ## Quick Violation Checklist
 
 Before submitting code, verify you haven't violated these:
@@ -732,14 +790,14 @@ Before submitting code, verify you haven't violated these:
 - [ ] Progress files in current solution's `.ai/` folder
 - [ ] Plan files saved to `.ai/plans/` (not `docs/plans/`)
 - [ ] Session context read first and updated last
-- [ ] Solution includes `{ApplicationName}.Common` project with all enumerations centralized
+- [ ] Solution includes `{ApplicationName}.Common` and `{ApplicationName}.Resources` projects with all enumerations centralized
 - [ ] Entities and models never reference each other (cross-reference = belongs in Common)
 - [ ] Interfaces live in an `Abstractions/` folder in the highest project both consumers and implementation already reference (implementation-only seams excepted)
 - [ ] Enum names are plural (except *Status suffix enums)
 - [ ] EF Core entity properties use enum types, not raw int
 - [ ] Code and design work delegated to specialized subagents (`architect`, `developer`, `designer`, `ui-developer`, `tester`, `ui-tester`, `reviewer`, `writer`) — not done in main conversation
 - [ ] All endpoint routes declare both success and error `.Produces()` metadata
-- [ ] Every API project `.csproj` includes `OpenApiGenerateDocumentsOnBuild`, `OpenApiDocumentsDirectory`, and `Microsoft.Extensions.ApiDescription.Server` package reference
+- [ ] Every API project `.csproj` writes the OpenAPI document on Debug builds (`OpenApiGenerateDocumentsOnBuild`, `OpenApiDocumentsDirectory`, and `Microsoft.Extensions.ApiDescription.Server` on Debug)
 - [ ] Every API project registers a document transformer (servers URL) and schema transformer (type mapping) in `AddOpenApi()`
 - [ ] Every API has a Kiota-generated client project — never use raw `HttpClient` to call an internal API
 - [ ] Kiota version pinned in `dotnet-tools.json` with `rollForward: false`
@@ -750,4 +808,8 @@ Before submitting code, verify you haven't violated these:
 - [ ] Rate limiting configured (`AddRateLimiter` + `UseRateLimiter`) and `UseHttpsRedirection` called
 - [ ] Persisted/serialized enums declare explicit `= 0, = 1, …` values with a "never renumber" comment
 - [ ] Known-incompatible transitive packages are upper-bounded in `Directory.Packages.props`
+- [ ] Package versions only in `Directory.Packages.props`; NuGet audit errors (NU1900-NU1905) kept on
+- [ ] Kiota `Api/` never edited by hand; the regeneration opt-out is used in CI and test runs
+- [ ] UI projects named `{ApplicationName}.App`, `{ApplicationName}.App.Shared`, `{ApplicationName}.App.Web`; heads do not reference `Clients`
+- [ ] Tests follow the layer they test, use the real provider with `NullLogger`, and use `Assert.ThrowsExactly`; no mocked `DataContext`, no `[ExpectedException]`
 - [ ] No `.p8` keys, keystores, or service-account JSON in the repo or runbooks (reference secret variable names)

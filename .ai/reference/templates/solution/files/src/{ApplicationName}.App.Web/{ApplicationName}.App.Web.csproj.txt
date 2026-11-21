@@ -1,0 +1,47 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net11.0</TargetFramework>
+    <RootNamespace>{ApplicationName}</RootNamespace>
+    <UserSecretsId>{applicationname}-app-web</UserSecretsId>
+
+    <!--
+    Container image settings, as for the API. The repository name is set here; the registry is deliberately not.
+    Set ContainerRegistry for the registry the image is pushed to (an environment variable or a Directory.Build.props
+    override keeps the host name out of source control).
+    -->
+    <ContainerRepository>{applicationname}-app-web</ContainerRepository>
+    <!-- <ContainerRegistry><registry-host></ContainerRegistry> -->
+    <ContainerImageTags>$(Version);latest</ContainerImageTags>
+    <RuntimeIdentifiers>linux-x64;linux-arm64</RuntimeIdentifiers>
+    <ContainerRuntimeIdentifiers>linux-x64;linux-arm64</ContainerRuntimeIdentifiers>
+  </PropertyGroup>
+
+  <!--
+  ReadyToRun precompiles IL during publish. It needs a runtime identifier, so the property is set only when one is
+  given; setting it unconditionally breaks the RID-less build.
+  -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <PublishReadyToRun Condition="'$(RuntimeIdentifier)' != ''">true</PublishReadyToRun>
+  </PropertyGroup>
+
+  <!--
+  A publish profile stores a single tag (PublishImageTag), which the SDK maps to ContainerImageTag. Supplying that
+  alongside ContainerImageTags fails the publish. Clearing both here lets the versioned tag list win.
+  -->
+  <Target Name="NormalizeContainerImageTags" BeforeTargets="ComputeContainerConfig" Condition="'$(ContainerImageTags)' != ''">
+    <PropertyGroup>
+      <PublishImageTag></PublishImageTag>
+      <ContainerImageTag></ContainerImageTag>
+    </PropertyGroup>
+  </Target>
+
+  <ItemGroup>
+    <PackageReference Include="I-Synergy.Framework.AspNetCore" />
+    <PackageReference Include="I-Synergy.Framework.OpenTelemetry.ApplicationInsights" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\{ApplicationName}.App.Shared\{ApplicationName}.App.Shared.csproj" />
+  </ItemGroup>
+
+</Project>

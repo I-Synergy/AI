@@ -92,7 +92,7 @@ blocks with your project's context, then keep it updated at the end of every ses
 ### {Domain} (Reference Implementation)
 
 **Status:** [Complete / In Progress / Planned]
-**Location:** [`src/{ApplicationName}.Domain.{Domain}/`]
+**Location:** [`src/{ApplicationName}.Domains/Features/{Entities}/`]
 **Use As Template:** [Yes / No]
 
 **Key Learnings:**
@@ -105,7 +105,7 @@ blocks with your project's context, then keep it updated at the end of every ses
 ### {Domain} (Reference Implementation)
 
 **Status:** Complete and production-ready
-**Location:** `src/{ApplicationName}.Domain.{Domain}/`
+**Location:** `src/{ApplicationName}.Domains/Features/{Entities}/`
 **Use As Template:** Yes - all future domain implementations should follow this pattern
 
 **Key Learnings:**

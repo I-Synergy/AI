@@ -1,0 +1,74 @@
+using System.Reflection;
+using ISynergy.Framework.AspNetCore.Extensions;
+using ISynergy.Framework.Core.Services;
+using ISynergy.Framework.OpenTelemetry.ApplicationInsights.Extensions;
+using ISynergy.Framework.OpenTelemetry.Extensions;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
+using {ApplicationName}.Extensions;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// ===== TELEMETRY =====
+var mainAssembly = Assembly.GetAssembly(typeof(Program)) ?? throw new InvalidOperationException("Unable to load main assembly");
+var infoService = new InfoService();
+infoService.LoadAssembly(mainAssembly);
+
+var telemetryBuilder = builder.Logging.AddTelemetry(
+    builder,
+    infoService,
+    tracerProviderBuilderAction: tracing =>
+    {
+        tracing.AddAspNetCoreInstrumentation(options => options.RecordException = true);
+    },
+    meterProviderBuilderAction: metrics =>
+    {
+        metrics.AddAspNetCoreInstrumentation();
+
+        // ASP.NET Core and Kestrel meters
+        metrics.AddMeter("Microsoft.AspNetCore.Hosting");
+        metrics.AddMeter("Microsoft.AspNetCore.Server.Kestrel");
+    },
+    loggerProviderBuilderAction: _ => { });
+
+if (builder.Environment.IsDevelopment())
+    telemetryBuilder.AddOtlpExporter();
+else
+    telemetryBuilder.AddApplicationInsightsExporter();
+
+// ===== UI =====
+builder.Services.AddRazorComponents().AddInteractiveServerComponents();
+
+// ===== API =====
+// Registers the API client and {ApplicationName}.App.Shared's I{ApplicationName}ApiService from the HttpClientSettings section.
+builder.Add{ApplicationName}ApiServices();
+
+// ===== HEALTH CHECKS =====
+builder.Services.AddWebHealthChecks();
+
+var app = builder.Build();
+
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHsts();
+}
+
+app.UseHttpsRedirection();
+app.UseAntiforgery();
+app.MapStaticAssets();
+
+// /health/live is liveness and does no I/O. /health/ready also probes the API.
+app.MapHealthChecks("/health/live", new HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("live"),
+});
+app.MapHealthChecks("/health/ready", new HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("ready"),
+});
+
+app.MapRazorComponents<{ApplicationName}.App>()
+    .AddInteractiveServerRenderMode();
+
+app.Run();

@@ -1,0 +1,18 @@
+namespace {ApplicationName}.Data.{Provider}.Tests.Infrastructure;
+
+/// <summary>
+/// The outcome of trying to reach a container runtime: either a PostgreSQL server the tests can create
+/// databases on, or the reason it could not be reached.
+/// </summary>
+/// <param name="ConnectionString">
+/// The connection string of the running container's default database, or <see langword="null"/> when no
+/// runtime answered.
+/// </param>
+/// <param name="UnavailableReason">
+/// Why the tests cannot run, in a form fit for the skip report, or <see langword="null"/> when they can.
+/// </param>
+internal sealed record PostgresServerState(string? ConnectionString, string? UnavailableReason)
+{
+    /// <summary>Gets a value indicating whether a container runtime answered.</summary>
+    public bool IsAvailable => ConnectionString is not null;
+}

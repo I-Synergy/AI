@@ -1,0 +1,190 @@
+using System.Reflection;
+using System.Text.Json;
+using ISynergy.Framework.Core.Abstractions.Base;
+using ISynergy.Framework.Core.Abstractions.Services;
+using ISynergy.Framework.Core.Extensions;
+using Microsoft.Extensions.Logging;
+using {ApplicationName}.Models;
+
+namespace {ApplicationName}.Services;
+
+/// <summary>
+/// Stores the device settings in MAUI preferences and keeps the global settings in memory. Preference primitives are
+/// stored as they are; other types are stored as JSON through <see cref="SettingsJsonContext"/>. The head has no
+/// roaming store and no global store, so those operations complete without changing anything.
+/// </summary>
+public class SettingsService : ISettingsService, IReloadable
+{
+    private readonly ILogger<SettingsService> _logger;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SettingsService"/> class and reads the device settings.
+    /// </summary>
+    /// <param name="logger">The logger.</param>
+    public SettingsService(ILogger<SettingsService> logger)
+    {
+        _logger = logger;
+        LoadLocalSettings();
+    }
+
+    /// <summary>Gets the settings that belong to this device.</summary>
+    public LocalSettings LocalSettings { get; private set; } = new();
+
+    /// <summary>Gets the settings that roam with the user account. The head stores none.</summary>
+    public RoamingSettings RoamingSettings { get; private set; } = new();
+
+    /// <summary>Gets the settings that apply to the whole installation.</summary>
+    public GlobalSettings GlobalSettings { get; private set; } = new();
+
+    /// <inheritdoc />
+    ILocalSettings ISettingsService.LocalSettings => LocalSettings;
+
+    /// <inheritdoc />
+    IRoamingSettings ISettingsService.RoamingSettings => RoamingSettings;
+
+    /// <inheritdoc />
+    IGlobalSettings ISettingsService.GlobalSettings => GlobalSettings;
+
+    /// <inheritdoc />
+    public async Task ReloadAsync(CancellationToken cancellationToken = default)
+    {
+        LoadLocalSettings();
+        await LoadGlobalSettingsAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public void LoadLocalSettings()
+    {
+        try
+        {
+            foreach (var property in WritableProperties(typeof(LocalSettings)))
+            {
+                if (!Preferences.Default.ContainsKey(property.Name))
+                    continue;
+
+                var value = ReadPreference(property.Name, UnderlyingType(property.PropertyType));
+                if (value is not null)
+                    property.SetValue(LocalSettings, value);
+            }
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(exception, "The device settings could not be read. The defaults are used.");
+            LocalSettings = new LocalSettings();
+        }
+    }
+
+    /// <inheritdoc />
+    public bool SaveLocalSettings()
+    {
+        try
+        {
+            foreach (var property in WritableProperties(typeof(LocalSettings)))
+            {
+                var value = property.GetValue(LocalSettings);
+                if (value is not null)
+                    WritePreference(property.Name, UnderlyingType(property.PropertyType), value);
+            }
+
+            return true;
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(exception, "The device settings could not be saved.");
+            return false;
+        }
+    }
+
+    /// <inheritdoc />
+    public Task LoadRoamingSettingsAsync() => Task.CompletedTask;
+
+    /// <inheritdoc />
+    public Task<bool> SaveRoamingSettingsAsync() => Task.FromResult(true);
+
+    /// <summary>
+    /// Accepts the global settings without storing them. The head has no global store, so the call changes no rows.
+    /// </summary>
+    /// <param name="settings">The settings to store.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
+    /// <returns>Zero: no rows were changed.</returns>
+    public Task<int> AddOrUpdateGlobalSettingsAsync(IGlobalSettings settings, CancellationToken cancellationToken = default) =>
+        Task.FromResult(0);
+
+    /// <summary>
+    /// Loads the global settings. The head has no global store, so nothing is loaded.
+    /// </summary>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
+    /// <returns>A completed task.</returns>
+    public Task LoadGlobalSettingsAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+
+    /// <inheritdoc />
+    public T GetGlobalSetting<T>(string name, T defaultvalue) where T : IComparable<T> =>
+        GlobalSettings.GetPropertyValue(name, defaultvalue);
+
+    /// <inheritdoc />
+    public void ClearSettings()
+    {
+        LocalSettings = new LocalSettings();
+        RoamingSettings = new RoamingSettings();
+        GlobalSettings = new GlobalSettings();
+    }
+
+    private static IEnumerable<PropertyInfo> WritableProperties(Type type) =>
+        type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
+            .Where(property => property.CanRead && property.CanWrite);
+
+    private static Type UnderlyingType(Type type) => Nullable.GetUnderlyingType(type) ?? type;
+
+    private static object? ReadPreference(string key, Type type)
+    {
+        if (type == typeof(string)) return Preferences.Default.Get(key, default(string));
+        if (type == typeof(int)) return Preferences.Default.Get(key, default(int));
+        if (type == typeof(bool)) return Preferences.Default.Get(key, default(bool));
+        if (type == typeof(long)) return Preferences.Default.Get(key, default(long));
+        if (type == typeof(double)) return Preferences.Default.Get(key, default(double));
+        if (type == typeof(float)) return Preferences.Default.Get(key, default(float));
+        if (type == typeof(DateTime)) return Preferences.Default.Get(key, default(DateTime));
+        if (type == typeof(DateTimeOffset)) return Preferences.Default.Get(key, default(DateTimeOffset));
+
+        var json = Preferences.Default.Get(key, default(string));
+        var typeInfo = SettingsJsonContext.Default.GetTypeInfo(type);
+        return string.IsNullOrEmpty(json) || typeInfo is null
+            ? null
+            : JsonSerializer.Deserialize(json, typeInfo);
+    }
+
+    private static void WritePreference(string key, Type type, object value)
+    {
+        switch (value)
+        {
+            case string text:
+                Preferences.Default.Set(key, text);
+                return;
+            case int number:
+                Preferences.Default.Set(key, number);
+                return;
+            case bool flag:
+                Preferences.Default.Set(key, flag);
+                return;
+            case long longNumber:
+                Preferences.Default.Set(key, longNumber);
+                return;
+            case double doubleNumber:
+                Preferences.Default.Set(key, doubleNumber);
+                return;
+            case float floatNumber:
+                Preferences.Default.Set(key, floatNumber);
+                return;
+            case DateTime dateTime:
+                Preferences.Default.Set(key, dateTime);
+                return;
+            case DateTimeOffset dateTimeOffset:
+                Preferences.Default.Set(key, dateTimeOffset);
+                return;
+        }
+
+        var typeInfo = SettingsJsonContext.Default.GetTypeInfo(type);
+        if (typeInfo is not null)
+            Preferences.Default.Set(key, JsonSerializer.Serialize(value, typeInfo));
+    }
+}

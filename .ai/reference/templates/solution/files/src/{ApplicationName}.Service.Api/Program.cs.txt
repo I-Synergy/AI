@@ -1,0 +1,369 @@
+using System.Reflection;
+using System.Threading.RateLimiting;
+using Asp.Versioning;
+using ISynergy.Framework.AspNetCore.Extensions;
+using ISynergy.Framework.Core.Services;
+using ISynergy.Framework.OpenTelemetry.ApplicationInsights.Extensions;
+using ISynergy.Framework.OpenTelemetry.Extensions;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.OpenApi;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
+using {ApplicationName}.Common.Constants;
+using {ApplicationName}.Common.Factories;
+using {ApplicationName}.Data;
+using {ApplicationName}.Data.Abstractions;
+using {ApplicationName}.Data.Initializers;
+using {ApplicationName}.Domains.Extensions;
+using {ApplicationName}.Service.Api.Extensions;
+using {ApplicationName}.Service.Api.HealthChecks;
+using {ApplicationName}.Services.Endpoints;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// ===== TELEMETRY =====
+var mainAssembly = Assembly.GetAssembly(typeof(Program)) ?? throw new InvalidOperationException("Unable to load main assembly");
+var infoService = new InfoService();
+infoService.LoadAssembly(mainAssembly);
+
+var telemetryBuilder = builder.Logging.AddTelemetry(
+    builder,
+    infoService,
+    tracerProviderBuilderAction: tracing =>
+    {
+        tracing.AddAspNetCoreInstrumentation(options =>
+        {
+            options.RecordException = true;
+            options.EnrichWithHttpRequest = (activity, request) =>
+            {
+                activity.SetTag("http.request.header.user_agent", request.Headers.UserAgent);
+                activity.SetTag("http.request.method", request.Method);
+            };
+            options.EnrichWithHttpResponse = (activity, response) =>
+            {
+                activity.SetTag("http.response.status_code", response.StatusCode);
+            };
+        });
+
+        tracing.AddEntityFrameworkCoreInstrumentation();
+    },
+    meterProviderBuilderAction: metrics =>
+    {
+        metrics.AddAspNetCoreInstrumentation();
+
+        // ASP.NET Core and Kestrel meters
+        metrics.AddMeter("Microsoft.AspNetCore.Hosting");
+        metrics.AddMeter("Microsoft.AspNetCore.Server.Kestrel");
+
+        // EF Core meters
+        metrics.AddMeter("Microsoft.EntityFrameworkCore");
+
+        // Runtime and client series that carry no signal for this service
+        metrics.AddView("dotnet.gc.last_collection.*", MetricStreamConfiguration.Drop);
+        metrics.AddView("dotnet.jit.*", MetricStreamConfiguration.Drop);
+        metrics.AddView("http.client.open_connections", MetricStreamConfiguration.Drop);
+        metrics.AddView("http.client.active_requests", MetricStreamConfiguration.Drop);
+    },
+    loggerProviderBuilderAction: _ => { });
+
+if (builder.Environment.IsDevelopment())
+    telemetryBuilder.AddOtlpExporter();
+else
+    telemetryBuilder.AddApplicationInsightsExporter();
+
+// ===== DATA =====
+{{#if sqlserver}}
+// Development uses the Aspire SQL Server client, which reads the connection string Aspire injects.
+// Other environments read the connection string from configuration.
+if (builder.Environment.IsDevelopment())
+{
+    builder.AddSqlServerDbContext<DataContext>(
+        ConnectionStrings.Data,
+        configureDbContextOptions: options =>
+            options.UseSqlServer(sqlServer => sqlServer.MigrationsHistoryTable("__EFMigrationsHistory", "system")));
+}
+else
+{
+    builder.Services.Add{Provider}{ApplicationName}DataContext(builder.Configuration);
+}
+{{/if}}
+{{#if postgres}}
+// The PostgreSQL context reads the connection string from configuration in every environment. Aspire injects
+// the same setting when the AppHost runs the API.
+builder.Services.Add{Provider}{ApplicationName}DataContext(builder.Configuration);
+{{/if}}
+
+// ===== EXCEPTION HANDLING =====
+builder.Services.AddProblemDetails();
+
+// ===== HEALTH CHECKS =====
+// "live" marks the self check, which is a constant. "db" marks the database check.
+// /health serves "live" only; /health/ready serves "live" and "db".
+builder.Services.AddHealthChecks()
+    .AddCheck("self", () => HealthCheckResult.Healthy(), ["live"])
+    .AddCheck<DatabaseHealthCheck>("database", tags: ["db"], timeout: DatabaseHealthCheck.Timeout);
+
+// ===== RATE LIMITING =====
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddFixedWindowLimiter(RateLimits.Api, config =>
+    {
+        config.PermitLimit = 1000;
+        config.Window = TimeSpan.FromMinutes(1);
+        config.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        config.QueueLimit = 0;
+    });
+});
+
+// ===== RESPONSE COMPRESSION (opt-in, off) =====
+// Compression is not registered by default. Enabling it on a response that combines a secret with
+// request-reflected input exposes the secret to BREACH-style attacks, so enable it per deployment
+// only after reviewing the responses. To opt in, register the Brotli and Gzip providers with
+// AddResponseCompression, set EnableForHttps only when that review is complete, and call
+// UseResponseCompression before UseRateLimiter.
+
+// ===== CQRS =====
+builder.Services
+    .AddScoped<IDataContext>(services => services.GetRequiredService<DataContext>())
+    .With{ApplicationName}DomainHandlers();
+
+// ===== API VERSIONING =====
+// The version is read from the query string. The OpenAPI operation transformer below declares the
+// same parameter location, so the document and the runtime agree.
+builder.Services.AddApiVersioning(options =>
+{
+    options.ApiVersionReader = new QueryStringApiVersionReader();
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ReportApiVersions = true;
+});
+
+// ===== OPENAPI =====
+// The server URL comes from configuration. The default is the service-discovery name of this host,
+// which the client resolves at runtime.
+var apiServiceName = AspireNames.{applicationname}_api;
+var openApiServerUrl = builder.Configuration["OpenApi:ServerUrl"] ?? $"https+http://{apiServiceName}";
+
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDocumentTransformer((document, context, cancellationToken) =>
+    {
+        document.Servers = [new OpenApiServer { Url = openApiServerUrl }];
+        return Task.CompletedTask;
+    });
+
+    // Maps .NET types to JSON schema types so generated clients receive typed members, not UntypedNode.
+    options.AddSchemaTransformer((schema, context, cancellationToken) =>
+    {
+        // JsonPropertyInfo is set for property schemas. JsonTypeInfo covers standalone schemas such as
+        // query parameter enums.
+        var propertyType = context.JsonPropertyInfo?.PropertyType ?? context.JsonTypeInfo?.Type;
+
+        if (propertyType is null)
+            return Task.CompletedTask;
+
+        var actualType = Nullable.GetUnderlyingType(propertyType) ?? propertyType;
+
+        if (actualType == typeof(DateTimeOffset) || actualType == typeof(DateTime))
+        {
+            schema.Type = JsonSchemaType.String;
+            schema.Format = "date-time";
+        }
+        else if (actualType == typeof(DateOnly))
+        {
+            schema.Type = JsonSchemaType.String;
+            schema.Format = "date";
+        }
+        else if (actualType == typeof(TimeOnly))
+        {
+            schema.Type = JsonSchemaType.String;
+            schema.Format = "time";
+        }
+        else if (actualType == typeof(TimeSpan))
+        {
+            schema.Type = JsonSchemaType.String;
+            schema.Format = "duration";
+        }
+        else if (actualType == typeof(decimal) || actualType == typeof(double))
+        {
+            schema.Type = JsonSchemaType.Number;
+            schema.Format = "double";
+        }
+        else if (actualType == typeof(float))
+        {
+            schema.Type = JsonSchemaType.Number;
+            schema.Format = "float";
+        }
+        else if (actualType == typeof(int))
+        {
+            schema.Type = JsonSchemaType.Integer;
+            schema.Format = "int32";
+        }
+        else if (actualType == typeof(long))
+        {
+            schema.Type = JsonSchemaType.Integer;
+            schema.Format = "int64";
+        }
+        else if (actualType == typeof(short))
+        {
+            schema.Type = JsonSchemaType.Integer;
+            schema.Format = "int16";
+        }
+        else if (actualType == typeof(byte))
+        {
+            schema.Type = JsonSchemaType.Integer;
+            schema.Format = "int8";
+            schema.Minimum = "0";
+            schema.Maximum = "255";
+        }
+        else if (actualType == typeof(sbyte))
+        {
+            schema.Type = JsonSchemaType.Integer;
+            schema.Format = "int8";
+            schema.Minimum = "-128";
+            schema.Maximum = "127";
+        }
+        else if (actualType == typeof(uint))
+        {
+            schema.Type = JsonSchemaType.Integer;
+            schema.Format = "int32";
+            schema.Minimum = "0";
+        }
+        else if (actualType == typeof(ulong))
+        {
+            schema.Type = JsonSchemaType.Integer;
+            schema.Format = "int64";
+            schema.Minimum = "0";
+        }
+        else if (actualType == typeof(ushort))
+        {
+            schema.Type = JsonSchemaType.Integer;
+            schema.Format = "int16";
+            schema.Minimum = "0";
+        }
+        else if (actualType == typeof(Guid))
+        {
+            schema.Type = JsonSchemaType.String;
+            schema.Format = "uuid";
+        }
+        else if (actualType == typeof(string))
+        {
+            schema.Type = JsonSchemaType.String;
+        }
+        else if (actualType == typeof(char))
+        {
+            schema.Type = JsonSchemaType.String;
+            schema.MinLength = 1;
+            schema.MaxLength = 1;
+        }
+        else if (actualType == typeof(bool))
+        {
+            schema.Type = JsonSchemaType.Boolean;
+        }
+        else if (actualType == typeof(byte[]))
+        {
+            schema.Type = JsonSchemaType.String;
+            schema.Format = "byte";
+        }
+        else if (actualType == typeof(Uri))
+        {
+            schema.Type = JsonSchemaType.String;
+            schema.Format = "uri";
+        }
+        else if (actualType.IsEnum)
+        {
+            schema.Type = JsonSchemaType.String;
+            var enumNames = Enum.GetNames(actualType);
+            schema.Enum = [.. enumNames
+                .Select(name => System.Text.Json.Nodes.JsonValue.Create(name)!)
+                .Cast<System.Text.Json.Nodes.JsonNode>()];
+        }
+
+        return Task.CompletedTask;
+    });
+
+    // Declares the api-version query parameter that the versioning reader above consumes.
+    options.AddOperationTransformer((operation, context, cancellationToken) =>
+    {
+        operation.Parameters ??= [];
+        operation.Parameters.Add(new OpenApiParameter
+        {
+            Name = "api-version",
+            In = ParameterLocation.Query,
+            Required = false,
+            Schema = new OpenApiSchema { Type = JsonSchemaType.String }
+        });
+        return Task.CompletedTask;
+    });
+
+    // A query string is text, so the generator describes an integer [FromQuery] parameter as
+    // ["integer","string"]. Clients cannot map a multi-type schema, so the string member is removed.
+    // Route parameters are not affected because their route constraints already give them a plain type.
+    options.AddOperationTransformer((operation, context, cancellationToken) =>
+    {
+        foreach (var parameter in operation.Parameters ?? [])
+        {
+            if (parameter.Schema is not OpenApiSchema { Type: { } type } schema)
+                continue;
+
+            if (!type.HasFlag(JsonSchemaType.String))
+                continue;
+
+            if (type.HasFlag(JsonSchemaType.Integer) || type.HasFlag(JsonSchemaType.Number))
+                schema.Type = type & ~JsonSchemaType.String;
+        }
+
+        return Task.CompletedTask;
+    });
+});
+
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.Converters.Add(new SafeEnumConverterFactory());
+});
+
+// ===== PIPELINE =====
+var app = builder.Build();
+
+app.UseExceptionHandler();
+app.MapOpenApi();
+
+// HSTS is sent only outside Development. The HTTPS redirect applies in every environment.
+if (!app.Environment.IsDevelopment())
+    app.UseHsts();
+
+app.UseHttpsRedirection();
+
+app.UseRateLimiter();
+
+// ===== HEALTH PROBES =====
+// /health is liveness: only the "live" check runs, so the answer does no I/O.
+// /health/ready is readiness: the "live" and "db" checks run, so a database outage fails this path.
+app.UseHealthChecks("/health", new HealthCheckOptions
+{
+    Predicate = static registration => registration.Tags.Contains("live")
+});
+
+app.UseHealthChecks("/health/ready", new HealthCheckOptions
+{
+    Predicate = static registration => registration.Tags.Contains("live") || registration.Tags.Contains("db")
+});
+
+// Root probe for hosting platforms that request "/" by default. It is kept out of the OpenAPI document.
+app.MapGet("/", () => TypedResults.Ok()).ExcludeFromDescription();
+
+app.Map{Entities}Endpoints();
+
+// Skip database initialization when the app is hosted by the OpenAPI document generator, which must not
+// require a reachable database.
+if (!IsOpenApiDocumentGeneration())
+    await DatabaseInitializer.InitializeAsync(app.Services);
+
+app.Run();
+
+static bool IsOpenApiDocumentGeneration() =>
+    Environment.GetCommandLineArgs().Any(argument =>
+        argument.Contains("GetDocument", StringComparison.OrdinalIgnoreCase));

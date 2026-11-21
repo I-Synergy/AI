@@ -1,0 +1,88 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net11.0</TargetFramework>
+    <UserSecretsId>{applicationname}-service-api</UserSecretsId>
+    <OpenApiGenerateDocuments>false</OpenApiGenerateDocuments>
+    <OpenApiGenerateDocumentsOnBuild>false</OpenApiGenerateDocumentsOnBuild>
+
+    <!--
+    Container image settings. The repository name is set here; the registry is deliberately not.
+    Set ContainerRegistry for the registry the image is pushed to (an environment variable or a
+    Directory.Build.props override keeps the host name out of source control). Without it the
+    container publish targets the local container daemon.
+    -->
+    <ContainerRepository>{applicationname}-service-api</ContainerRepository>
+    <!-- <ContainerRegistry><registry-host></ContainerRegistry> -->
+    <ContainerImageTags>$(Version);latest</ContainerImageTags>
+    <RuntimeIdentifiers>linux-x64;linux-arm64</RuntimeIdentifiers>
+    <ContainerRuntimeIdentifiers>linux-x64;linux-arm64</ContainerRuntimeIdentifiers>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <OpenApiDocumentsDirectory>../../openapi</OpenApiDocumentsDirectory>
+    <OpenApiGenerateDocuments>true</OpenApiGenerateDocuments>
+    <OpenApiGenerateDocumentsOnBuild>true</OpenApiGenerateDocumentsOnBuild>
+    <OpenApiGenerationEnvironment>Development</OpenApiGenerationEnvironment>
+  </PropertyGroup>
+
+  <!--
+  ReadyToRun precompiles IL to native code during publish, which shortens cold starts.
+  It applies to Release publishes only. PublishReadyToRun needs a runtime identifier, so the
+  property is conditioned on an explicit RuntimeIdentifier. Setting it unconditionally makes
+  the RID-less build infer a single RID, which breaks the multi-architecture container publish.
+  -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <PublishReadyToRun Condition="'$(RuntimeIdentifier)' != ''">true</PublishReadyToRun>
+  </PropertyGroup>
+
+  <!--
+  The Visual Studio publish profile stores a single tag (PublishImageTag), which the SDK maps to
+  ContainerImageTag. Supplying that alongside ContainerImageTags fails the publish, and the profile
+  is rewritten on every publish. Clearing both here lets the versioned tag list win.
+  -->
+  <Target Name="NormalizeContainerImageTags" BeforeTargets="ComputeContainerConfig" Condition="'$(ContainerImageTags)' != ''">
+    <PropertyGroup>
+      <PublishImageTag></PublishImageTag>
+      <ContainerImageTag></ContainerImageTag>
+    </PropertyGroup>
+  </Target>
+
+  <ItemGroup>
+    <PackageReference Include="I-Synergy.Framework.AspNetCore.Globalization" />
+    <PackageReference Include="I-Synergy.Framework.AspNetCore.Monitoring" />
+    <PackageReference Include="I-Synergy.Framework.OpenTelemetry.ApplicationInsights" />
+    <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Microsoft.Extensions.ServiceDiscovery" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.EntityFrameworkCore" />
+
+    <PackageReference Include="Microsoft.Extensions.ApiDescription.Server" Condition="'$(Configuration)' == 'Debug'">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\{ApplicationName}.Services\{ApplicationName}.Services.csproj" />
+  </ItemGroup>
+
+  <!--
+  Kiota generation is a Debug-only development step: the client in src/{ApplicationName}.Clients is committed,
+  and a Debug build of this project regenerates it from the OpenAPI document. Set
+  -p:{ApplicationName}GenerateApiClient=false to build without regenerating (CI, or a test run that must not
+  rewrite committed files). The option is read here, so it must be passed on the command line of the
+  top-level build, which then flows to this project through the project reference.
+  -->
+  <PropertyGroup>
+    <{ApplicationName}GenerateApiClient Condition="'$({ApplicationName}GenerateApiClient)' == ''">true</{ApplicationName}GenerateApiClient>
+  </PropertyGroup>
+
+  <!--
+  Runs after the OpenAPI document is written, not after Build: the order between two AfterTargets="Build"
+  targets is undefined. Anchoring to GenerateOpenApiDocuments also makes the Inputs meaningful.
+  -->
+  <Target Name="OpenAPI" AfterTargets="GenerateOpenApiDocuments" Condition="'$(Configuration)'=='Debug' and '$({ApplicationName}GenerateApiClient)' != 'false'" Inputs="$(OpenApiDocumentsDirectory)/{ApplicationName}.Service.Api.json;$(MSBuildThisFileDirectory)../../.config/dotnet-tools.json" Outputs="../{ApplicationName}.Clients/Api/ApiClient.cs">
+    <!-- LogStandardErrorAsError surfaces the generator's own message instead of a bare MSB3073 failure. -->
+    <Exec Command="dotnet kiota generate -l CSharp --output &quot;../{ApplicationName}.Clients/Api&quot; --namespace-name {ApplicationName}.Clients.Api --class-name ApiClient --exclude-backward-compatible --clean-output --openapi &quot;../../openapi/{ApplicationName}.Service.Api.json&quot;" WorkingDirectory="$(ProjectDir)" StandardOutputImportance="High" LogStandardErrorAsError="true" />
+  </Target>
+</Project>

@@ -1,0 +1,9 @@
+using ISynergy.Framework.CQRS.Queries;
+
+namespace {ApplicationName}.Domains.Features.{Entities}.Queries.Get{Entity}ById;
+
+/// <summary>
+/// Query to retrieve one {entity} by its identifier.
+/// </summary>
+/// <param name="{Entity}Id">The identifier of the {entity} to retrieve.</param>
+public sealed record Get{Entity}ByIdQuery(Guid {Entity}Id) : IQuery<Get{Entity}ByIdResponse>;

@@ -1,0 +1,13 @@
+using Foundation;
+
+namespace {ApplicationName}.Platforms.MacCatalyst;
+
+/// <summary>
+/// The Mac Catalyst application delegate. It creates the MAUI application through the shared <see cref="MauiProgram"/>.
+/// </summary>
+[Register("AppDelegate")]
+public class AppDelegate : MauiUIApplicationDelegate
+{
+    /// <inheritdoc />
+    protected override MauiApp CreateMauiApp() => MauiProgram.CreateMauiApp();
+}

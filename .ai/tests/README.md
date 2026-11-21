@@ -245,6 +245,26 @@ No solution file is present in this tree, so nothing is generated here, the evid
 python3 .ai/tests/validate-standards.py
 ```
 
+### Solution Scaffold (`validate-scaffold.py`)
+
+Validates `.ai/scripts/scaffold-solution.py` and its templates in `.ai/reference/templates/solution/` by rendering five flag combinations into `.ai/tmp/validate-scaffold-<pid>/` (removed afterwards).
+
+**What it checks:**
+- Template integrity: manifest and `files/` match 1:1, flags are known, the README token table is complete, package groups are valid, and every C# template declares at most one top-level type
+- Per render: the exact `src/` and `tests/` project set, plural `Features/{Entities}/`, a solution file that lists exactly the generated projects with alphabetical, non-empty folders, no unresolved tokens or markers, UTF-8, consistent line endings, and a second render that skips every file
+- Template rules on every rendered `.cs` file: one type per file, no `Dto`, plural enums, handler suffixes, `CancellationToken` on async methods, no raw `HttpClient`, `.Produces(...)` on every route, XML docs, MSTest conventions
+- Central package management, NuGet audit properties, the tool manifest and the SDK pin
+- Forbidden terms: no shipped path and no rendered file may name a private reference project (the term list is a constant at the top of the script); work records under `.ai/tmp`, `.ai/analysis`, `.ai/plans`, `.ai/progress` and `.ai/completed` are not scanned. Two deliberate exemptions keep example paths usable: the drive-letter check ignores `D:\repo` and `D:\Projects\MyProject`, and the domain words are matched only as whole capitalised words so minified vendor scripts cannot match. The scan is a guard, not a proof.
+- CLI negative cases (bad name, unknown flag, `--yes` without a name, keyword entity, an out-of-range or duplicated port, a `Version` with more than three parts or a non-numeric part, a non-numeric `Year`, existing-file skip) and the provenance rule for `manifest.json`
+
+**Opt-in build smoke:** `SCAFFOLD_BUILD_SMOKE=1` additionally restores, builds (`-nodeReuse:false`, `MSBUILDDISABLENODEREUSE=1`) and tests the sqlserver+apphost render. It is skipped with a message when .NET SDK 11.0.100 is not installed and never builds the MAUI head.
+
+**Run individually:**
+```bash
+python3 .ai/tests/validate-scaffold.py
+SCAFFOLD_BUILD_SMOKE=1 python3 .ai/tests/validate-scaffold.py
+```
+
 ### Upgrade Script (`validate-upgrade-script.py`) — pytest only
 
 `run-all-tests.sh` does not run this suite; `test_suite.py` does, which makes pytest the fuller run.

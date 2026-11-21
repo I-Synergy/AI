@@ -1,0 +1,19 @@
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <NoWarn>$(NoWarn);NU1507</NoWarn>
+    <!--
+      NuGet audit is a build gate. Mode=all checks the transitive graph and Level=low fails on any advisory.
+      NU1900 (vulnerability data unavailable) and NU1905 (audit source returned no data) are errors too,
+      so an audit that never ran cannot pass silently.
+    -->
+    <NuGetAudit>true</NuGetAudit>
+    <NuGetAuditMode>all</NuGetAuditMode>
+    <NuGetAuditLevel>low</NuGetAuditLevel>
+    <WarningsAsErrors>$(WarningsAsErrors);NU1900;NU1901;NU1902;NU1903;NU1904;NU1905</WarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+{PackageVersions}
+  </ItemGroup>
+</Project>

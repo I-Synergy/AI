@@ -1,0 +1,12 @@
+using System.Text.Json.Serialization;
+using ISynergy.Framework.Core.Enumerations;
+
+namespace {ApplicationName}.Services;
+
+/// <summary>
+/// Source-generated JSON context for the device settings whose type is not a preference primitive. Every such type
+/// that <see cref="SettingsService"/> stores must be listed here: trimmed and ahead-of-time builds cannot serialize
+/// a type that is not registered.
+/// </summary>
+[JsonSerializable(typeof(Themes))]
+internal sealed partial class SettingsJsonContext : JsonSerializerContext;

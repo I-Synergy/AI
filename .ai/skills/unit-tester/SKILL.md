@@ -5,12 +5,12 @@ description: MSTest unit testing specialist. Use when writing unit tests, creati
 
 # Unit Tester Skill
 
-Specialized agent for MSTest, Moq, and Reqnroll testing.
+Specialized agent for MSTest and Reqnroll testing. Handlers are tested against a real EF Core provider, not a mocked context.
 
 ## Expertise Areas
 
 - MSTest framework
-- Moq mocking library
+- Real EF Core providers (InMemory) behind the handlers, through `TestDatabase`
 - Reqnroll BDD testing
 - Test-Driven Development (TDD)
 - Unit test organization
@@ -31,11 +31,10 @@ Specialized agent for MSTest, Moq, and Reqnroll testing.
    - Cover happy paths and error cases
    - Make scenarios readable for non-technical stakeholders
 
-3. **Mock Dependencies**
-   - Mock DataContext operations
-   - Mock external services
-   - Setup return values
-   - Verify method calls
+3. **Choose the Seam**
+   - Run handlers against the real `DataContext` over InMemory (`TestDatabase`, one store per test)
+   - Fake only an external service the handler must not call
+   - Assert on the stored outcome, not on which methods were called
 
 4. **Ensure Coverage**
    - Aim for 80%+ code coverage
@@ -47,7 +46,7 @@ Specialized agent for MSTest, Moq, and Reqnroll testing.
 
 - **Unit/Integration:** MSTest (NOT xUnit, NOT NUnit)
 - **BDD:** Reqnroll (NOT SpecFlow)
-- **Mocking:** Moq
+- **Data:** real EF Core provider (InMemory); fakes only for external services. Moq is not referenced by default
 - **Assertions:** MSTest Assert class
 
 ## Test Naming Convention
@@ -68,14 +67,15 @@ HandleAsync_NegativeAmount_ThrowsArgumentException
 public async Task MethodName_Scenario_ExpectedResult()
 {
     // Arrange
-    var command = new Create{Entity}Command(...);
+    using var db = new TestDatabase();
+    var handler = new Create{Entity}CommandHandler(db.Context, NullLogger<Create{Entity}CommandHandler>.Instance);
 
     // Act
-    var result = await _handler.HandleAsync(command);
+    var result = await handler.HandleAsync(new Create{Entity}Command(Name: "Alpha", Description: null));
 
     // Assert
-    Assert.IsNotNull(result);
-    _mockContext.Verify(x => x.Method(...), Times.Once);
+    var stored = await db.Context.{Entities}.SingleAsync(e => e.{Entity}Id == result.{Entity}Id);
+    Assert.AreEqual("Alpha", stored.Name);
 }
 ```
 
@@ -96,7 +96,7 @@ Feature: {Entity} Management
 
 ## Templates to Use
 
-- `.ai/reference/templates/test-class.cs.txt`
+- `.ai/reference/templates/test-class.cs.txt` (handler tests on the real provider; layout in `.ai/patterns/testing-patterns.md`)
 - `.ai/reference/templates/feature-file.feature.txt`
 - `.ai/reference/templates/test-plan.md.txt`
 - `.ai/reference/templates/test-incident-report.md.txt`
@@ -131,7 +131,7 @@ The test artifacts this skill produces are mapped to ISO/IEC/IEEE 29119-3, right
 - [ ] All tests use MSTest (not xUnit/NUnit)
 - [ ] Descriptive test names following convention
 - [ ] AAA pattern used consistently
-- [ ] Mocks setup and verified correctly
+- [ ] Each test runs on its own `TestDatabase`; any fake stands in for an external seam only
 - [ ] BDD scenarios for complex workflows
 - [ ] All tests pass
 - [ ] Coverage meets 80%+ target

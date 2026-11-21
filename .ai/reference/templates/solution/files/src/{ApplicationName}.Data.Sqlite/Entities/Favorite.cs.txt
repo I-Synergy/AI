@@ -1,0 +1,13 @@
+namespace {ApplicationName}.Data.Sqlite.Entities;
+
+/// <summary>
+/// A device-local favorite of one item. This is the generic sample entity of the local store.
+/// </summary>
+public class Favorite
+{
+    /// <summary>Gets or sets the identifier of the favorited item. It is the primary key.</summary>
+    public Guid ItemId { get; set; }
+
+    /// <summary>Gets or sets when the favorite was added, in UTC.</summary>
+    public DateTimeOffset CreatedAt { get; set; }
+}

@@ -1,0 +1,31 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Design;
+using {ApplicationName}.Common.Constants;
+
+namespace {ApplicationName}.Data;
+
+/// <summary>
+/// Design-time factory used by <c>dotnet ef</c>. Migrations are scaffolded without opening a connection, so
+/// the default string only has to be well formed. It carries no credentials: the user name and password come
+/// from the environment (for example PGUSER and PGPASSWORD) or from the <c>DESIGN_TIME_CONNECTION_STRING</c>
+/// environment variable when migrations are applied.
+/// </summary>
+public class DataContextFactory : IDesignTimeDbContextFactory<DataContext>
+{
+    private const string ConnectionStringVariable = "DESIGN_TIME_CONNECTION_STRING";
+
+    private const string DefaultConnectionString =
+        "Host=localhost;Port=5432;Database={applicationname}-db;Trust Server Certificate=true";
+
+    /// <inheritdoc />
+    public DataContext CreateDbContext(string[] args)
+    {
+        var connectionString = Environment.GetEnvironmentVariable(ConnectionStringVariable) ?? DefaultConnectionString;
+
+        var options = new DbContextOptionsBuilder<DataContext>()
+            .UseNpgsql(connectionString, npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", DatabaseConstants.SystemSchema))
+            .Options;
+
+        return new DataContext(options);
+    }
+}

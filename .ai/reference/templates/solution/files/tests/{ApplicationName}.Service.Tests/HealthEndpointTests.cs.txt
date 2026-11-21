@@ -1,0 +1,52 @@
+using System.Net;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+namespace {ApplicationName}.Service.Tests;
+
+/// <summary>
+/// Covers the two probe paths the health checks are split across: liveness (<c>/health</c>) asks only
+/// whether this process runs, readiness (<c>/health/ready</c>) also asks about the database.
+/// </summary>
+[TestClass]
+public sealed class HealthEndpointTests
+{
+    [TestMethod]
+    public async Task LivenessPath_AnswersHealthy_WithoutTheDatabase()
+    {
+        // Arrange
+        await using var factory = new CustomWebApplicationFactory();
+        using var client = factory.CreateClient();
+
+        // Act
+        using var response = await client.GetAsync("/health");
+
+        // Assert: liveness reports whether this process is running, never a dependency's state.
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+        Assert.AreEqual("Healthy", await response.Content.ReadAsStringAsync());
+    }
+
+    [TestMethod]
+    public async Task ReadinessPath_AnswersTheStatusWordOnly_ConsistentWithTheStatusCode()
+    {
+        // Arrange
+        await using var factory = new CustomWebApplicationFactory();
+        using var client = factory.CreateClient();
+
+        // Act
+        using var response = await client.GetAsync("/health/ready");
+        var body = await response.Content.ReadAsStringAsync();
+
+        // Assert: the in-memory store may or may not satisfy the database check, depending on how the host
+        // implements it, so the test pins the contract instead: a 200 says Healthy, a 503 says Unhealthy,
+        // and on an anonymous path nothing else (no host, connection string or exception text) is written.
+        if (response.StatusCode == HttpStatusCode.OK)
+        {
+            Assert.AreEqual("Healthy", body);
+        }
+        else
+        {
+            Assert.AreEqual(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+            Assert.AreEqual("Unhealthy", body);
+        }
+    }
+}

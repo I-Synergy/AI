@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net11.0</TargetFramework>
+		<EnableMSTestRunner>true</EnableMSTestRunner>
+		<OutputType>Exe</OutputType>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="MSTest.TestAdapter" />
+		<PackageReference Include="Microsoft.Testing.Extensions.TrxReport" />
+		<!-- Boots the real Service.Api host in-process (WebApplicationFactory). -->
+		<PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+		<!-- The factory swaps the host's database for this provider, so the suite needs no running server. -->
+		<PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\src\{ApplicationName}.Service.Api\{ApplicationName}.Service.Api.csproj" />
+		<!-- For the concrete DataContext and IDataContext registrations the factory replaces. -->
+		<ProjectReference Include="..\..\src\{ApplicationName}.Data.{Provider}\{ApplicationName}.Data.{Provider}.csproj" />
+	</ItemGroup>
+</Project>

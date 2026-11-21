@@ -34,10 +34,10 @@ out-of-scope means the plan's boundary is undefined.]
 
 | Artifact | Path |
 |---|---|
-| [Command / Query] | [{Solution}.Domain.{Domain}/Features/{Domain}/…/{Operation}{Entity}Command.cs] |
+| [Command / Query] | [{Solution}.Domains/Features/{Entities}/Commands/{Operation}{Entity}/{Operation}{Entity}Command.cs] |
 | Handler | […/{Operation}{Entity}CommandHandler.cs] |
-| Endpoint *(where the slice exposes one)* | […/{Operation}{Entity}Endpoint.cs] |
-| Tests | [{Solution}.{Domain}.Tests/{Domain}/{Operation}{Entity}CommandHandlerTests.cs] |
+| Endpoint *(where the slice exposes one)* | [{Solution}.Services/Endpoints/{Entities}Endpoints.cs] |
+| Tests | [{Solution}.Domains.Tests/Handlers/{Entities}/{Operation}{Entity}CommandHandlerTests.cs] |
 | Feature file *(where the slice is BDD-covered)* | [docs/slices/{Domain}/{Entity}.{Operation}/{Entity}.{Operation}.feature] |
 
 [Copied from the blueprint's `files_to_create`; add the endpoint row only when the slice has one.]

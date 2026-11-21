@@ -6,8 +6,8 @@ The typed-client interface/implementation/registration trio with the standard re
 
 ### Define Client Interface
 ```csharp
-// File: {ApplicationName}.Contracts.ExternalServices/IExternalApiClient.cs
-namespace {ApplicationName}.Contracts.ExternalServices;
+// File: {ApplicationName}.Domains.Abstractions/IExternalApiClient.cs
+namespace {ApplicationName}.Domains.Abstractions;
 
 public interface IExternalApiClient
 {
@@ -26,7 +26,7 @@ namespace {ApplicationName}.Infrastructure.ExternalServices;
 
 using System.Net.Http.Json;
 using Microsoft.Extensions.Logging;
-using {ApplicationName}.Contracts.ExternalServices;
+using {ApplicationName}.Domains.Abstractions;
 
 public class ExternalApiClient(
     HttpClient httpClient,
@@ -148,8 +148,8 @@ builder.Services.AddHttpClient<IExternalApiClient, ExternalApiClient>(client =>
 
 ### Webhook Receiver Endpoint
 ```csharp
-// File: {ApplicationName}.Services.API/Endpoints/WebhookEndpoints.cs
-namespace {ApplicationName}.Services.API.Endpoints;
+// File: {ApplicationName}.Services/Endpoints/WebhookEndpoints.cs
+namespace {ApplicationName}.Services.Endpoints;
 
 using Microsoft.AspNetCore.Mvc;
 

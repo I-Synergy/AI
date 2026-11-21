@@ -1,0 +1,50 @@
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using {ApplicationName}.Data;
+
+namespace {ApplicationName}.Service.Api.HealthChecks;
+
+/// <summary>
+/// Verifies that the database behind <see cref="DataContext"/> is reachable.
+/// </summary>
+/// <remarks>
+/// <para>
+/// The liveness check is a constant and cannot fail while the process runs. This check answers the separate
+/// question of whether requests that need the database can be served. It is registered under the "db" tag and
+/// served by the readiness path only, so a database outage does not restart the process.
+/// </para>
+/// <para>
+/// The check is bounded by <see cref="Timeout"/>. Exceptions are returned as an unhealthy result, never thrown,
+/// so a probe during an outage stays a health report.
+/// </para>
+/// </remarks>
+public sealed class DatabaseHealthCheck(DataContext dataContext) : IHealthCheck
+{
+    /// <summary>
+    /// The time the database is given to answer before the check reports Unhealthy.
+    /// </summary>
+    public static readonly TimeSpan Timeout = TimeSpan.FromSeconds(5);
+
+    /// <inheritdoc />
+    public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
+    {
+        using var timeoutSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeoutSource.CancelAfter(Timeout);
+
+        try
+        {
+            var canConnect = await dataContext.Database.CanConnectAsync(timeoutSource.Token);
+
+            return canConnect
+                ? HealthCheckResult.Healthy("The database is reachable.")
+                : HealthCheckResult.Unhealthy("The database is not reachable.");
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            return HealthCheckResult.Unhealthy($"The database did not answer within {Timeout.TotalSeconds:0} seconds.");
+        }
+        catch (Exception exception)
+        {
+            return HealthCheckResult.Unhealthy("The database is not reachable.", exception);
+        }
+    }
+}

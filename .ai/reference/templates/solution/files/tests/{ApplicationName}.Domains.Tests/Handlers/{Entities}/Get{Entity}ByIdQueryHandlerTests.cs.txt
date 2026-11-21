@@ -1,0 +1,57 @@
+using {ApplicationName}.Common.Enumerations;
+using {ApplicationName}.Domains.Features.{Entities}.Queries.Get{Entity}ById;
+using {ApplicationName}.Domains.Tests.Infrastructure;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+namespace {ApplicationName}.Domains.Tests.Handlers.{Entities};
+
+// Traces: US-<Domain>-NNN (placeholder; fill in when the story exists, see .ai/reference/traceability.md).
+// Tag each test method with [TestCategory("AC-<Domain>-NNN.n")] once its acceptance criterion is declared.
+/// <summary>
+/// Verifies that the by-identifier query returns the stored row or nothing.
+/// </summary>
+[TestClass]
+public sealed class Get{Entity}ByIdQueryHandlerTests
+{
+    [TestMethod]
+    public async Task HandleAsync_Existing{Entity}_ReturnsTheMappedModel()
+    {
+        // Arrange
+        using var db = new TestDatabase();
+        var id = await {Entity}TestData.AddAsync(
+            db.Context,
+            name: "Alpha",
+            description: "First sample",
+            status: {Entity}Status.Active);
+        var handler = new Get{Entity}ByIdQueryHandler(
+            db.Context,
+            NullLogger<Get{Entity}ByIdQueryHandler>.Instance);
+
+        // Act
+        var result = await handler.HandleAsync(new Get{Entity}ByIdQuery(id));
+
+        // Assert
+        Assert.IsNotNull(result.{Entity});
+        Assert.AreEqual(id, result.{Entity}.{Entity}Id);
+        Assert.AreEqual("Alpha", result.{Entity}.Name);
+        Assert.AreEqual("First sample", result.{Entity}.Description);
+        Assert.AreEqual({Entity}Status.Active, result.{Entity}.Status);
+    }
+
+    [TestMethod]
+    public async Task HandleAsync_Missing{Entity}_ReturnsANullModel()
+    {
+        // Arrange
+        using var db = new TestDatabase();
+        var handler = new Get{Entity}ByIdQueryHandler(
+            db.Context,
+            NullLogger<Get{Entity}ByIdQueryHandler>.Instance);
+
+        // Act
+        var result = await handler.HandleAsync(new Get{Entity}ByIdQuery(Guid.NewGuid()));
+
+        // Assert
+        Assert.IsNull(result.{Entity});
+    }
+}

@@ -1,0 +1,22 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using {ApplicationName}.Common.Converters;
+
+namespace {ApplicationName}.Common.Factories;
+
+/// <summary>
+/// Factory that applies <see cref="SafeEnumConverter{T}"/> to any enum type.
+/// </summary>
+public sealed class SafeEnumConverterFactory : JsonConverterFactory
+{
+    /// <inheritdoc />
+    public override bool CanConvert(Type typeToConvert) =>
+        typeToConvert.IsEnum;
+
+    /// <inheritdoc />
+    public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options)
+    {
+        var converterType = typeof(SafeEnumConverter<>).MakeGenericType(typeToConvert);
+        return (JsonConverter)Activator.CreateInstance(converterType)!;
+    }
+}

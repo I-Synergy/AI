@@ -23,7 +23,8 @@ Load these files based on task type:
 | Bulk Refactoring | `.ai/skills/refactor/SKILL.md` |
 | Product Discovery | `.ai/skills/product-discovery/SKILL.md`, `.ai/skills/product-discovery/references/question-bank.md`, `.ai/skills/product-discovery/references/prototype-guide.md` |
 | Design Interrogation | `.ai/skills/design-interrogation/SKILL.md`, `.ai/skills/product-discovery/SKILL.md`, `.ai/reference/quality-model.md` |
-| Solution Scaffolding | `.ai/skills/solution-generator/SKILL.md`, `.ai/skills/vertical-slices/SKILL.md`, `.ai/reference/traceability.md` |
+| Solution Scaffolding | `.ai/skills/solution-generator/SKILL.md`, `.ai/skills/vertical-slices/SKILL.md`, `.ai/project/architecture.md`, `.ai/reference/templates/solution/README.md`, `.ai/reference/traceability.md` |
+| Solution scaffold | `.ai/scripts/scaffold-solution.py`, `.ai/reference/templates/solution/README.md`, `.ai/reference/templates/solution/manifest.json`, `.ai/reference/templates/solution/package-versions.json`, `.ai/project/architecture.md`, `.ai/project/tech-stack.md` |
 | Gap Validation | `.ai/skills/gap-review/SKILL.md` |
 | Domain Modeling | `.ai/skills/ubiquitous-language/SKILL.md`, `.ai/skills/usecase-specification/SKILL.md`, `.ai/skills/user-story/SKILL.md`, `.ai/reference/traceability.md` |
 | Skill Creation | `.ai/skills/skill-creator/SKILL.md` |

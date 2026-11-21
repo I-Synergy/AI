@@ -1,0 +1,24 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+namespace {ApplicationName}.Entities;
+
+/// <summary>
+/// Fluent EF Core mapping for <see cref="{Entity}"/>. Kept in its own file beside the entity and applied by
+/// <c>ApplyConfigurationsFromAssembly</c> in the DataContext.
+/// </summary>
+public sealed class {Entity}Configuration : IEntityTypeConfiguration<{Entity}>
+{
+    /// <inheritdoc />
+    public void Configure(EntityTypeBuilder<{Entity}> builder)
+    {
+        builder.ToTable("{entities}");
+        builder.HasKey(e => e.{Entity}Id);
+        builder.Property(e => e.{Entity}Id).ValueGeneratedNever();
+        builder.Property(e => e.Name).IsRequired().HasMaxLength(100);
+        builder.Property(e => e.Description).HasMaxLength(500);
+        builder.Property(e => e.Status).IsRequired();
+        builder.Property(e => e.CreatedAt).IsRequired();
+        builder.HasIndex(e => e.Name);
+    }
+}

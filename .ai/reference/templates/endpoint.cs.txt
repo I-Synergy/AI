@@ -1,26 +1,44 @@
-// File: {ApplicationName}.Services.{Domain}/Endpoints/v1/{Entity}Endpoints.cs
-
-namespace {ApplicationName}.Services.{Domain}.Endpoints.v1;
+// File: {ApplicationName}.Services/Endpoints/{Entities}Endpoints.cs
+// Shape: the rendered Items sample (ItemsEndpoints.cs). One endpoints class per entity.
+// The API is anonymous by default: no 401 on these routes. Add .RequireAuthorization() and
+// .Produces(StatusCodes.Status401Unauthorized) only when a route needs authentication.
 
 using Asp.Versioning;
 using Asp.Versioning.Builder;
+using ISynergy.Framework.CQRS.Abstractions.Commands;
+using ISynergy.Framework.CQRS.Queries;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using {ApplicationName}.Common.Constants;
+using {ApplicationName}.Domains;
+using {ApplicationName}.Domains.Features.{Entities}.Commands.Create{Entity};
+using {ApplicationName}.Domains.Features.{Entities}.Commands.Delete{Entity};
+using {ApplicationName}.Domains.Features.{Entities}.Commands.Update{Entity};
+using {ApplicationName}.Domains.Features.{Entities}.Queries.Get{Entities}List;
+using {ApplicationName}.Domains.Features.{Entities}.Queries.Get{Entity}ById;
+using {ApplicationName}.Services.Extensions;
+
+namespace {ApplicationName}.Services.Endpoints;
 
 /// <summary>
-/// Defines endpoints for {Entity} operations.
+/// Defines the endpoints for {entity} operations.
 /// </summary>
-public static class {Entity}Endpoints
+public static class {Entities}Endpoints
 {
     /// <summary>
-    /// Maps all {entity} endpoints to the application route builder.
+    /// The key a refusal is reported under in a validation problem.
     /// </summary>
-    public static void Map{Entity}Endpoints(
-        this IEndpointRouteBuilder app,
-        params string[] authenticationSchemes)
+    private const string RefusalKey = "{Entity}";
+
+    /// <summary>
+    /// Maps the {entity} endpoints to the application route builder.
+    /// </summary>
+    /// <param name="app">The route builder to map into.</param>
+    /// <returns>The same route builder, so calls can be chained.</returns>
+    public static IEndpointRouteBuilder Map{Entities}Endpoints(this IEndpointRouteBuilder app)
     {
         var version = app.NewApiVersionSet()
             .HasApiVersion(new ApiVersion(1, 0))
@@ -31,140 +49,175 @@ public static class {Entity}Endpoints
             .MapGroup("/{entities}")
             .WithDisplayName("{Entities}")
             .WithTags("{Entities}")
-            .WithGroupName("v1")
             .WithApiVersionSet(version)
-            .RequireAuthorization(options =>
-            {
-                options.RequireAuthenticatedUser();
-                options.AddAuthenticationSchemes(authenticationSchemes);
-            });
+            .RequireRateLimiting(RateLimits.Api);
 
-        // POST: Create
         group.MapPost("", Add{Entity}Async)
-            .WithSummary("Create a new {entity}")
-            .WithDescription("Creates a new {entity} with the provided details")
-            .Accepts<{Entity}>("application/json")
-            .WithValidation<{Entity}>()
+            .WithSummary("Create {entity}")
+            .WithDescription("Creates the {entity} from the provided details")
+            .Produces(StatusCodes.Status429TooManyRequests)
+            .Accepts<Models.Create{Entity}Request>("application/json")
+            .WithValidation<Models.Create{Entity}Request>()
             .Produces<Guid>(StatusCodes.Status201Created)
-            .Produces(StatusCodes.Status401Unauthorized)
             .ProducesValidationProblem();
 
-        // GET: Get by ID
-        group.MapGet("{id}", Get{Entity}ByIdAsync)
+        group.MapGet("{id:guid}", Get{Entity}ByIdAsync)
             .WithSummary("Get {entity} by ID")
             .WithDescription("Retrieves a specific {entity} by its unique identifier")
-            .Produces<{Entity}>(StatusCodes.Status200OK)
-            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status429TooManyRequests)
+            .Produces<Models.{Entity}>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound);
 
-        // GET: Get list
-        group.MapGet("", Get{Entity}ListAsync)
+        group.MapGet("", Get{Entities}ListAsync)
             .WithSummary("Get all {entities}")
-            .WithDescription("Retrieves a paginated list of {entities}")
-            .Produces<List<{Entity}>>(StatusCodes.Status200OK)
-            .Produces(StatusCodes.Status401Unauthorized);
+            .WithDescription("Retrieves the list of {entities}")
+            .Produces(StatusCodes.Status429TooManyRequests)
+            .Produces<IReadOnlyList<Models.{Entity}>>(StatusCodes.Status200OK);
 
-        // PUT: Update
         group.MapPut("", Update{Entity}Async)
-            .WithSummary("Update an existing {entity}")
-            .WithDescription("Updates an existing {entity} with the provided details")
-            .Accepts<{Entity}>("application/json")
-            .WithValidation<{Entity}>()
+            .WithSummary("Update {entity}")
+            .WithDescription("Updates the {entity} from the provided details")
+            .Produces(StatusCodes.Status429TooManyRequests)
+            .Accepts<Models.Update{Entity}Request>("application/json")
+            .WithValidation<Models.Update{Entity}Request>()
             .Produces<bool>(StatusCodes.Status200OK)
-            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status404NotFound)
             .ProducesValidationProblem();
 
-        // DELETE: Delete
-        group.MapDelete("{id}", Remove{Entity}Async)
-            .WithSummary("Delete a {entity}")
-            .WithDescription("Deletes a {entity} by its unique identifier")
+        group.MapDelete("{id:guid}", Delete{Entity}Async)
+            .WithSummary("Delete {entity}")
+            .WithDescription("Deletes the {entity} with the given identifier")
+            .Produces(StatusCodes.Status429TooManyRequests)
             .Produces(StatusCodes.Status204NoContent)
-            .Produces(StatusCodes.Status401Unauthorized)
-            .Produces(StatusCodes.Status404NotFound);
+            .Produces(StatusCodes.Status404NotFound)
+            .ProducesValidationProblem();
+
+        return app;
     }
 
-    #region {Entity} Methods
-
     /// <summary>
-    /// Creates a new {entity}.
+    /// Creates the {entity}.
     /// </summary>
-    public static async Task<Results<Created<Guid>, BadRequest>> Add{Entity}Async(
+    /// <param name="handler">The command handler.</param>
+    /// <param name="request">The request body.</param>
+    /// <param name="cancellationToken">Cancels the operation.</param>
+    /// <returns>201 with the new identifier, or a validation problem when the handler refuses the command.</returns>
+    public static async Task<Results<Created<Guid>, ValidationProblem>> Add{Entity}Async(
         [FromServices] ICommandHandler<Create{Entity}Command, Create{Entity}Response> handler,
-        [FromBody] {Entity} e,
+        [FromBody] Models.Create{Entity}Request request,
         CancellationToken cancellationToken = default)
     {
-        var command = new Create{Entity}Command(
-            e.Property1,
-            e.Property2,
-            e.Property3);
+        var command = new Create{Entity}Command(request.Name, request.Description);
 
-        var result = await handler.HandleAsync(command, cancellationToken);
-
-        return TypedResults.Created($"/{entities}/{result.{Entity}Id}", result.{Entity}Id);
+        try
+        {
+            var result = await handler.HandleAsync(command, cancellationToken);
+            return TypedResults.Created($"/{entities}/{result.{Entity}Id}", result.{Entity}Id);
+        }
+        catch (InvalidOperationException exception)
+        {
+            return Refused(exception.Message);
+        }
     }
 
     /// <summary>
-    /// Retrieves a {entity} by its unique identifier.
+    /// Retrieves the {entity} with the given identifier.
     /// </summary>
-    public static async Task<Results<Ok<{Entity}>, NotFound>> Get{Entity}ByIdAsync(
+    /// <param name="handler">The query handler.</param>
+    /// <param name="id">The identifier of the {entity}.</param>
+    /// <param name="cancellationToken">Cancels the operation.</param>
+    /// <returns>200 with the {entity}, or 404 when it does not exist.</returns>
+    public static async Task<Results<Ok<Models.{Entity}>, NotFound>> Get{Entity}ByIdAsync(
         [FromServices] IQueryHandler<Get{Entity}ByIdQuery, Get{Entity}ByIdResponse> handler,
         [FromRoute] Guid id,
         CancellationToken cancellationToken = default)
     {
-        var query = new Get{Entity}ByIdQuery(id);
-        var result = await handler.HandleAsync(query, cancellationToken);
+        var response = await handler.HandleAsync(new Get{Entity}ByIdQuery(id), cancellationToken);
 
-        if (result.{Entity} is not null)
-            return TypedResults.Ok(result.{Entity});
+        if (response.{Entity} is null)
+            return TypedResults.NotFound();
 
-        return TypedResults.NotFound();
+        return TypedResults.Ok(response.{Entity});
     }
 
     /// <summary>
-    /// Retrieves a paginated list of {entities}.
+    /// Retrieves all {entities}.
     /// </summary>
-    public static async Task<Ok<List<{Entity}>>> Get{Entity}ListAsync(
-        [FromServices] IQueryHandler<Get{Entity}ListQuery, Get{Entity}ListResponse> handler,
-        [FromQuery] int pageIndex = 0,
-        [FromQuery] int pageSize = GenericConstants.DefaultPageSize,
+    /// <param name="handler">The query handler.</param>
+    /// <param name="cancellationToken">Cancels the operation.</param>
+    /// <returns>200 with the {entities}.</returns>
+    public static async Task<Ok<IReadOnlyList<Models.{Entity}>>> Get{Entities}ListAsync(
+        [FromServices] IQueryHandler<Get{Entities}ListQuery, Get{Entities}ListResponse> handler,
         CancellationToken cancellationToken = default)
     {
-        var query = new Get{Entity}ListQuery(pageIndex, pageSize);
-        var result = await handler.HandleAsync(query, cancellationToken);
-        return TypedResults.Ok(result.{Entities} ?? []);
+        var response = await handler.HandleAsync(new Get{Entities}ListQuery(), cancellationToken);
+        return TypedResults.Ok(response.{Entities});
     }
 
     /// <summary>
-    /// Updates an existing {entity}.
+    /// Updates the {entity}.
     /// </summary>
-    public static async Task<Results<Ok<bool>, BadRequest>> Update{Entity}Async(
+    /// <param name="handler">The command handler.</param>
+    /// <param name="request">The request body, including the identifier of the {entity}.</param>
+    /// <param name="cancellationToken">Cancels the operation.</param>
+    /// <returns>200 with the result, 404 when the {entity} does not exist, or a validation problem.</returns>
+    public static async Task<Results<Ok<bool>, NotFound, ValidationProblem>> Update{Entity}Async(
         [FromServices] ICommandHandler<Update{Entity}Command, Update{Entity}Response> handler,
-        [FromBody] {Entity} e,
+        [FromBody] Models.Update{Entity}Request request,
         CancellationToken cancellationToken = default)
     {
-        var command = new Update{Entity}Command(
-            e.{Entity}Id,
-            e.Property1,
-            e.Property2);
+        var command = new Update{Entity}Command(request.{Entity}Id, request.Name, request.Description, request.Status);
 
-        var result = await handler.HandleAsync(command, cancellationToken);
-
-        return TypedResults.Ok(result.Success);
+        try
+        {
+            var response = await handler.HandleAsync(command, cancellationToken);
+            return TypedResults.Ok(response.Success);
+        }
+        catch (ResourceNotFoundException)
+        {
+            return TypedResults.NotFound();
+        }
+        catch (InvalidOperationException exception)
+        {
+            return Refused(exception.Message);
+        }
     }
 
     /// <summary>
-    /// Deletes a {entity} by its unique identifier.
+    /// Deletes the {entity} with the given identifier.
     /// </summary>
-    public static async Task<Results<NoContent, NotFound>> Remove{Entity}Async(
+    /// <param name="handler">The command handler.</param>
+    /// <param name="id">The identifier of the {entity}.</param>
+    /// <param name="cancellationToken">Cancels the operation.</param>
+    /// <returns>204 when deleted, 404 when the {entity} does not exist, or a validation problem.</returns>
+    public static async Task<Results<NoContent, NotFound, ValidationProblem>> Delete{Entity}Async(
         [FromServices] ICommandHandler<Delete{Entity}Command, Delete{Entity}Response> handler,
         [FromRoute] Guid id,
         CancellationToken cancellationToken = default)
     {
-        var command = new Delete{Entity}Command(id);
-        await handler.HandleAsync(command, cancellationToken);
-
-        return TypedResults.NoContent();
+        try
+        {
+            await handler.HandleAsync(new Delete{Entity}Command(id), cancellationToken);
+            return TypedResults.NoContent();
+        }
+        catch (ResourceNotFoundException)
+        {
+            return TypedResults.NotFound();
+        }
+        catch (InvalidOperationException exception)
+        {
+            return Refused(exception.Message);
+        }
     }
 
-    #endregion
+    /// <summary>
+    /// Answers a refused command with the declared validation problem.
+    /// </summary>
+    /// <param name="reason">The caller-facing reason.</param>
+    /// <returns>A validation problem carrying the reason.</returns>
+    private static ValidationProblem Refused(string reason) =>
+        TypedResults.ValidationProblem(new Dictionary<string, string[]>
+        {
+            [RefusalKey] = [reason]
+        });
 }

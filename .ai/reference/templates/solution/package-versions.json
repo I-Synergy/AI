@@ -1,0 +1,264 @@
+[
+  {
+    "id": "Asp.Versioning.Http",
+    "version": "10.2.3",
+    "groups": [
+      "core"
+    ]
+  },
+  {
+    "id": "Aspire.Hosting.AppHost",
+    "version": "17.0.0",
+    "groups": [
+      "apphost"
+    ]
+  },
+  {
+    "id": "Aspire.Hosting.Azure.PostgreSQL",
+    "version": "17.0.0",
+    "groups": [
+      "postgres"
+    ]
+  },
+  {
+    "id": "Aspire.Hosting.Azure.Sql",
+    "version": "17.0.0",
+    "groups": [
+      "sqlserver"
+    ]
+  },
+  {
+    "id": "Aspire.Hosting.Dotnet",
+    "version": "17.0.0",
+    "groups": [
+      "apphost"
+    ]
+  },
+  {
+    "id": "Aspire.Hosting.Maui",
+    "version": "17.0.0-preview.1.26567.5",
+    "groups": [
+      "maui"
+    ]
+  },
+  {
+    "id": "Aspire.Microsoft.EntityFrameworkCore.SqlServer",
+    "version": "17.0.0",
+    "groups": [
+      "sqlserver"
+    ]
+  },
+  {
+    "id": "I-Synergy.Framework.AspNetCore",
+    "version": "2026.11119.12316",
+    "groups": [
+      "core"
+    ]
+  },
+  {
+    "id": "I-Synergy.Framework.AspNetCore.Globalization",
+    "version": "2026.11119.12316",
+    "groups": [
+      "core"
+    ]
+  },
+  {
+    "id": "I-Synergy.Framework.AspNetCore.Monitoring",
+    "version": "2026.11119.12316",
+    "groups": [
+      "core"
+    ]
+  },
+  {
+    "id": "I-Synergy.Framework.Core",
+    "version": "2026.11119.12316",
+    "groups": [
+      "core"
+    ]
+  },
+  {
+    "id": "I-Synergy.Framework.CQRS",
+    "version": "2026.11119.12316",
+    "groups": [
+      "core"
+    ]
+  },
+  {
+    "id": "I-Synergy.Framework.EntityFramework",
+    "version": "2026.11119.12316",
+    "groups": [
+      "core"
+    ]
+  },
+  {
+    "id": "I-Synergy.Framework.OpenTelemetry.ApplicationInsights",
+    "version": "2026.11119.12316",
+    "groups": [
+      "core"
+    ]
+  },
+  {
+    "id": "I-Synergy.Framework.UI",
+    "version": "2026.11119.12316",
+    "groups": [
+      "maui",
+      "web",
+      "sqlite-device"
+    ]
+  },
+  {
+    "id": "I-Synergy.Framework.UI.Maui",
+    "version": "2026.11119.12316",
+    "groups": [
+      "maui"
+    ]
+  },
+  {
+    "id": "Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore",
+    "version": "11.0.0",
+    "groups": [
+      "core"
+    ]
+  },
+  {
+    "id": "Microsoft.AspNetCore.Mvc.Testing",
+    "version": "11.0.0",
+    "groups": [
+      "tests"
+    ]
+  },
+  {
+    "id": "Microsoft.AspNetCore.OpenApi",
+    "version": "11.0.0",
+    "groups": [
+      "core"
+    ]
+  },
+  {
+    "id": "Microsoft.EntityFrameworkCore.Design",
+    "version": "11.0.0",
+    "groups": [
+      "core"
+    ]
+  },
+  {
+    "id": "Microsoft.EntityFrameworkCore.InMemory",
+    "version": "11.0.0",
+    "groups": [
+      "tests"
+    ]
+  },
+  {
+    "id": "Microsoft.EntityFrameworkCore.Sqlite",
+    "version": "11.0.0",
+    "groups": [
+      "sqlite-device"
+    ]
+  },
+  {
+    "id": "Microsoft.EntityFrameworkCore.Tools",
+    "version": "11.0.0",
+    "groups": [
+      "core"
+    ]
+  },
+  {
+    "id": "Microsoft.Extensions.ApiDescription.Server",
+    "version": "11.0.0",
+    "groups": [
+      "core"
+    ]
+  },
+  {
+    "id": "Microsoft.Extensions.Hosting",
+    "version": "11.0.0",
+    "groups": [
+      "worker"
+    ]
+  },
+  {
+    "id": "Microsoft.Extensions.Http",
+    "version": "11.0.0",
+    "groups": [
+      "core"
+    ]
+  },
+  {
+    "id": "Microsoft.Extensions.ServiceDiscovery",
+    "version": "11.0.0",
+    "groups": [
+      "core"
+    ]
+  },
+  {
+    "id": "Microsoft.Kiota.Bundle",
+    "version": "2.2.0",
+    "groups": [
+      "core"
+    ]
+  },
+  {
+    "id": "Microsoft.Maui.DevFlow.Agent",
+    "version": "0.1.0-preview.14.26567.2",
+    "groups": [
+      "maui"
+    ]
+  },
+  {
+    "id": "Microsoft.Playwright.MSTest",
+    "version": "1.65.1",
+    "groups": [
+      "tests-ui"
+    ]
+  },
+  {
+    "id": "Microsoft.Testing.Extensions.TrxReport",
+    "version": "2.5.2",
+    "groups": [
+      "tests"
+    ]
+  },
+  {
+    "id": "Moq",
+    "version": "4.21.0",
+    "groups": [
+      "tests"
+    ]
+  },
+  {
+    "id": "MSTest.TestAdapter",
+    "version": "4.5.3",
+    "groups": [
+      "tests"
+    ]
+  },
+  {
+    "id": "Npgsql.EntityFrameworkCore.PostgreSQL",
+    "version": "11.0.0",
+    "groups": [
+      "postgres"
+    ]
+  },
+  {
+    "id": "OpenTelemetry.Instrumentation.EntityFrameworkCore",
+    "version": "1.21.0-beta.2",
+    "groups": [
+      "core"
+    ]
+  },
+  {
+    "id": "Reqnroll.MSTest",
+    "version": "3.3.4",
+    "groups": [
+      "tests-acceptance"
+    ]
+  },
+  {
+    "id": "Testcontainers.PostgreSql",
+    "version": "4.16.0",
+    "groups": [
+      "tests",
+      "postgres"
+    ]
+  }
+]

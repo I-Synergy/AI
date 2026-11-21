@@ -1,0 +1,22 @@
+using ISynergy.Framework.CQRS.Extensions;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace {ApplicationName}.Domains.Extensions;
+
+/// <summary>
+/// Registers the CQRS handlers of the domain.
+/// </summary>
+public static class ServiceCollectionExtensions
+{
+    /// <summary>
+    /// Registers every command and query handler declared in this assembly.
+    /// </summary>
+    /// <param name="services">The service collection to register into.</param>
+    /// <returns>The same service collection, so calls can be chained.</returns>
+    public static IServiceCollection With{ApplicationName}DomainHandlers(this IServiceCollection services)
+    {
+        var assembly = typeof(ServiceCollectionExtensions).Assembly;
+        services.AddCQRS().AddHandlers(assembly);
+        return services;
+    }
+}

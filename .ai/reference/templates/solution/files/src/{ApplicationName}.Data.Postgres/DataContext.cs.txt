@@ -1,0 +1,38 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using {ApplicationName}.Common.Constants;
+using {ApplicationName}.Data.Abstractions;
+using {ApplicationName}.Entities;
+
+namespace {ApplicationName}.Data;
+
+/// <summary>
+/// The PostgreSQL data context. Schema and migration-history conventions are applied here, so they hold
+/// whether the context comes from dependency injection, the design-time factory, or <c>new</c>.
+/// </summary>
+/// <remarks>
+/// PostgreSQL stores <c>timestamp with time zone</c> values as instants, and Npgsql accepts only offset zero
+/// for them. Set <see cref="{Entity}.CreatedAt"/> and other <c>DateTimeOffset</c> values from
+/// <c>DateTimeOffset.UtcNow</c>, not from a local offset.
+/// </remarks>
+public class DataContext(DbContextOptions<DataContext> options)
+    : DbContext(options), IDataContext, IDbContextOptionsConfiguration<DataContext>
+{
+    /// <inheritdoc />
+    public DbSet<{Entity}> {Entities} => Set<{Entity}>();
+
+    /// <summary>
+    /// Applies this context's provider conventions regardless of how the context is instantiated.
+    /// </summary>
+    public void Configure(IServiceProvider serviceProvider, DbContextOptionsBuilder optionsBuilder)
+        => optionsBuilder.UseNpgsql(npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", DatabaseConstants.SystemSchema));
+
+    /// <inheritdoc />
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+
+        modelBuilder.HasDefaultSchema("{applicationname}");
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof({Entity}Configuration).Assembly);
+    }
+}

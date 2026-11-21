@@ -1,0 +1,8 @@
+using ISynergy.Framework.CQRS.Queries;
+
+namespace {ApplicationName}.Domains.Features.{Entities}.Queries.Get{Entities}List;
+
+/// <summary>
+/// Query to retrieve all {entities}.
+/// </summary>
+public sealed record Get{Entities}ListQuery() : IQuery<Get{Entities}ListResponse>;

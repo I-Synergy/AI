@@ -66,6 +66,9 @@ jobs:
       - name: Run adapter layout validation
         run: python .ai/tests/validate-adapters.py
 
+      - name: Run solution scaffold validation
+        run: python .ai/tests/validate-scaffold.py
+
       - name: Run all tests together
         run: bash .ai/tests/run-all-tests.sh
 

@@ -11,147 +11,84 @@ sources:
 license: See license.md in repository root
 ---
 
-# I-Synergy Framework MAUI + Blazor Skill (SKILL.md)
+# MAUI and Blazor Heads (I-Synergy)
 
-**Target shells**: .NET MAUI (Android, iOS, macOS, Windows) using `BlazorWebView` + native pages.
-**Objective**: Reuse the exact ViewModels, services, and design system that power the MAUI, Blazor, WinUI, and WPF samples.
+The generated solution has two heads over one shared layer. The heads do not share a page tree, and neither one is a Blazor Hybrid shell.
 
----
+| Project | Head | UI | Role |
+|---|---|---|---|
+| `{ApplicationName}.App` | MAUI | I-Synergy MVVM, XAML views | Native app for Windows, Mac Catalyst, Android, iOS |
+| `{ApplicationName}.App.Web` | Blazor web | Plain Razor, interactive server | Browser head; no ViewModels |
+| `{ApplicationName}.App.Shared` | Shared | none | `I{ApplicationName}ApiService`, its implementation, `HttpClientSettings` wiring, settings models |
 
-## 1. Architecture Highlights
+Both heads depend on `I{ApplicationName}ApiService`. Neither references the Kiota client types, which stay in `{ApplicationName}.Clients` behind the shared layer.
 
-1. **Unified bootstrapper** – `builder.Services.ConfigureServices<Context, CommonServices, ExceptionHandlerService, SettingsService, Resources>(...)` is called inside `MauiProgram.CreateMauiApp()` exactly the same way as [samples/Sample.Blazor/Program.cs](samples/Sample.Blazor/Program.cs). This registers the MVVM stack, logging, localization, and dialog/navigation services.
-2. **Shared ViewModels** – Pages declare `<c:View x:TypeArguments="viewmodels:DashboardViewModel" />` so the same ViewModel used by Blazor Razor components also powers MAUI XAML views. Review [samples/Sample.Maui/Views](samples/Sample.Maui/Views) and [samples/Sample.Maui/ViewModels](samples/Sample.Maui/ViewModels).
-3. **BlazorWebView hosting** – When you need Fluent UI components or Razor UI inside MAUI, embed `<BlazorWebView>` with `RootComponents` pointing to the Razor component inheriting `View<TViewModel>` (see [samples/Sample.Maui/Views/BlazorHostPage.xaml](samples/Sample.Maui/Views/BlazorHostPage.xaml)).
-4. **Theme + form factor services** – `IThemeService` (documented in [docs/MAUI-Dynamic-Theme-System.md](docs/MAUI-Dynamic-Theme-System.md)) syncs accent colors between WinUI, MAUI, and Fluent UI. `IFormFactorService` adapts breakpoints so ViewModels can react to device orientation.
-5. **Context propagation** – `ScopedContextService` flows tenant/user data from the DI root into modal pages and dialogs, identical to the Blazor implementation.
+## MAUI head bootstrap
 
----
-
-## 2. Project Setup Template
+`MauiProgram.CreateMauiApp()` configures the framework, then the application's services:
 
 ```csharp
-// MauiProgram.cs
-public static MauiApp CreateMauiApp()
-{
-    var builder = MauiApp.CreateBuilder();
-    builder
-        .UseMauiApp<App>()
-        .ConfigureFonts(fonts =>
-        {
-            fonts.AddFont("Montserrat-SemiBold.ttf", "DisplayFont");
-            fonts.AddFont("SpaceGrotesk-Regular.ttf", "BodyFont");
-        });
-
-    var infoService = new InfoService();
-    infoService.LoadAssembly(typeof(App).Assembly);
-
-    builder.Services
-        .ConfigureServices<Context, CommonServices, ExceptionHandlerService, SettingsService, Properties.Resources>(
-            builder.Configuration,
-            infoService,
-            services =>
-            {
-                services.AddMauiBlazorWebView();
-#if DEBUG
-                services.AddBlazorWebViewDeveloperTools();
-#endif
-                services.AddFluentUIComponents();
-            },
-            typeof(App).Assembly);
-
-    builder.Services.AddSingleton<IConnectivity>(Connectivity.Current);
-    builder.Services.AddSingleton<IFilePicker>(FilePicker.Default);
-
-    return builder.Build();
-}
-```
-
-> Keep the ConfigureServices call identical to the other shells so `View<TViewModel>` and the scoped context services behave the same.
-
----
-
-## 3. Navigation Patterns
-
-| Scenario | Pattern | Reference |
-| --- | --- | --- |
-| Navigate between native MAUI pages | `await Shell.Current.GoToAsync("//settings");` | [samples/Sample.Maui/AppShell.xaml](samples/Sample.Maui/AppShell.xaml) |
-| Navigate within embedded Blazor UI | `NavigationManager.NavigateTo("/{entities}");` | [samples/Sample.Blazor/Components/Pages](samples/Sample.Blazor/Components/Pages) |
-| Launch dialog with shared ViewModel | `_dialogService.ShowDialogAsync<SampleDialog>(viewModel, options);` | [samples/Sample.Maui/ViewModels/Dialogs](samples/Sample.Maui/ViewModels) |
-| Bridge MAUI -> Blazor command | Use `BlazorWebView.Dispatcher.DispatchAsync(() => command.Execute(parameter));` | [src/ISynergy.Framework.UI.Maui/Extensions/BlazorWebViewExtensions.cs](src/ISynergy.Framework.UI.Maui/Extensions/BlazorWebViewExtensions.cs) |
-
-Keep navigation logic inside ViewModels so any shell (MAUI, WinUI, WPF, Blazor) can execute identical flows.
-
----
-
-## 4. Platform Service Injection
-
-```csharp
-public interface IDeviceService
-{
-    string GetModel();
-    Task<bool> EnsurePermissionAsync<TPermission>() where TPermission : Permissions.BasePermission, new();
-}
-
-public class DeviceService : IDeviceService
-{
-    public string GetModel() => DeviceInfo.Current.Model;
-
-    public async Task<bool> EnsurePermissionAsync<TPermission>() where TPermission : Permissions.BasePermission, new()
+builder
+    .UseMauiAppForCurrentHead<App>()
+    .UseFonts(_ => { })
+    .UseThemeColors(colors =>
     {
-        var status = await Permissions.CheckStatusAsync<TPermission>();
-        if (status != PermissionStatus.Granted)
+        colors.Add("#512BD4");
+    })
+    .ConfigureServices<App, Context, CommonServices, ExceptionHandlerService, SettingsService, global::{ApplicationName}.Resources.Properties.Resources>(
+        appBuilder =>
         {
-            status = await Permissions.RequestAsync<TPermission>();
-        }
-        return status == PermissionStatus.Granted;
-    }
-}
-
-// Registration
-builder.Services.AddSingleton<IDeviceService, DeviceService>();
+            appBuilder.Add{ApplicationName}ApiServices();
+            appBuilder.Services.AddDeviceStore();
+        },
+        mainAssembly,
+        assemblyName => assemblyName.Name!.StartsWith(typeof(App).Namespace!, StringComparison.Ordinal));
 ```
 
-In Razor components hosted via `BlazorWebView`, inject `IDeviceService` and call its methods. Because ViewModels receive `ICommonServices`, they can request platform services by type from `ScopedContextService` without coupling to MAUI APIs.
+- `UseMauiAppForCurrentHead<App>()` is the entry point for every MAUI head. `UseMauiApp<App>()` is not used.
+- `ConfigureServices` takes six type arguments in this order: the application, the context, the common services, the exception handler, the settings service, and the resource class. The callback receives the host builder, so the shared layer and the device store register there.
+- `UseFonts` registers the fonts the framework ships. The sample adds none of its own, so the callback is empty. Add a font with `fonts.AddFont("file.ttf", "alias")` only when the application ships one.
+- The assembly filter limits framework discovery to the application's own namespace.
 
----
+## Startup
 
-## 5. ViewModel Reuse Checklist
+`App` (`App.xaml.cs`) derives from the framework `Application`. It does not set `MainPage`:
 
-- Derive from `ViewModel`, `ViewModelDialog<T>`, or `ViewModelNavigation<TParameter>` in `ISynergy.Framework.Mvvm`.
-- Hold UI state using `GetValue<T>()/SetValue(value)` so property change notifications stay consistent across shells.
-- Use `AsyncRelayCommand`/`RelayCommand` from CommunityToolkit.Mvvm; register them in the constructor; surface them to Razor views or XAML via bindings.
-- Interact with dialogs using `IDialogService` and navigation using `INavigationService` instead of platform primitives.
-- When you need UI-specific code (e.g., file pickers), wrap it in an abstraction registered in ConfigureServices and inject the abstraction into the ViewModel.
+- `InitializeApplicationAsync()` runs once, before the shell. It shows a busy message, runs the startup work, and calls `_lifecycleService?.SignalApplicationInitialized()` at the end, whether or not the work succeeded.
+- `OnApplicationLoaded(...)` runs after the UI and the startup are both ready. It opens the shell with `_navigationService.NavigateModalAsync<ShellViewModel>()`.
 
----
+## Views
 
-## 6. Design Direction Sync (shared with Blazor skill)
+The root of every XAML view is the non-generic `c:View`. The code-behind passes the view model to the base class. There is no `x:TypeArguments`. See `.ai/patterns/mvvm.md` for the full view, view model, and command pattern.
 
-Adopt the same creative guidelines described in the consolidated Blazor skill:
+## Blazor web head
 
-- **Intentional aesthetic**: decide on a bold style (lux brutalism, retro grid, soft organic, etc.) that matches the page’s purpose.
-- **Typography variables**: expose fonts via `App.xaml` resources and mirror them in `wwwroot/css/site.css` so both MAUI XAML and Blazor components share the same look.
-- **Semantic colors**: define `Color` resources (`ColorSurface`, `ColorAccent`, `ColorInk`) and propagate them to Fluent tokens via `IThemeService`.
-- **Motion**: use `Microsoft.Maui.Controls.Animation` for native elements and CSS keyframes for Blazor fragments, but keep sequencing consistent.
-- **Accessibility**: maintain WCAG contrast, provide focus visuals for both XAML controls and Fluent components, honor reduced-motion preference from `AppThemeBinding`.
+`{ApplicationName}.App.Web` is plain Razor, not the I-Synergy Blazor UI library. Its `Program.cs`:
 
-This keeps hybrid experiences visually cohesive regardless of whether the pixels are rendered by XAML or fluent Razor components.
+```csharp
+builder.Services.AddRazorComponents().AddInteractiveServerComponents();
+builder.AddAcmeApiServices();   // Acme = {ApplicationName}; registers the API client and I{ApplicationName}ApiService
+builder.Services.AddWebHealthChecks();
 
----
+app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
+```
 
-## 7. Troubleshooting Cheatsheet
+Pages are `.razor` components that inject the API service directly. There is no `View<TViewModel>` and no ViewModel layer. Health checks: `/health/live` does no I/O; `/health/ready` also runs the API probe.
 
-| Symptom | Likely Cause | Fix |
-| --- | --- | --- |
-| Blazor content not rendering inside MAUI | `RootComponents` missing or `HostPage` path incorrect | Match the Sample.Maui `BlazorWebView` setup; ensure `wwwroot/index.html` is copied to output |
-| Commands don’t fire from MAUI button | Forgot to call `SetLocatorProvider()` or register `View<TViewModel>` | Confirm ConfigureServices + `SetLocatorProvider()` executed in `MauiProgram` |
-| Dialog ViewModel cannot resolve services | `ScopedContextService` not initialized | Ensure `SetLocatorProvider()` called and dialogs created through `IDialogService` |
-| Theme mismatch between MAUI and Blazor | `IThemeService` not notified of theme change | Call `_themeService.SetThemeAsync(theme)` and raise `ThemeChanged` so Fluent theme updates |
-| Navigation stack desync | Mixing Shell navigation with manual `Navigation.PushAsync` | Standardize on Shell routes or wrap navigation in `INavigationService` |
+## Shared settings
 
----
+`HttpClientSettings` (in `{ApplicationName}.Common`) holds the base address, the fallback address, the timeout, and the default headers. `HostApplicationBuilderExtensions.Add{ApplicationName}ApiServices` reads the `HttpClientSettings` section key by key, not by binding, so trimming and NativeAOT do not skip it. Service discovery replaces the base address with the configured fallback when no discovery resolver is present.
 
-## 8. When to Fall Back to Blazor Skill
+## Where an optional component library goes
 
-Use this MAUI skill when the topic touches device APIs, navigation between native pages, performance on mobile, or BlazorWebView hosting. When you need pure Razor guidance (components, routing, Fluent UI details), jump to the consolidated [I-Synergy Framework Blazor Skill](../blazor-fluentui/SKILL.md) — both skills share the same templates and design rules.
+The sample uses no component library. If one is added (a UI kit such as Microsoft Fluent UI), it is registered in the web head's `Program.cs` and its styles and namespaces are imported in `_Imports.razor`. For the MAUI head it is a NuGet package in `{ApplicationName}.App`. The Fluent UI guidance is an optional add-on in `.ai/skills/blazor-fluentui/SKILL.md`.
+
+## Pitfalls
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| A MAUI page does not open | View or view model is not named `{X}View` / `{X}ViewModel`, or is outside the head's namespace | Rename, or move it under `{ApplicationName}.App` |
+| Build error on a binding | `x:DataType` missing (compiled bindings are on) | Set `x:DataType` to the view model or model type |
+| Page compiles but the view model is `null` | Code-behind does not call `base(viewModel)` | Pass the view model to the base constructor |
+| Blazor head cannot reach the API under Aspire | Service-discovery name does not match the AppHost resource name | Use the `AspireNames` constant in both places |
+| Fonts missing on device | A font file is referenced without `UseFonts` | Add it with `UseFonts`, or remove the reference |

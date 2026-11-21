@@ -1,0 +1,113 @@
+using DotNet.Testcontainers.Builders;
+using Testcontainers.PostgreSql;
+
+namespace {ApplicationName}.Data.{Provider}.Tests.Infrastructure;
+
+/// <summary>
+/// Starts one PostgreSQL container for the whole test run and keeps it for every test, or latches the reason
+/// it could not be started.
+/// </summary>
+/// <remarks>
+/// <para>
+/// One container, not one per test: each test creates its own database inside it (see
+/// <see cref="PostgresDatabase"/>), which isolates tests without paying for a container start each time. The
+/// container is stopped when the test process exits.
+/// </para>
+/// <para>
+/// When no runtime answers, the state carries the reason and the tests skip loudly (see
+/// <see cref="PostgresFixture"/>). They never pass silently. The wait for a starting container is bounded: an
+/// unbounded wait in a test harness hangs the run and reports nothing.
+/// </para>
+/// </remarks>
+internal static class PostgresServer
+{
+    /// <summary>
+    /// The image to test against. Keep it equal to the image the AppHost runs: the tests exist to prove what
+    /// the deployment's database will do, and a different major version is a different server.
+    /// </summary>
+    private const string Image = "postgres:18";
+
+    /// <summary>The variable that forces the tests to skip, whatever runtimes are available.</summary>
+    private const string SkipVariable = "POSTGRES_TESTS_SKIP";
+
+    /// <summary>The user and password the container is created with. Both are test-local, never deployment values.</summary>
+    private const string UserName = "postgres";
+    private const string Password = "postgres";
+
+    /// <summary>How long the container may take to start, and to be ready, before the tests give up.</summary>
+    private static readonly TimeSpan StartTimeout = TimeSpan.FromMinutes(2);
+
+    /// <summary>How long the container may take to stop on the way out.</summary>
+    private static readonly TimeSpan StopTimeout = TimeSpan.FromSeconds(30);
+
+    private static readonly Lazy<Task<PostgresServerState>> Server = new(
+        StartAsync,
+        LazyThreadSafetyMode.ExecutionAndPublication);
+
+    private static PostgreSqlContainer? _container;
+
+    /// <summary>
+    /// Gets the server state, starting the container on the first call. Never throws: a runtime that is
+    /// missing or unreachable is returned as an unavailable state carrying the reason.
+    /// </summary>
+    /// <returns>The server state.</returns>
+    public static Task<PostgresServerState> GetAsync() => Server.Value;
+
+    private static async Task<PostgresServerState> StartAsync()
+    {
+        var skipRequested = Environment.GetEnvironmentVariable(SkipVariable);
+
+        if (!string.IsNullOrWhiteSpace(skipRequested))
+        {
+            return new PostgresServerState(
+                null,
+                $"skipped on request: {SkipVariable} is set to \"{skipRequested}\"");
+        }
+
+        try
+        {
+            var container = new PostgreSqlBuilder(Image)
+                .WithUsername(UserName)
+                .WithPassword(Password)
+                .WithWaitStrategy(Wait.ForUnixContainer().UntilCommandIsCompleted("pg_isready", "-U", UserName))
+                .Build();
+
+            // Recorded and wired for shutdown before the start is awaited: a start that times out would
+            // otherwise leave a container behind that nobody stops.
+            _container = container;
+            AppDomain.CurrentDomain.ProcessExit += (_, _) => StopContainer();
+
+            await container.StartAsync().WaitAsync(StartTimeout).ConfigureAwait(false);
+
+            return new PostgresServerState(container.GetConnectionString(), null);
+        }
+        catch (TimeoutException)
+        {
+            return new PostgresServerState(
+                null,
+                $"the PostgreSQL container did not start and become ready within {StartTimeout.TotalMinutes:0} minutes");
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            return new PostgresServerState(
+                null,
+                $"no container runtime answered: {exception.GetType().Name}: {exception.Message.ReplaceLineEndings(" ").Trim()}");
+        }
+    }
+
+    /// <summary>
+    /// Stops the container, ignoring a failure: this runs on the way out of a test process, where nothing
+    /// can be reported or retried.
+    /// </summary>
+    private static void StopContainer()
+    {
+        try
+        {
+            _container?.StopAsync().Wait(StopTimeout);
+        }
+        catch (Exception)
+        {
+            // The container's fate is not the test run's result.
+        }
+    }
+}

@@ -76,6 +76,162 @@ re-run it at any time. A real directory holding files at an adapter path is repo
 python .ai/scripts/sync-instructions.py
 ```
 
+### Scaffold the Solution (Optional)
+
+`.ai/scripts/scaffold-solution.py` renders a new .NET 11 solution from the templates in `.ai/reference/templates/solution/`. Run it from the folder that should hold the solution:
+
+```bash
+python .ai/scripts/scaffold-solution.py
+```
+
+The script prompts for the application name, the company, the first sample entity, the database provider and the optional projects, then renders into `./<Name>` (the output directory is also a prompt). It never overwrites an existing file. `--dry-run` prints the file list and writes nothing.
+
+Example session. Each answer follows its prompt, and the default is shown in brackets:
+
+```
+$ python .ai/scripts/scaffold-solution.py
+Application name (PascalCase, for example Acme): Acme
+Company (for Directory.Build.props, for example Acme Corp): Acme Corp
+Application identifier (lower-case reverse DNS, for the MAUI head) [com.example.acme]:
+First sample entity, singular (PascalCase) [Item]:
+First sample entity, plural (PascalCase) [Items]:
+Database (sqlserver or postgres) [sqlserver]:
+Include apphost (Aspire AppHost that runs the API and the database locally) [y/N]: y
+Include maui (MAUI app head) [y/N]: y
+Include web (Blazor web head) [y/N]: y
+Include sqlite-device (SQLite store for the device app) [y/N]: y
+Include worker (background worker host) - templates not available yet [y/N]: n
+Include tests-acceptance (Reqnroll acceptance tests) - templates not available yet [y/N]: n
+Include tests-ui (Playwright UI tests) - templates not available yet [y/N]: n
+Output directory [./Acme]:
+```
+
+The same solution without prompts:
+
+```bash
+python .ai/scripts/scaffold-solution.py --name Acme --company "Acme Corp" \
+  --entity Item --database sqlserver --with apphost,maui,web,sqlite-device \
+  --output ./Acme --yes
+```
+
+`--application-id` defaults to `com.example.acme` and `--entities` to the plural of `--entity`. Add `--dry-run` to list the files first.
+
+Flags without templates (`worker`, `tests-acceptance`, `tests-ui`) print `notice: flag '<name>' - templates not available yet` and are ignored in that render.
+
+#### Flags
+
+| Flag | Default | Meaning |
+|---|---|---|
+| `--name` | prompt | Application name: PascalCase, 2 to 60 characters, for example `Acme`. Reserved: `System`, `Microsoft`, `ISynergy`, `Aspire`, `Windows`, `Azure`, `Npgsql`, `Asp` |
+| `--company` | prompt | Company written to `Directory.Build.props`, for example `Acme Corp`. Must not contain `< > & " { }` |
+| `--application-id` | `com.example.<name>` | Lower-case reverse DNS. Sets the MAUI Android package, Apple bundle identifier and Windows package identity |
+| `--entity` | `Item` | First sample entity, singular PascalCase |
+| `--entities` | plural of `--entity` | First sample entity, plural PascalCase |
+| `--database` | `sqlserver` | `sqlserver` or `postgres` |
+| `--with a,b,c` | none | Comma-separated optional flags: `apphost`, `maui`, `web`, `sqlite-device`, `worker`, `tests-acceptance`, `tests-ui`. Skips the flag prompts |
+| `--yes` | off | No prompts. Values not given as flags take their defaults; `--name` and `--company` are still required |
+| `--output` | `./<name>` | Output directory. Must not be an existing file |
+| `--dry-run` | off | Print the file list and write nothing |
+| `--force-token KEY=VALUE` | computed | Override `Version`, `Year`, `AppHostHttpsPort` (44400), `ApiHttpsPort` (44401) or `WebHttpsPort` (44402). Repeatable; use for reproducible renders |
+| `--templates PATH` | `.ai/reference/templates/solution` | Template root |
+| `--check-templates` | off | Check the template set (manifest, tokens, conditional markers, package groups) and exit |
+
+#### What is generated
+
+Every render contains the same core projects, plus the projects of the flags you choose:
+
+| Selection | Adds |
+|---|---|
+| Always | `Common`, `Resources`, `Entities`, `Models`, `Data`, `Domains`, `Services`, `Service.Api`, `Clients` (Kiota), the solution file and root files; tests `Domains.Tests` and `Service.Tests` |
+| `sqlserver` (default) or `postgres` | `Data.SqlServer` or `Data.Postgres`, and its tests project `Data.SqlServer.Tests` or `Data.Postgres.Tests` |
+| `apphost` | `AppHost` and `aspire.config.json` |
+| `maui` | `App` (MAUI head for Windows, Android and Apple) and `App.Shared` |
+| `web` | `App.Web` (plain Razor) and `App.Shared` |
+| `sqlite-device` | `Data.Sqlite` (local store) and `App.Shared`. Use it with `maui` or `web`; those are the combinations the templates are verified with |
+
+The layout is flat: every project sits directly under `src/` or `tests/` and is named `{Name}.{Layer}`.
+
+```
+Acme/
+├── Acme.slnx                       # solution; Solution Items list the root files below
+├── Directory.Build.props           # company, version stamp, Nullable, LangVersion 15.0
+├── Directory.Packages.props        # central package versions; NuGet audit as errors
+├── global.json                     # .NET SDK 11.0.100, rollForward disabled
+├── nuget.config                    # nuget.org only
+├── .config/dotnet-tools.json       # Kiota and dotnet-ef, pinned
+├── aspire.config.json              # apphost only
+├── openapi/                        # OpenAPI document written by the API's Debug build (Kiota input)
+├── src/
+│   ├── Acme.Common/                # shared enumerations, constants and converters
+│   ├── Acme.Resources/             # resources
+│   ├── Acme.Entities/              # entities and EF Core configurations (no Models reference)
+│   ├── Acme.Models/                # request, response and read models (no Entities reference)
+│   ├── Acme.Data/                  # data abstractions (IDataContext)
+│   ├── Acme.Data.SqlServer/        # or Acme.Data.Postgres: DataContext, factory, DatabaseInitializer
+│   ├── Acme.Domains/               # Features/Items/Commands and Queries, one folder per operation
+│   ├── Acme.Services/              # endpoint groups and validation
+│   ├── Acme.Service.Api/           # ASP.NET Core host: OpenAPI, health checks
+│   ├── Acme.Clients/               # Kiota client; Api/ is committed
+│   ├── Acme.App.Shared/            # maui, web or sqlite-device: shared services and models
+│   ├── Acme.App/                   # maui: MAUI head
+│   ├── Acme.App.Web/               # web: Blazor head
+│   ├── Acme.Data.Sqlite/           # sqlite-device: local store
+│   └── Acme.AppHost/               # apphost: Aspire AppHost
+└── tests/
+    ├── Acme.Domains.Tests/         # MSTest handler tests
+    ├── Acme.Service.Tests/         # endpoint tests against the API host
+    └── Acme.Data.SqlServer.Tests/  # or Acme.Data.Postgres.Tests (Testcontainers)
+```
+
+The sample `Item` slice is generated end to end: create, update, delete, get by id and list, with their endpoints, client code, pages and tests.
+
+#### What you create yourself
+
+- **Migrations.** The scaffold ships no `Migrations/` folder. After `dotnet tool restore`, create the first one:
+
+  ```bash
+  dotnet ef migrations add Initial --project src/Acme.Data.SqlServer --startup-project src/Acme.Service.Api
+  ```
+
+  For `postgres`, use `src/Acme.Data.Postgres` as the project.
+- **Database password (`apphost`).** Set it once per machine with `aspire secret set Parameters:acme-database-password <password>`. The AppHost prompts for it when it is missing. No password is stored in the repository.
+- **Your domain.** `Item` is a sample. Replace it or add entities; [TEMPLATE-FAQ.md Q12](TEMPLATE-FAQ.md#q12-how-do-i-add-another-entity) lists the steps.
+- **App identity and assets.** Signing, store listings, the Apple and Windows packaging identity (the default comes from `--application-id`) and the sample icon and splash SVGs are yours to replace.
+- **Environment settings.** Production connection strings and secrets are supplied per environment, not committed.
+
+#### Prerequisites
+
+- **.NET 11 SDK.** `global.json` pins `11.0.100` with `rollForward` disabled, so that SDK version must be installed. Prerelease SDKs are allowed.
+- **Local tools.** `dotnet tool restore` installs the pinned Kiota CLI (1.38.0) and `dotnet-ef` (11.0.0) from `.config/dotnet-tools.json`.
+- **Docker.** The AppHost runs SQL Server in a container (`mssql/server:2022-latest`). The Postgres test project starts a `postgres:18` container with Testcontainers. Without a container runtime those tests are reported as skipped, never as passed. Set `POSTGRES_TESTS_SKIP` to skip them on purpose. The SQL Server test project does not start a container.
+- **MAUI workloads (only with `maui`).** Which heads build on which host is in [TEMPLATE-FAQ.md Q17](TEMPLATE-FAQ.md#q17-what-maui-heads-build-where).
+- **NuGet.** Restore reads nuget.org only (`nuget.config`). NuGet audit runs on every build, and NU1900 to NU1905 are errors, so a build fails when audit data cannot be fetched.
+
+#### Versions and preview pins
+
+- The versions in `Directory.Packages.props` are the values in `.ai/reference/templates/solution/package-versions.json` at render time. A later template change does not reach an existing solution, and the upgrade script does not change these files.
+- Some pins are previews because no stable release exists yet: `Aspire.Hosting.Maui`, `OpenTelemetry.Instrumentation.EntityFrameworkCore`, and `Microsoft.Maui.DevFlow.Agent` (Debug builds only).
+- The Postgres provider uses `Npgsql.EntityFrameworkCore.PostgreSQL` directly, because no stable Aspire Npgsql client matched EF Core 11 at scaffold time.
+- The Kiota CLI and `dotnet-ef` versions come from `.config/dotnet-tools.json`; the SDK version comes from `global.json`. Neither is in `package-versions.json`.
+
+#### After the render
+
+The script prints the next steps:
+
+```bash
+cd Acme
+dotnet tool restore
+dotnet restore
+dotnet build -nodeReuse:false
+dotnet test
+```
+
+On a machine where MSBuild node reuse exhausts memory, set `MSBUILDDISABLENODEREUSE=1` and pass `-nodeReuse:false` to every build.
+
+The Claude Code `Stop` hook builds a solution only when its `.sln` or `.slnx` file is in the project root. The default output folder is a subfolder, so build a solution rendered there yourself.
+
+Kiota regenerates `src/Acme.Clients/Api/` on every Debug build of `Service.Api`, from `openapi/Acme.Service.Api.json`. To build without regenerating (CI, or a run that must not rewrite committed files), pass `-p:AcmeGenerateApiClient=false`.
+
 ### Verify Installation
 
 ```bash
@@ -143,8 +299,8 @@ Replace these tokens with your actual values:
 
 | Token | Meaning | Example Usage |
 |-------|---------|---------------|
-| `{ApplicationName}` | Your application name | `{ApplicationName}.Domain.{Domain}` |
-| `{Domain}` | Your bounded context | `{ApplicationName}.Domain.{Domain}` |
+| `{ApplicationName}` | Your application name | `{ApplicationName}.Domains` |
+| `{Domain}` | Your bounded context (a `Features/` folder, not a project) | `Domains/Features/{Entities}/` |
 | `{Entity}` | Your aggregate root (PascalCase) | `Create{Entity}Command` |
 | `{Entities}` | Aggregate root plural — DbSet names | `dataContext.{Entities}` |
 | `{entity}` | Aggregate root (camelCase) | `{entity}Id` |
@@ -213,6 +369,7 @@ AGENTS.md                        # AI orchestration instructions (Claude Code lo
 │   └── ...                     # 8 patterns total
 ├── scripts/                    # Automation scripts
 │   ├── sync-platforms.py       # Link .ai/ into the paths each tool reads (--tools to limit)
+│   ├── scaffold-solution.py    # Render a .NET solution from reference/templates/solution (prompts or flags)
 │   └── upgrade-template.py     # Safely upgrade existing projects
 ├── skills/                     # Specialized agent personas (source of truth)
 ├── agents/                     # Specialized subagents (runAs: subagent) and the orchestrator (Copilot entry point)
@@ -240,21 +397,21 @@ AGENTS.md                        # AI orchestration instructions (Claude Code lo
 1. **Copy template:** `.ai/reference/templates/command-handler.cs.txt`
 2. **Replace tokens:**
    - `{ApplicationName}` → your application name
-   - `{Domain}` → your bounded context
+   - `{Entities}` → the plural name of the feature folder
    - `{Entity}` → your aggregate root
-3. **Save as:** `src/{ApplicationName}.Domain.{Domain}/Features/{Entity}/Commands/Create{Entity}Command.cs`
+3. **Save as:** `src/{ApplicationName}.Domains/Features/{Entities}/Commands/Create{Entity}/Create{Entity}Command.cs`
 
 ### Token Replacement Example
 
 **Template:**
 ```csharp
-namespace {ApplicationName}.Domain.{Domain}.Features.{Entity}.Commands;
+namespace {ApplicationName}.Domains.Features.{Entities}.Commands.Create{Entity};
 
 public sealed record Create{Entity}Command(...) : ICommand<Create{Entity}Response>;
 ```
 
 **After Replacement:** every token is substituted with your own names, following the same
-`{ApplicationName}.Domain.{Domain}` / `Create{Entity}Command` shape.
+`{ApplicationName}.Domains.Features.{Entities}` / `Create{Entity}Command` shape.
 
 ## Using Specialized Agent Skills
 
@@ -325,6 +482,8 @@ python -m pytest .ai/tests/test_suite.py -v
 ```
 
 `run-all-tests.sh` skips `validate-upgrade-script.py`; the pytest wrapper includes it, so pytest is the fuller run.
+
+The scaffold has its own suite, `validate-scaffold.py` (suite 16 in `run-all-tests.sh`). It renders the scaffold for several flag combinations into a temporary folder and checks the result. `SCAFFOLD_BUILD_SMOKE=1` also restores, builds and tests one render, and needs the .NET 11 SDK.
 
 ### Installing pytest on a Corporate Network
 
@@ -426,19 +585,20 @@ Run through `.ai/checklists/pre-submission.md`:
 
 ## Common Workflows
 
-### Adding a New Domain
+### Adding a New Feature Slice
 
-1. Create projects:
+The solution is flat: one `Domains` project holds every feature, so a new bounded context is a folder, not a project.
+
+1. Create the slice folders under the existing project:
    ```
-   {ApplicationName}.Entities.{NewDomain}/
-   {ApplicationName}.Models.{NewDomain}/
-   {ApplicationName}.Domain.{NewDomain}/
-   {ApplicationName}.Services.{NewDomain}/
+   src/{ApplicationName}.Domains/Features/{Entities}/Commands/Create{Entity}/
+   src/{ApplicationName}.Domains/Features/{Entities}/Queries/Get{Entity}ById/
    ```
-2. Copy templates from `.ai/reference/templates/`
-3. Replace tokens with your domain/entity names
-4. Follow patterns from `.ai/patterns/cqrs-patterns.md`
-5. Check `.ai/checklists/pre-submission.md`
+2. Copy templates from `.ai/reference/templates/` (or run `python .ai/scripts/scaffold-solution.py` for a fresh solution)
+3. Replace tokens with your entity names
+4. Add the endpoints to `src/{ApplicationName}.Services/Endpoints/`
+5. Follow patterns from `.ai/patterns/cqrs-patterns.md`
+6. Check `.ai/checklists/pre-submission.md`
 
 ### Bulk Refactoring
 
@@ -531,6 +691,12 @@ still present. The entries the template needs are:
 __pycache__/
 .pytest_cache/
 ```
+
+#### Scaffolded solution files
+
+Scaffolded solution files are outside both lists, so the upgrade never reads or writes them: `src/`, `tests/`, `openapi/`, the root `.slnx`, `Directory.Build.props`, `Directory.Packages.props`, `global.json`, `nuget.config`, `aspire.config.json`, `.config/`, `.editorconfig`, `.gitattributes` and the root `README.md`. The scaffold itself (`.ai/scripts/scaffold-solution.py` and `.ai/reference/templates/solution/`) is template-owned, so an upgrade brings new templates to the project.
+
+One scaffolded file is an exception. `.gitignore` is template-owned, so a solution rendered into the project root shows a diff against the template's `.gitignore`. Merge the two rather than accepting the scaffold's copy, which has none of the adapter and `.ai/tmp/` entries listed above.
 
 #### After any install or upgrade
 

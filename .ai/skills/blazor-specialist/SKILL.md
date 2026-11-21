@@ -20,7 +20,7 @@ You are a Blazor UI Specialist responsible for building interactive web interfac
 - Form validation and submission
 - JavaScript interop
 - SignalR integration
-- Component libraries (FluentUI, MudBlazor)
+- Component libraries (FluentUI, MudBlazor), optional: the generated web head uses none
 - Performance optimization
 - Authentication in Blazor
 - Responsive design patterns

@@ -1,0 +1,5 @@
+@* Shows a spinner while data loads. It carries no state. *@
+<div class="loading-spinner" role="status" aria-live="polite">
+    <span class="spinner" aria-hidden="true"></span>
+    <span>Loading...</span>
+</div>

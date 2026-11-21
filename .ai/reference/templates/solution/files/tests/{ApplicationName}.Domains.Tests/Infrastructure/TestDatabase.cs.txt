@@ -1,0 +1,51 @@
+using {ApplicationName}.Data;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+
+namespace {ApplicationName}.Domains.Tests.Infrastructure;
+
+/// <summary>
+/// Provides a <see cref="DataContext"/> over a private EF Core in-memory store, for unit-testing handlers
+/// against a real provider instead of a mocked context.
+/// </summary>
+/// <remarks>
+/// Each instance gets its own store (a fresh name), so tests are isolated and can run in any order. Create
+/// one per test with <c>using var db = new TestDatabase();</c>. The in-memory provider enforces no indexes
+/// and no foreign keys; assertions about those belong in the Data.{Provider}.Tests project.
+/// </remarks>
+public sealed class TestDatabase : IDisposable
+{
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TestDatabase"/> class.
+    /// </summary>
+    /// <param name="databaseName">
+    /// The in-memory store to attach to, or <see langword="null"/> for a new private one. Two instances that
+    /// share a name share their rows.
+    /// </param>
+    public TestDatabase(string? databaseName = null)
+    {
+        DatabaseName = databaseName ?? Guid.NewGuid().ToString();
+
+        var options = new DbContextOptionsBuilder<DataContext>()
+            .UseInMemoryDatabase(DatabaseName)
+            // A handler that opens a transaction would otherwise fail on the in-memory provider, which
+            // reports TransactionIgnoredWarning as an error by default.
+            .ConfigureWarnings(warnings => warnings.Ignore(InMemoryEventId.TransactionIgnoredWarning))
+            .Options;
+
+        Context = new DataContext(options);
+    }
+
+    /// <summary>
+    /// Gets the context handlers are constructed with. It is also the context tests read results back from.
+    /// </summary>
+    public DataContext Context { get; }
+
+    /// <summary>
+    /// Gets the name of the in-memory store, for failure messages.
+    /// </summary>
+    public string DatabaseName { get; }
+
+    /// <inheritdoc />
+    public void Dispose() => Context.Dispose();
+}

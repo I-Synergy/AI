@@ -1,4 +1,6 @@
 # MVVM Pattern & App Lifecycle
+
+> **Scope.** The generated MAUI head uses the I-Synergy MVVM stack. The pattern for it is in `.ai/patterns/mvvm.md`. The CommunityToolkit.Mvvm examples below (`ObservableObject`, `[ObservableProperty]`, `[RelayCommand]`) apply only to a MAUI project outside that stack. Do not mix the two in one head.
 CommunityToolkit.Mvvm ViewModels, commands and bindings, plus MAUI app lifecycle events. Load this when building ViewModels or handling app lifecycle.
 
 ## MVVM Pattern (CommunityToolkit.Mvvm)

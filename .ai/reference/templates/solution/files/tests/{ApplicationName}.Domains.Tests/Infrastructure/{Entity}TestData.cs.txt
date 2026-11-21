@@ -1,0 +1,41 @@
+using {ApplicationName}.Common.Enumerations;
+using {ApplicationName}.Data;
+using {ApplicationName}.Entities;
+
+namespace {ApplicationName}.Domains.Tests.Infrastructure;
+
+/// <summary>
+/// Writes {Entity} rows for the arrange step of a handler test.
+/// </summary>
+internal static class {Entity}TestData
+{
+    /// <summary>
+    /// Adds one {Entity} row and saves it.
+    /// </summary>
+    /// <param name="context">The context to write through.</param>
+    /// <param name="name">The name of the row.</param>
+    /// <param name="description">The description of the row, or <see langword="null"/> for none.</param>
+    /// <param name="status">The status of the row.</param>
+    /// <returns>The identifier of the row that was written.</returns>
+    public static async Task<Guid> AddAsync(
+        DataContext context,
+        string name = "Sample",
+        string? description = "Sample description",
+        {Entity}Status status = {Entity}Status.Draft)
+    {
+        var id = Guid.NewGuid();
+
+        context.{Entities}.Add(new {Entity}
+        {
+            {Entity}Id = id,
+            Name = name,
+            Description = description,
+            Status = status,
+            CreatedAt = DateTimeOffset.UtcNow
+        });
+
+        await context.SaveChangesAsync();
+
+        return id;
+    }
+}

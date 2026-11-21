@@ -1,0 +1,164 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <!--
+    Target frameworks follow the host OS and the installed tools:
+    - Apple heads (iOS, Mac Catalyst) are built on macOS and Windows, never on Linux.
+    - The Android head needs the Android SDK, so it is added when ANDROID_HOME is set; Windows hosts always add it.
+    - The Windows head needs the Windows App SDK and is added on Windows only.
+    On Linux without ANDROID_HOME no head is selected; this project then cannot be built on that host.
+    -->
+    <TargetFrameworks Condition="!$([MSBuild]::IsOSPlatform('linux'))">net11.0-ios;net11.0-maccatalyst</TargetFrameworks>
+    <TargetFrameworks Condition="'$(ANDROID_HOME)' != '' Or $([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net11.0-android</TargetFrameworks>
+    <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net11.0-windows10.0.26100.0</TargetFrameworks>
+
+    <MauiXamlInflator>SourceGen</MauiXamlInflator>
+    <OutputType>Exe</OutputType>
+    <UseMaui>true</UseMaui>
+    <SingleProject>true</SingleProject>
+    <RootNamespace>{ApplicationName}</RootNamespace>
+    <IsPackable>false</IsPackable>
+    <WindowsPackageType>None</WindowsPackageType>
+    <MauiEnableXamlCBindingWithSourceCompilation>true</MauiEnableXamlCBindingWithSourceCompilation>
+    <NoWarn>$(NoWarn);MAUIX2005</NoWarn>
+
+    <!--
+    ReadyToRun needs a runtime identifier and exists only for Windows. It is enabled in the Windows block below and
+    stays off for every other target.
+    -->
+    <PublishReadyToRun>false</PublishReadyToRun>
+
+    <!-- Display name and identity. The application identifier is the Android package, the Apple bundle identifier and the Windows package identity. -->
+    <Product>{ApplicationName}</Product>
+    <ApplicationTitle>$(Product)</ApplicationTitle>
+    <ApplicationId>{ApplicationId}</ApplicationId>
+    <!-- Integer build number required by Android and Apple stores. Increase it for every store upload. -->
+    <ApplicationVersion>1</ApplicationVersion>
+    <ApplicationDisplayVersion>$(Version)</ApplicationDisplayVersion>
+
+    <!-- Signing keys and provisioning profiles are never stored in the repository. Set them per machine or in CI. -->
+    <!-- <CodeSignEntitlements>Platforms\MacCatalyst\Entitlements.plist</CodeSignEntitlements> is set in the Mac Catalyst block. -->
+{{#if apphost}}
+
+    <!--
+    Workaround: a multi-targeted MAUI project does not expose GetTargetPath to the outer build, which breaks Visual
+    Studio build acceleration and the Aspire AppHost, which starts the project through its path.
+    -->
+    <GetTargetPathDependsOn>$(GetTargetPathDependsOn)</GetTargetPathDependsOn>
+{{/if}}
+  </PropertyGroup>
+{{#if apphost}}
+
+  <Target Name="GetTargetPath" />
+
+  <!--
+  The SDK's Run target passes RunCommand to cmd.exe unquoted, so a project path that contains spaces truncates the
+  command. TargetDir exists only after evaluation, so the quote is applied in a target that runs before Run.
+  -->
+  <Target Name="QuoteWindowsRunCommand"
+          BeforeTargets="Run"
+          Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">
+    <PropertyGroup>
+      <RunCommand>"$(TargetDir)$(AssemblyName)$(_NativeExecutableExtension)"</RunCommand>
+    </PropertyGroup>
+  </Target>
+{{/if}}
+
+  <Choose>
+    <When Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+      <PropertyGroup>
+        <!-- Android 37 enforces API 24 as the deployment floor. -->
+        <SupportedOSPlatformVersion>24.0</SupportedOSPlatformVersion>
+        <AndroidPackageFormat>aab</AndroidPackageFormat>
+        <AndroidKeyStore>false</AndroidKeyStore>
+        <AndroidCreatePackagePerAbi>false</AndroidCreatePackagePerAbi>
+      </PropertyGroup>
+    </When>
+    <When Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">
+      <PropertyGroup>
+        <SupportedOSPlatformVersion>15.0</SupportedOSPlatformVersion>
+        <EnableAssemblyILStripping>false</EnableAssemblyILStripping>
+        <!-- Set CodesignKey and CodesignProvision (Debug: automatic provisioning; Release: manual) outside the repository. -->
+      </PropertyGroup>
+    </When>
+    <When Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">
+      <PropertyGroup>
+        <SupportedOSPlatformVersion>17.0</SupportedOSPlatformVersion>
+        <CodeSignEntitlements>Platforms\MacCatalyst\Entitlements.plist</CodeSignEntitlements>
+        <!-- Set CodesignKey and CodesignProvision (Debug: automatic provisioning; Release: manual) outside the repository. -->
+      </PropertyGroup>
+    </When>
+    <When Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">
+      <PropertyGroup>
+        <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+        <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
+        <WindowsAppSdkSelfContained>true</WindowsAppSdkSelfContained>
+        <SelfContained>true</SelfContained>
+        <!-- Only meaningful with a runtime identifier, which publish passes (for example -r win-x64). -->
+        <PublishReadyToRun Condition="'$(RuntimeIdentifier)' != ''">true</PublishReadyToRun>
+      </PropertyGroup>
+    </When>
+  </Choose>
+
+  <ItemGroup>
+    <!-- Icon and splash are SVG shapes without text: the resizer cannot rasterize SVG text. Fonts come from the framework. -->
+    <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="Transparent" BaseSize="600,600" />
+    <MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#FFFFFF" BaseSize="400,400" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The configuration files are embedded: MauiProgram reads them by the root namespace and the appsettings file name. -->
+    <EmbeddedResource Include="appsettings.json" />
+    <EmbeddedResource Include="appsettings.Development.json">
+      <DependentUpon>appsettings.json</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="appsettings.Production.json">
+      <DependentUpon>appsettings.json</DependentUpon>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <!--
+  Apple privacy manifest. The app reads its own preferences through MAUI Preferences (NSUserDefaults), a
+  required-reason API, so the manifest must ship at the root of the bundle.
+  -->
+  <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">
+    <BundleResource Include="Platforms\iOS\PrivacyInfo.xcprivacy" LogicalName="PrivacyInfo.xcprivacy" />
+  </ItemGroup>
+  <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">
+    <BundleResource Include="Platforms\MacCatalyst\PrivacyInfo.xcprivacy" LogicalName="PrivacyInfo.xcprivacy" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="I-Synergy.Framework.UI.Maui" />
+    <PackageReference Include="I-Synergy.Framework.OpenTelemetry.ApplicationInsights" />
+    <PackageReference Include="Microsoft.Extensions.ServiceDiscovery" />
+    <!--
+    Debug-only agent for development tooling. It references desktop framework assemblies that must not ship, so
+    Release builds do not reference it, and MauiProgram calls it only under the DEBUG symbol.
+    -->
+    <PackageReference Include="Microsoft.Maui.DevFlow.Agent" Condition="'$(Configuration)' == 'Debug'" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- {{#if sqlite-device}} -->
+    <ProjectReference Include="..\{ApplicationName}.Data.Sqlite\{ApplicationName}.Data.Sqlite.csproj" />
+    <!-- {{/if}} -->
+    <ProjectReference Include="..\{ApplicationName}.App.Shared\{ApplicationName}.App.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The XAML views compile to partial classes that derive from the framework view base. -->
+    <Using Include="ISynergy.Framework.UI.Controls.View">
+      <Alias>View</Alias>
+    </Using>
+    <Using Include="ISynergy.Framework.Mvvm.Abstractions.IView">
+      <Alias>IView</Alias>
+    </Using>
+  </ItemGroup>
+
+  <ItemGroup>
+    <MauiXaml Update="Views\**\*.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
+  </ItemGroup>
+
+</Project>

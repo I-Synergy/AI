@@ -1,0 +1,25 @@
+using {ApplicationName}.Common.Enumerations;
+using {ApplicationName}.Models;
+
+namespace {ApplicationName}.Abstractions.Services;
+
+/// <summary>
+/// Reads and changes {entities} through the API. Heads depend on this interface only.
+/// </summary>
+public interface I{ApplicationName}ApiService
+{
+    /// <summary>Gets all {entities}.</summary>
+    Task<IReadOnlyList<{Entity}>> Get{Entities}Async(CancellationToken cancellationToken = default);
+
+    /// <summary>Gets one {entity} by its identifier, or null when it does not exist.</summary>
+    Task<{Entity}?> Get{Entity}ByIdAsync(Guid {entity}Id, CancellationToken cancellationToken = default);
+
+    /// <summary>Creates the {entity} and returns its identifier.</summary>
+    Task<Guid> Create{Entity}Async(string name, string? description, CancellationToken cancellationToken = default);
+
+    /// <summary>Updates the {entity}. Returns false when it does not exist.</summary>
+    Task<bool> Update{Entity}Async(Guid {entity}Id, string name, string? description, {Entity}Status status, CancellationToken cancellationToken = default);
+
+    /// <summary>Deletes the {entity}. Returns false when it does not exist.</summary>
+    Task<bool> Delete{Entity}Async(Guid {entity}Id, CancellationToken cancellationToken = default);
+}

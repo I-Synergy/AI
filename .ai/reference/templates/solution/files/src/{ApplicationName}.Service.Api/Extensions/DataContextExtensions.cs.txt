@@ -1,0 +1,62 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using {ApplicationName}.Common.Constants;
+using {ApplicationName}.Data;
+
+namespace {ApplicationName}.Service.Api.Extensions;
+
+/// <summary>
+/// Registers the <see cref="DataContext"/> against the connection string configured for the application.
+/// </summary>
+/// <remarks>
+/// <para>
+/// The connection string is read from <c>ConnectionStrings:{applicationname}-db</c>. It is supplied by the
+/// environment or a secret store and is never committed to source control.
+/// </para>
+/// <para>
+/// The migrations history table is pinned to the "system" schema in the provider options. The same pin on the
+/// context's configuration interface is not applied reliably at runtime.
+/// </para>
+/// </remarks>
+public static class DataContextExtensions
+{
+    /// <summary>
+    /// Registers <see cref="DataContext"/> against the connection string configured under <see cref="ConnectionStrings.Data"/>.
+    /// </summary>
+    /// <param name="services">The service collection to register into.</param>
+    /// <param name="configuration">The configuration that holds the connection string.</param>
+    /// <returns>The same service collection, so calls can be chained.</returns>
+    /// <remarks>
+    /// The connection string is read when the context is first created, not when the registration is made, so
+    /// registering the context never fails. A missing connection string fails the first use with a clear message.
+    /// </remarks>
+    public static IServiceCollection Add{Provider}{ApplicationName}DataContext(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        services.AddDbContext<DataContext>(options =>
+        {
+            var connectionString = configuration.GetConnectionString(ConnectionStrings.Data);
+
+            if (string.IsNullOrWhiteSpace(connectionString))
+            {
+                throw new InvalidOperationException(
+                    $"ConnectionStrings:{ConnectionStrings.Data} must be configured.");
+            }
+
+{{#if sqlserver}}
+            options.UseSqlServer(
+                connectionString,
+                sqlServer => sqlServer.MigrationsHistoryTable("__EFMigrationsHistory", "system"));
+{{/if}}
+{{#if postgres}}
+            options.UseNpgsql(
+                connectionString,
+                npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "system"));
+{{/if}}
+        });
+
+        return services;
+    }
+}

@@ -1,0 +1,42 @@
+using {ApplicationName}.Common.Enumerations;
+using {ApplicationName}.Data.Abstractions;
+using ISynergy.Framework.CQRS.Abstractions.Commands;
+using Microsoft.Extensions.Logging;
+
+namespace {ApplicationName}.Domains.Features.{Entities}.Commands.Create{Entity};
+
+/// <summary>
+/// Handles the creation of the {entity}.
+/// </summary>
+public sealed class Create{Entity}CommandHandler(
+    IDataContext dataContext,
+    ILogger<Create{Entity}CommandHandler> logger)
+    : ICommandHandler<Create{Entity}Command, Create{Entity}Response>
+{
+    /// <inheritdoc />
+    public async Task<Create{Entity}Response> HandleAsync(
+        Create{Entity}Command command,
+        CancellationToken cancellationToken = default)
+    {
+        var entity = new Entities.{Entity}
+        {
+            {Entity}Id = Guid.NewGuid(),
+            Name = command.Name,
+            Description = command.Description,
+            Status = {Entity}Status.Draft,
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        dataContext.{Entities}.Add(entity);
+        var rowsAffected = await dataContext.SaveChangesAsync(cancellationToken);
+
+        if (rowsAffected == 0)
+        {
+            logger.LogWarning("Creating the {Entity} wrote no rows");
+            throw new InvalidOperationException("The {entity} could not be created.");
+        }
+
+        logger.LogInformation("Created {Entity} {EntityId}", entity.{Entity}Id);
+        return new Create{Entity}Response(entity.{Entity}Id);
+    }
+}

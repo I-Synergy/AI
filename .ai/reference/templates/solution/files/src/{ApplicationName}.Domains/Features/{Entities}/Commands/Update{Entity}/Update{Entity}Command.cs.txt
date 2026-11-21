@@ -1,0 +1,17 @@
+using {ApplicationName}.Common.Enumerations;
+using ISynergy.Framework.CQRS.Commands;
+
+namespace {ApplicationName}.Domains.Features.{Entities}.Commands.Update{Entity};
+
+/// <summary>
+/// Command to update the {entity}.
+/// </summary>
+/// <param name="{Entity}Id">The identifier of the {entity} to update.</param>
+/// <param name="Name">The new name.</param>
+/// <param name="Description">The new description.</param>
+/// <param name="Status">The new status.</param>
+public sealed record Update{Entity}Command(
+    Guid {Entity}Id,
+    string Name,
+    string? Description,
+    {Entity}Status Status) : ICommand<Update{Entity}Response>;

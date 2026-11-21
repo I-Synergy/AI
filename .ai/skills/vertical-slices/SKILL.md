@@ -42,11 +42,11 @@ For each feature:
     { "name": "{PropertyName}", "type": "{CSharpType}" }
   ],
   "files_to_create": [
-    "{Solution}.Domain.{Domain}/Features/{Entity}/Commands/{Operation}{Entity}/{Operation}{Entity}Command.cs",
-    "{Solution}.Domain.{Domain}/Features/{Entity}/Commands/{Operation}{Entity}/{Operation}{Entity}CommandHandler.cs",
-    "{Solution}.Domain.{Domain}/Features/{Entity}/Commands/{Operation}{Entity}/{Operation}{Entity}Response.cs",
-    "{Solution}.Services.{Domain}/Endpoints/{Entity}/{Operation}{Entity}Endpoint.cs",
-    "{Solution}.{Domain}.Tests/{Entity}/{Operation}{Entity}CommandHandlerTests.cs"
+    "{Solution}.Domains/Features/{Entities}/Commands/{Operation}{Entity}/{Operation}{Entity}Command.cs",
+    "{Solution}.Domains/Features/{Entities}/Commands/{Operation}{Entity}/{Operation}{Entity}CommandHandler.cs",
+    "{Solution}.Domains/Features/{Entities}/Commands/{Operation}{Entity}/{Operation}{Entity}Response.cs",
+    "{Solution}.Services/Endpoints/{Entities}Endpoints.cs",
+    "{Solution}.Domains.Tests/Handlers/{Entities}/{Operation}{Entity}CommandHandlerTests.cs"
   ],
   "source": {
     "use_cases": ["UC-{Domain}-{NNN}"],

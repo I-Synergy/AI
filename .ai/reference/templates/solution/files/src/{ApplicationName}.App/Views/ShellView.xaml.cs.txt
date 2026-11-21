@@ -1,0 +1,52 @@
+using ISynergy.Framework.Mvvm.Abstractions.ViewModels;
+using ISynergy.Framework.UI.Abstractions.Views;
+using {ApplicationName}.ViewModels;
+
+namespace {ApplicationName}.Views;
+
+/// <summary>
+/// The shell page. It hosts the tab bar and binds the shell view model.
+/// </summary>
+public partial class ShellView : Shell, IShellView
+{
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ShellView"/> class.
+    /// </summary>
+    /// <param name="viewModel">The shell view model.</param>
+    public ShellView(ShellViewModel viewModel)
+    {
+        InitializeComponent();
+        ViewModel = viewModel;
+    }
+
+    /// <summary>
+    /// Gets or sets the view model, which is also the binding context of the shell.
+    /// </summary>
+    /// <remarks>The getter returns null when no binding context is set, for example after the shell is detached.</remarks>
+    public IViewModel ViewModel
+    {
+        get => (BindingContext as IViewModel)!;
+        set
+        {
+            BindingContext = value;
+            SetBinding(Shell.TitleProperty, new Binding(nameof(value.Title)));
+        }
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// Releases the view model of the shell.
+    /// </summary>
+    /// <param name="disposing"><c>true</c> to release the managed resources; <c>false</c> otherwise.</param>
+    protected virtual void Dispose(bool disposing)
+    {
+        if (disposing)
+            ViewModel?.Dispose();
+    }
+}

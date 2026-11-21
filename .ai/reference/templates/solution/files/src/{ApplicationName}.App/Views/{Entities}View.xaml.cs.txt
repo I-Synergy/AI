@@ -1,0 +1,19 @@
+using {ApplicationName}.ViewModels;
+
+namespace {ApplicationName}.Views;
+
+/// <summary>
+/// The page that lists the {entities}.
+/// </summary>
+public partial class {Entities}View
+{
+    /// <summary>
+    /// Initializes a new instance of the <see cref="{Entities}View"/> class.
+    /// </summary>
+    /// <param name="viewModel">The list view model.</param>
+    public {Entities}View({Entities}ViewModel viewModel)
+        : base(viewModel)
+    {
+        InitializeComponent();
+    }
+}

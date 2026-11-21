@@ -1,0 +1,22 @@
+using Microsoft.EntityFrameworkCore;
+using {ApplicationName}.Data.Sqlite.Entities;
+
+namespace {ApplicationName}.Data.Sqlite;
+
+/// <summary>
+/// Device-local database context. The schema is created with <c>EnsureCreated</c>, so no migrations ship with it.
+/// </summary>
+public class LocalDataContext(DbContextOptions<LocalDataContext> options) : DbContext(options)
+{
+    /// <summary>Gets the favorites stored on the device.</summary>
+    public DbSet<Favorite> Favorites => Set<Favorite>();
+
+    /// <inheritdoc />
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        ArgumentNullException.ThrowIfNull(modelBuilder);
+
+        base.OnModelCreating(modelBuilder);
+        modelBuilder.ApplyConfiguration(new FavoriteConfiguration());
+    }
+}

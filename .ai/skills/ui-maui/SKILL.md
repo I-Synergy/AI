@@ -10,104 +10,71 @@ sources:
 license: See license.md in repository root
 ---
 
-# I-Synergy Framework UI MAUI Skill (SKILL.md)
+# .NET MAUI Head (I-Synergy UI)
 
-Everything here points at the actual code under [src/ISynergy.Framework.UI.Maui](src/ISynergy.Framework.UI.Maui). Use these sections when wiring MAUI apps to the framework services instead of relying on the readme.
+This skill covers the MAUI head of a generated solution, `{ApplicationName}.App`, and the framework services it uses. For the view, view model, and command pattern, read `.ai/patterns/mvvm.md`. For the bootstrap of both heads, read `.ai/skills/maui-blazor/SKILL.md`.
 
----
+## 1. Bootstrap: `MauiProgram.CreateMauiApp`
 
-## 1. `MauiAppBuilderExtensions.ConfigureServices`
+The bootstrap has four parts, in this order:
 
-`ConfigureServices<TApplication, TContext, TCommonServices, TExceptionHandlerService, TSettingsService, TResource>` in [src/ISynergy.Framework.UI.Maui/Extensions/MauiAppBuilderExtensions.cs](src/ISynergy.Framework.UI.Maui/Extensions/MauiAppBuilderExtensions.cs) is the single entry point for DI:
+1. **Configuration.** The base `appsettings.json` and the environment file (`appsettings.Development.json` or `appsettings.Production.json`) are embedded resources. `MauiProgram` reads them by name. The environment comes from the launch arguments, then the `Environment` variable, then defaults to Production.
+2. **Telemetry.** `builder.Logging.AddTelemetry(...)` with the framework's OpenTelemetry extension. Development exports over OTLP; other environments export to Application Insights.
+3. **Head and framework.** `UseMauiAppForCurrentHead<App>()`, `UseFonts(...)`, `UseThemeColors(...)`, and `ConfigureServices<...>(...)` (six type arguments, see `maui-blazor`).
+4. **Debug-only tooling.** `builder.AddMauiDevFlowAgent()` under `#if DEBUG`. The package is referenced for Debug builds only.
 
 ```csharp
-appBuilder.Services.Configure<ApplicationFeatures>(appBuilder.Configuration.GetSection(nameof(ApplicationFeatures)).Bind);
-appBuilder.Services.Configure<ClientApplicationOptions>(appBuilder.Configuration.GetSection(nameof(ClientApplicationOptions)).Bind);
+// Correct: the application's services are added in the callback; the framework's are left to ConfigureServices.
+builder
+    .UseMauiAppForCurrentHead<App>()
+    .ConfigureServices<App, Context, CommonServices, ExceptionHandlerService, SettingsService, global::{ApplicationName}.Resources.Properties.Resources>(
+        appBuilder => appBuilder.Add{ApplicationName}ApiServices(),
+        mainAssembly,
+        assemblyName => assemblyName.Name!.StartsWith(typeof(App).Namespace!, StringComparison.Ordinal));
 
-appBuilder.Services.TryAddSingleton<IInfoService>(s => InfoService.Default);
-appBuilder.Services.TryAddSingleton<ILanguageService>(s => languageService);
-appBuilder.Services.TryAddSingleton<IMessengerService, MessengerService>();
-appBuilder.Services.TryAddSingleton<IPreferences>(s => Preferences.Default);
-appBuilder.Services.TryAddSingleton<IMigrationService, MigrationService>();
-
-appBuilder.Services.TryAddSingleton<TContext>();
-appBuilder.Services.TryAddSingleton<IContext>(s => s.GetRequiredService<TContext>());
-appBuilder.Services.TryAddSingleton<IExceptionHandlerService, TExceptionHandlerService>();
-appBuilder.Services.TryAddScoped<ISettingsService, TSettingsService>();
-appBuilder.Services.TryAddScoped<IAuthenticationProvider, AuthenticationProvider>();
-
-appBuilder.Services.TryAddSingleton<IApplicationLifecycleService, ApplicationLifecycleService>();
-appBuilder.Services.TryAddSingleton<INavigationService, NavigationService>();
-appBuilder.Services.TryAddSingleton<IDialogService, DialogService>();
-appBuilder.Services.TryAddSingleton<IThemeService, ThemeService>();
-appBuilder.Services.TryAddSingleton<IClipboardService, ClipboardService>();
-appBuilder.Services.TryAddSingleton<IFileService<FileResult>, FileService>();
+// Wrong: a second registration of a framework service, and the wrong head entry point.
+builder.Services.AddSingleton<INavigationService, NavigationService>();   // already registered by ConfigureServices
+builder.UseMauiApp<App>();                                               // not used by this template
 ```
 
-- `RegisterAssemblies(assembly, assemblyFilter)` pulls every `View`, `ViewModel`, and service in the calling assembly into DI.
-- `AddPageResolver()` registers `MauiInitializerService`, ensuring each page created through the shell resolves its scoped services before appearing.
-- Fonts are configured right in this extension; you get the Segoe/Open Sans bundle unless you override it.
+## 2. What the framework registers
 
----
+`ConfigureServices` registers the framework's UI services (navigation, dialogs, theme, lifecycle, settings, exception handling, and the application context) against the types you pass. The application's own services are added in the callback. The sample adds two:
 
-## 2. Logging + OpenTelemetry
+- `appBuilder.Add{ApplicationName}ApiServices()`: the API client and `I{ApplicationName}ApiService`, from `{ApplicationName}.App.Shared`.
+- `appBuilder.Services.AddDeviceStore()`: the device-local SQLite store, from `{ApplicationName}.App/Extensions`, which calls `AddLocalSqliteStore` in `{ApplicationName}.Data.Sqlite`.
 
-`ConfigureLogging` in the same file wires `ILogger` + OpenTelemetry ([src/ISynergy.Framework.UI.Maui/Extensions/MauiAppBuilderExtensions.cs](src/ISynergy.Framework.UI.Maui/Extensions/MauiAppBuilderExtensions.cs)):
+Do not register a framework service a second time. Add application services in the callback and leave the framework's own registrations to `ConfigureServices`.
 
-- `AddOpenTelemetry()` is called for both tracing and metrics with HTTP and runtime instrumentation enabled.
-- Debug builds automatically add `AddConsoleExporter()` so you can see spans/metrics while iterating.
-- Override the optional `Action<TracerProviderBuilder>` / `Action<MeterProviderBuilder>` parameters to add exporters (OTLP, Azure Monitor, etc.) without touching the framework code.
+## 3. Context and settings
 
----
+- `Context` (`Context.cs`, in the root namespace) implements the framework's `IContext`. It holds the signed-in profile, the time zone, and the offline flag. The sample has no sign-in, so the profile stays empty.
+- `SettingsService` (`Services/SettingsService.cs`) implements the framework's `ISettingsService`. Its JSON serialization uses a source-generated context, `SettingsJsonContext`, in its own file, so the code is trimming- and NativeAOT-safe. Each serializable type needs a `[JsonSerializable]` entry on that context; the sample lists only `Themes`.
 
-## 3. Dynamic theme pipeline
+## 4. Startup and the shell
 
-- `ApplicationExtensions.SetApplicationColor` ([src/ISynergy.Framework.UI.Maui/Extensions/ApplicationExtensions.cs](src/ISynergy.Framework.UI.Maui/Extensions/ApplicationExtensions.cs)) swaps every `ISynergy.Framework.UI.Resources.Styles.Themes` resource dictionary based on a hex string and falls back to `Themeffb900` if the color is unknown.
-- `ThemeService` ([src/ISynergy.Framework.UI.Maui/Services/ThemeService.cs](src/ISynergy.Framework.UI.Maui/Services/ThemeService.cs)) pulls `Theme`/`Color` from `ISettingsService`, calls the extension, sets `Application.AccentColor`, and updates platform resources (Android colors, Windows title bar) inside `UpdatePlatformColors()`.
-- The service guards `Application.Current` nullability, so you can call `IThemeService.ApplyTheme()` any time after the app builds.
+- `App.InitializeApplicationAsync()` runs the startup work once, with a busy message through `_commonServices.BusyService`, and signals initialization at the end.
+- `App.OnApplicationLoaded` opens `ShellViewModel` with `NavigateModalAsync`.
+- `ShellView` derives from `Shell` and implements `IShellView`. Its `ViewModel` property sets the binding context and binds the title. Its `Dispose` releases the view model.
+- The shell's `TabBar` lists the tabs. The sample has one tab, `ItemsView`, with `FlyoutBehavior="Disabled"`.
 
----
+## 5. Localisation
 
-## 4. NavigationService behavior
+Strings come from `{ApplicationName}.Resources` (`Properties/Resources.resx`). In code, `_commonServices.LanguageService.GetString(key)`. In XAML, `{m:GetString Key}` with the `ISynergy.Framework.UI.Markup` namespace. A missing key shows the key itself, so check the resource file when a label shows a key name.
 
-The MAUI implementation in [src/ISynergy.Framework.UI.Maui/Services/NavigationService.cs](src/ISynergy.Framework.UI.Maui/Services/NavigationService.cs) wraps `Page.GetNavigation()` and drives both stack and modal navigation:
+## 6. Dependencies
 
-- `NavigateAsync<TViewModel>` uses `NavigationExtensions.CreatePage<TViewModel>` to construct the view, pushes it if it is not already on the stack, and calls `InitializeAsync()` on the ViewModel with centralized exception handling.
-- `NavigateModalAsync<TViewModel>` swaps `Application.Current.Windows[0].Page` and reruns initialization; dispatcher-aware logic re-enters on the UI thread if needed.
-- `CanGoBack` inspects both navigation and modal stacks. `CleanBackStackAsync` pops to root.
-- Blade APIs (`OpenBladeAsync` etc.) throw `[Obsolete("Not supported!", true)]` so you do not accidentally call desktop-only features.
+The MAUI head references `I-Synergy.Framework.UI.Maui`, `I-Synergy.Framework.OpenTelemetry.ApplicationInsights`, and `Microsoft.Extensions.ServiceDiscovery`. The `Using` aliases in `{ApplicationName}.App.csproj` (`View`, `IView`) let the XAML code-behind resolve the framework base class. Do not add `CommunityToolkit.Mvvm` to this head: the framework's MVVM base classes and commands are used instead.
 
----
+## 7. Platform heads
 
-## 5. Platform services bundled in DI
+`Platforms/` holds the entry points of each target: `Android/MainActivity.cs` and `MainApplication.cs`, `iOS/AppDelegate.cs`, `MacCatalyst/AppDelegate.cs`, and `Windows/App.xaml`. Each calls `MauiProgram.CreateMauiApp()`. The Apple targets ship `PrivacyInfo.xcprivacy` as a bundle resource, because the app reads its preferences through MAUI `Preferences`.
 
-`ConfigureServices` automatically registers:
+Target selection in `{ApplicationName}.App.csproj` follows the host: Apple targets are added on every host except Linux, Android is added with `ANDROID_HOME` or on Windows, and the Windows target is added on Windows only. The AppHost adds a Windows device and, on macOS only, a Mac Catalyst device.
 
-| Service | Implementation | Notes |
-| --- | --- | --- |
-| `ITokenStorageService` | [TokenStorageService](src/ISynergy.Framework.UI.Maui/Services/TokenStorageService.cs) | Secure tokens per platform via `SecureStorage`. |
-| `IDialogService` | [DialogService](src/ISynergy.Framework.UI.Maui/Services/DialogService.cs) | Presents modal pages/windows consistently. |
-| `IFileService<FileResult>` | [FileService](src/ISynergy.Framework.UI.Maui/Services/FileService.cs) | Uses `FilePicker`/`FileSaver` across OSs. |
-| `ICameraService` | [CameraService](src/ISynergy.Framework.UI.Maui/Services/CameraService.cs) | Wraps `MediaPicker`; request permissions before calling. |
-| `IClipboardService` | [ClipboardService](src/ISynergy.Framework.UI.Maui/Services/ClipboardService.cs) | Maps to `Clipboard.Default`. |
+## Pitfalls
 
-You get `IApplicationLifecycleService`, `IDispatcherService`, and `IScopedContextService` out of the box so background operations and ViewModel scopes behave exactly like WPF/WinUI.
-
----
-
-## 6. Page resolver + initialization
-
-`AddPageResolver()` registers `IMauiInitializeService` ([src/ISynergy.Framework.UI.Maui/Extensions/MauiAppBuilderExtensions.cs](src/ISynergy.Framework.UI.Maui/Extensions/MauiAppBuilderExtensions.cs)), pointing at `MauiInitializerService`. That initializer resolves each page through DI, so every `ui:View` automatically receives its ViewModel and `CommonServices` before hitting the visual tree. No manual service locator calls are needed.
-
----
-
-## 7. Troubleshooting directly from source
-
-| Symptom | Actual cause in code | Fix |
-| --- | --- | --- |
-| `NavigationService` throws `InvalidOperationException("Main page is not available.")` | `GetMainPage()` (NavigationService) could not find `Application.Current.Windows[0].Page`. | Ensure you set a `Page` when the app launches (e.g., `MainPage = new AppShell();`). |
-| Theme never updates | `ThemeService.ApplyTheme()` exits when `Application.Current` is null. | Call the service after `builder.Build()` and `app.Run()` or from `MauiProgram` right after you set `MainPage`. |
-| Fonts missing | You removed the bundled font registrations in `ConfigureServices`. | Re-add `ConfigureFonts` call or add your own fonts before calling `UseMauiApp<App>()`. |
-| File picker returns empty string | `StaticAssetService` returns `string.Empty` when `HttpClient.SendAsync` fails. | Inspect HTTP response; the service intentionally swallows errors to let ViewModels decide how to react. |
-
-Pair this MAUI skill with **ui-core** for shared auth/context logic and **ui-blazor** if you embed Razor components via `BlazorWebView`.
+- A view that does not appear: the view model's constructor parameters must be registered services; a missing one throws at navigation time, not at build time.
+- A binding that fails to build: `x:DataType` is required on every binding (compiled bindings are on).
+- A cold start that hangs on the busy message: `SignalApplicationInitialized()` was not called. The sample calls it after the try/catch, so the failure path signals too.
+- Under Aspire, the device cannot reach the API: `HttpClientSettings:BaseAddress` must use the API's Aspire resource name, the `AspireNames` constant from `{ApplicationName}.Common`.

@@ -1,5 +1,7 @@
 # Microservices Architecture Pattern
 
+> **Layout note.** A solution from the scaffold is flat: one API host (`{ApplicationName}.Service.Api`) over one endpoints library (`{ApplicationName}.Services`) and shared projects. Use this pattern only when a bounded context is split into its own deployable service. Each split service is then a separate solution-level project named `{ApplicationName}.{Entity}.Service` (the examples below use that form), and the flat layout is kept for everything that stays in the monolith. Splitting is an architecture decision; take it through the architect and, when it changes the layout, the council.
+
 ## Overview
 
 Microservices architecture is an approach to developing a single application as a suite of small, independently deployable services. Each service runs in its own process, communicates via lightweight mechanisms (typically HTTP/REST or messaging), and is organized around business capabilities. This pattern enables continuous delivery, scalability, and technology diversity.
@@ -134,9 +136,9 @@ Bounded Contexts:
 ### Context Mapping
 
 ```csharp
-// File: {ApplicationName}.Services.{Entity}/Domain/{Entity}.cs
+// File: {ApplicationName}.{Entity}.Service/Domain/{Entity}.cs
 
-namespace {ApplicationName}.Services.{Entity}.Domain;
+namespace {ApplicationName}.{Entity}.Service.Domain;
 
 /// <summary>
 /// {Entity} aggregate in {Entity} Management context.
@@ -150,9 +152,9 @@ public sealed class {Entity}
     // {Entity}-specific properties and behavior
 }
 
-// File: {ApplicationName}.Services.{ChildEntity}/Domain/{ChildEntity}.cs
+// File: {ApplicationName}.{ChildEntity}.Service/Domain/{ChildEntity}.cs
 
-namespace {ApplicationName}.Services.{ChildEntity}.Domain;
+namespace {ApplicationName}.{ChildEntity}.Service.Domain;
 
 /// <summary>
 /// {ChildEntity} aggregate in {ChildEntity} Management context.
@@ -345,9 +347,9 @@ public sealed class DashboardAggregationService
 ### Synchronous Communication (REST)
 
 ```csharp
-// File: {ApplicationName}.Services.{ChildEntity}/Services/{Entity}ServiceClient.cs
+// File: {ApplicationName}.{ChildEntity}.Service/Services/{Entity}ServiceClient.cs
 
-namespace {ApplicationName}.Services.{ChildEntity}.Services;
+namespace {ApplicationName}.{ChildEntity}.Service.Services;
 
 /// <summary>
 /// Client for communicating with {Entity} Service.
@@ -410,11 +412,11 @@ builder.Services.AddHttpClient<{Entity}ServiceClient>(client =>
 ### Synchronous Communication (gRPC)
 
 ```csharp
-// File: {ApplicationName}.Services.{Entity}/Protos/{entity}.proto
+// File: {ApplicationName}.{Entity}.Service/Protos/{entity}.proto
 
 syntax = "proto3";
 
-option csharp_namespace = "{ApplicationName}.Services.{Entity}.Grpc";
+option csharp_namespace = "{ApplicationName}.{Entity}.Service.Grpc";
 
 package {entity};
 
@@ -458,12 +460,12 @@ message Update{Entity}Response {
 
 **gRPC Service Implementation:**
 ```csharp
-// File: {ApplicationName}.Services.{Entity}/GrpcServices/{Entity}GrpcService.cs
+// File: {ApplicationName}.{Entity}.Service/GrpcServices/{Entity}GrpcService.cs
 
 using Grpc.Core;
-using {ApplicationName}.Services.{Entity}.Grpc;
+using {ApplicationName}.{Entity}.Service.Grpc;
 
-namespace {ApplicationName}.Services.{Entity}.GrpcServices;
+namespace {ApplicationName}.{Entity}.Service.GrpcServices;
 
 public sealed class {Entity}GrpcService : {Entity}Service.{Entity}ServiceBase
 {
@@ -518,11 +520,11 @@ public sealed class {Entity}GrpcService : {Entity}Service.{Entity}ServiceBase
 
 **gRPC Client:**
 ```csharp
-// File: {ApplicationName}.Services.{ChildEntity}/Services/{Entity}GrpcClient.cs
+// File: {ApplicationName}.{ChildEntity}.Service/Services/{Entity}GrpcClient.cs
 
-using {ApplicationName}.Services.{Entity}.Grpc;
+using {ApplicationName}.{Entity}.Service.Grpc;
 
-namespace {ApplicationName}.Services.{ChildEntity}.Services;
+namespace {ApplicationName}.{ChildEntity}.Service.Services;
 
 public sealed class {Entity}GrpcClient
 {
@@ -564,9 +566,9 @@ builder.Services.AddGrpcClient<{Entity}Service.{Entity}ServiceClient>(options =>
 ### Asynchronous Communication (Message Queue)
 
 ```csharp
-// File: {ApplicationName}.Services.{Entity}/Events/{Entity}CreatedEvent.cs
+// File: {ApplicationName}.{Entity}.Service/Events/{Entity}CreatedEvent.cs
 
-namespace {ApplicationName}.Services.{Entity}.Events;
+namespace {ApplicationName}.{Entity}.Service.Events;
 
 /// <summary>
 /// Event published when a {entity} is created.
@@ -583,7 +585,7 @@ public sealed record {Entity}CreatedEvent
 
 **Publishing Events (using MassTransit):**
 ```csharp
-// File: {ApplicationName}.Services.{Entity}/Handlers/Create{Entity}CommandHandler.cs
+// File: {ApplicationName}.{Entity}.Service/Handlers/Create{Entity}CommandHandler.cs
 
 using MassTransit;
 
@@ -598,7 +600,7 @@ public sealed class Create{Entity}CommandHandler(
         CancellationToken cancellationToken = default)
     {
         // Create {entity}
-        var entity = new Entities.{Domain}.{Entity}
+        var entity = new Entities.{Entity}
         {
             {Entity}Id = Guid.NewGuid(),
             Name = command.Name,
@@ -635,12 +637,12 @@ public sealed class Create{Entity}CommandHandler(
 
 **Consuming Events:**
 ```csharp
-// File: {ApplicationName}.Services.Notification/Consumers/{Entity}CreatedEventConsumer.cs
+// File: {ApplicationName}.Notification.Service/Consumers/{Entity}CreatedEventConsumer.cs
 
 using MassTransit;
-using {ApplicationName}.Services.{Entity}.Events;
+using {ApplicationName}.{Entity}.Service.Events;
 
-namespace {ApplicationName}.Services.Notification.Consumers;
+namespace {ApplicationName}.Notification.Service.Consumers;
 
 /// <summary>
 /// Consumes {Entity}CreatedEvent and sends notification.
@@ -752,7 +754,7 @@ public sealed class NotificationDbContext
 Services communicate through events without a central coordinator.
 
 ```csharp
-// File: {ApplicationName}.Services.Order/Events/OrderCreatedEvent.cs
+// File: {ApplicationName}.Order.Service/Events/OrderCreatedEvent.cs
 
 public sealed record OrderCreatedEvent
 {
@@ -761,7 +763,7 @@ public sealed record OrderCreatedEvent
     public decimal TotalAmount { get; init; }
 }
 
-// File: {ApplicationName}.Services.Payment/Consumers/OrderCreatedEventConsumer.cs
+// File: {ApplicationName}.Payment.Service/Consumers/OrderCreatedEventConsumer.cs
 
 public sealed class OrderCreatedEventConsumer : IConsumer<OrderCreatedEvent>
 {
@@ -794,7 +796,7 @@ public sealed class OrderCreatedEventConsumer : IConsumer<OrderCreatedEvent>
     }
 }
 
-// File: {ApplicationName}.Services.Order/Consumers/PaymentFailedEventConsumer.cs
+// File: {ApplicationName}.Order.Service/Consumers/PaymentFailedEventConsumer.cs
 
 public sealed class PaymentFailedEventConsumer : IConsumer<PaymentFailedEvent>
 {
@@ -811,11 +813,11 @@ public sealed class PaymentFailedEventConsumer : IConsumer<PaymentFailedEvent>
 A central orchestrator manages the saga workflow.
 
 ```csharp
-// File: {ApplicationName}.Services.Orchestrator/Sagas/OrderSaga.cs
+// File: {ApplicationName}.Orchestrator.Service/Sagas/OrderSaga.cs
 
 using MassTransit;
 
-namespace {ApplicationName}.Services.Orchestrator.Sagas;
+namespace {ApplicationName}.Orchestrator.Service.Sagas;
 
 public sealed class OrderState : SagaStateMachineInstance
 {
@@ -924,7 +926,7 @@ public interface IDomainEvent
     DateTimeOffset OccurredAt { get; init; }
 }
 
-// File: {ApplicationName}.Services.{Entity}/Events/{Entity}UpdatedEvent.cs
+// File: {ApplicationName}.{Entity}.Service/Events/{Entity}UpdatedEvent.cs
 
 public sealed record {Entity}UpdatedEvent : IDomainEvent
 {
@@ -937,7 +939,7 @@ public sealed record {Entity}UpdatedEvent : IDomainEvent
     public Guid UserId { get; init; }
 }
 
-// File: {ApplicationName}.Services.Reporting/Consumers/{Entity}UpdatedEventConsumer.cs
+// File: {ApplicationName}.Reporting.Service/Consumers/{Entity}UpdatedEventConsumer.cs
 
 public sealed class {Entity}UpdatedEventConsumer : IConsumer<{Entity}UpdatedEvent>
 {
@@ -996,7 +998,7 @@ builder.Build().Run();
 
 **Service Discovery in Consumer:**
 ```csharp
-// File: {ApplicationName}.Services.{ChildEntity}/Program.cs
+// File: {ApplicationName}.{ChildEntity}.Service/Program.cs
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -1021,7 +1023,7 @@ app.Run();
 ## Circuit Breaker and Resilience Patterns
 
 ```csharp
-// File: {ApplicationName}.Services.{ChildEntity}/Program.cs
+// File: {ApplicationName}.{ChildEntity}.Service/Program.cs
 
 using Microsoft.Extensions.Http.Resilience;
 
@@ -1059,7 +1061,7 @@ app.Run();
 ## Distributed Tracing with OpenTelemetry
 
 ```csharp
-// File: {ApplicationName}.Services.{Entity}/Program.cs
+// File: {ApplicationName}.{Entity}.Service/Program.cs
 
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -1181,7 +1183,7 @@ version: '3.8'
 services:
   {entity}-service:
     build:
-      context: ./src/{ApplicationName}.Services.{Entity}
+      context: ./src/{ApplicationName}.{Entity}.Service
       dockerfile: Dockerfile
     ports:
       - "8081:8080"
@@ -1196,7 +1198,7 @@ services:
 
   {childEntity}-service:
     build:
-      context: ./src/{ApplicationName}.Services.{ChildEntity}
+      context: ./src/{ApplicationName}.{ChildEntity}.Service
       dockerfile: Dockerfile
     ports:
       - "8082:8080"
@@ -1213,7 +1215,7 @@ services:
 
   reporting-service:
     build:
-      context: ./src/{ApplicationName}.Services.Reporting
+      context: ./src/{ApplicationName}.Reporting.Service
       dockerfile: Dockerfile
     ports:
       - "8083:8080"
@@ -1494,7 +1496,7 @@ spec:
 ### Health Checks
 
 ```csharp
-// File: {ApplicationName}.Services.{Entity}/Program.cs
+// File: {ApplicationName}.{Entity}.Service/Program.cs
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -1555,7 +1557,7 @@ public sealed class {Entity}ServiceHealthCheck : IHealthCheck
 ### Application Insights / Sentry
 
 ```csharp
-// File: {ApplicationName}.Services.{Entity}/Program.cs
+// File: {ApplicationName}.{Entity}.Service/Program.cs
 
 using I.Synergy.Framework.OpenTelemetry.Extensions;
 

@@ -1,0 +1,132 @@
+using {ApplicationName}.Common.Enumerations;
+using {ApplicationName}.Data.{Provider}.Tests.Infrastructure;
+using {ApplicationName}.Entities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+namespace {ApplicationName}.Data.{Provider}.Tests;
+
+/// <summary>
+/// Pins what the {Provider} <c>DataContext</c> builds: the provider, the {Entity} entity configuration and
+/// the migrations history table. Offline: the design-time factory names a server that is never contacted.
+/// </summary>
+/// <remarks>
+/// What this cannot see: how the provider stores a value, what an index enforces, or whether a migration does
+/// what the model says. Those need a real server; see the readme of this project.
+/// </remarks>
+[TestClass]
+public sealed class DataContextModelTests
+{
+{{#if sqlserver}}
+    private const string ExpectedProviderName = "Microsoft.EntityFrameworkCore.SqlServer";
+    private const string ExpectedHistoryTable = "[system].[__EFMigrationsHistory]";
+{{/if}}
+{{#if postgres}}
+    private const string ExpectedProviderName = "Npgsql.EntityFrameworkCore.PostgreSQL";
+    private const string ExpectedHistoryTable = "system.\"__EFMigrationsHistory\"";
+{{/if}}
+
+    [TestMethod]
+    public void DesignTimeFactory_BuildsAContextOnTheExpectedProvider()
+    {
+        // Arrange
+        using var context = ModelProbe.CreateContext();
+
+        // Act
+        var providerName = context.Database.ProviderName;
+
+        // Assert
+        Assert.AreEqual(ExpectedProviderName, providerName);
+    }
+
+    [TestMethod]
+    public void Model_{Entity}_IsKeyedBy{Entity}Id()
+    {
+        // Arrange
+        using var context = ModelProbe.CreateContext();
+
+        // Act
+        var entityType = ModelProbe.GetModel(context).FindEntityType(typeof({Entity}));
+
+        // Assert
+        Assert.IsNotNull(entityType, "The {Entity} entity is not part of the model.");
+
+        var key = entityType.FindPrimaryKey();
+        Assert.IsNotNull(key, "The {Entity} entity has no primary key.");
+        Assert.AreEqual(1, key.Properties.Count);
+        Assert.AreEqual(nameof({Entity}.{Entity}Id), key.Properties[0].Name);
+    }
+
+    [TestMethod]
+    public void Model_{Entity}_RequiresANameAndAllowsAMissingDescription()
+    {
+        // Arrange
+        using var context = ModelProbe.CreateContext();
+        var entityType = ModelProbe.GetModel(context).FindEntityType(typeof({Entity}));
+        Assert.IsNotNull(entityType, "The {Entity} entity is not part of the model.");
+
+        // Act
+        var name = entityType.FindProperty(nameof({Entity}.Name));
+        var description = entityType.FindProperty(nameof({Entity}.Description));
+
+        // Assert
+        Assert.IsNotNull(name);
+        Assert.IsFalse(name.IsNullable, "Name must be required.");
+        Assert.IsNotNull(description);
+        Assert.IsTrue(description.IsNullable, "Description must be optional.");
+    }
+
+    [TestMethod]
+    public void Model_{Entity}_StoresTheStatusAsTheEnum()
+    {
+        // Arrange
+        using var context = ModelProbe.CreateContext();
+        var entityType = ModelProbe.GetModel(context).FindEntityType(typeof({Entity}));
+        Assert.IsNotNull(entityType, "The {Entity} entity is not part of the model.");
+
+        // Act
+        var status = entityType.FindProperty(nameof({Entity}.Status));
+
+        // Assert
+        Assert.IsNotNull(status);
+        Assert.AreEqual(typeof({Entity}Status), status.ClrType);
+    }
+
+    [TestMethod]
+    public void Model_{Entity}_LivesInTheApplicationSchema()
+    {
+        // Arrange
+        using var context = ModelProbe.CreateContext();
+        var entityType = ModelProbe.GetModel(context).FindEntityType(typeof({Entity}));
+        Assert.IsNotNull(entityType, "The {Entity} entity is not part of the model.");
+
+        // Act
+        var schema = entityType.GetSchema();
+
+        // Assert
+        Assert.AreEqual("{applicationname}", schema);
+    }
+
+    /// <summary>
+    /// The migrations history table sits in the "system" schema, which is what <c>MigrateAsync</c> reads at
+    /// runtime. A context that reads the default history table on a database migrated under "system" finds no
+    /// applied migrations and re-runs every one, failing on the first table that already exists.
+    /// </summary>
+    [TestMethod]
+    public void MigrationsHistoryTable_IsPinnedToTheSystemSchema()
+    {
+        // Arrange
+        using var context = ModelProbe.CreateContext();
+
+        // Act
+        var script = context.GetService<IHistoryRepository>().GetCreateScript();
+
+        // Assert
+        StringAssert.Contains(
+            script,
+            ExpectedHistoryTable,
+            "The migrations history table is not created in the system schema. The script rendered is: " + script);
+    }
+}

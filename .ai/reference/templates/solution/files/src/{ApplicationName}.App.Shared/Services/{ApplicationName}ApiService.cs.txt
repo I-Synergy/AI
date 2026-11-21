@@ -1,0 +1,93 @@
+using System.Net;
+using Microsoft.Kiota.Abstractions;
+using {ApplicationName}.Abstractions.Services;
+using {ApplicationName}.Clients.Api;
+using {ApplicationName}.Common.Enumerations;
+using {ApplicationName}.Models;
+using ClientModels = {ApplicationName}.Clients.Api.Models;
+
+namespace {ApplicationName}.Services;
+
+/// <summary>
+/// Implements the API operations with the generated Kiota client. It maps the client models to the application
+/// models, so heads never see the generated types.
+/// </summary>
+public sealed class {ApplicationName}ApiService(ApiClient client) : I{ApplicationName}ApiService
+{
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<{Entity}>> Get{Entities}Async(CancellationToken cancellationToken = default)
+    {
+        var items = await client.{Entities}.GetAsync(cancellationToken: cancellationToken);
+        return items?.Select(Map).ToList() ?? [];
+    }
+
+    /// <inheritdoc />
+    public async Task<{Entity}?> Get{Entity}ByIdAsync(Guid {entity}Id, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var item = await client.{Entities}[{entity}Id].GetAsync(cancellationToken: cancellationToken);
+            return item is null ? null : Map(item);
+        }
+        catch (ApiException exception) when (exception.ResponseStatusCode == (int)HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<Guid> Create{Entity}Async(string name, string? description, CancellationToken cancellationToken = default)
+    {
+        var body = new ClientModels.Create{Entity}Request
+        {
+            Name = name,
+            Description = description,
+        };
+
+        var identifier = await client.{Entities}.PostAsync(body, cancellationToken: cancellationToken);
+        return identifier ?? Guid.Empty;
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> Update{Entity}Async(Guid {entity}Id, string name, string? description, {Entity}Status status, CancellationToken cancellationToken = default)
+    {
+        var body = new ClientModels.Update{Entity}Request
+        {
+            {Entity}Id = {entity}Id,
+            Name = name,
+            Description = description,
+            Status = Enum.Parse<ClientModels.{Entity}Status>(status.ToString()),
+        };
+
+        try
+        {
+            var updated = await client.{Entities}.PutAsync(body, cancellationToken: cancellationToken);
+            return updated ?? false;
+        }
+        catch (ApiException exception) when (exception.ResponseStatusCode == (int)HttpStatusCode.NotFound)
+        {
+            return false;
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> Delete{Entity}Async(Guid {entity}Id, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await client.{Entities}[{entity}Id].DeleteAsync(cancellationToken: cancellationToken);
+            return true;
+        }
+        catch (ApiException exception) when (exception.ResponseStatusCode == (int)HttpStatusCode.NotFound)
+        {
+            return false;
+        }
+    }
+
+    private static {Entity} Map(ClientModels.{Entity} source) =>
+        new(source.{Entity}Id ?? Guid.Empty,
+            source.Name ?? string.Empty,
+            source.Description,
+            source.Status is null ? {Entity}Status.Draft : Enum.Parse<{Entity}Status>(source.Status.ToString()!),
+            source.CreatedAt ?? DateTimeOffset.MinValue);
+}
