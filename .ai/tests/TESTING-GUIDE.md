@@ -27,6 +27,7 @@ The pytest wrapper also runs `validate-upgrade-script.py`, which the bash runner
 | Integration Smoke Tests | `smoke-test.py` | Skills loadable, names and descriptions unique, patterns and templates present |
 | Traceability | `validate-traceability.py` | The identifier chain: story → criterion → scenario → slice → test |
 | Standards | `validate-standards.py` | `.ai/reference/standards.md` and the generated compatibility surfaces |
+| Solution Scaffold | `validate-scaffold.py` | `scaffold-solution.py` and `.ai/reference/templates/solution/`: render matrix, template rules, central packages, forbidden terms, CLI errors; `SCAFFOLD_BUILD_SMOKE=1` adds an opt-in build |
 | Upgrade Script (pytest only) | `validate-upgrade-script.py` | `upgrade-template.py` classification and integration |
 
 No dated results snapshot is kept here — results change with every run.
@@ -72,6 +73,9 @@ python3 .ai/tests/validate-traceability.py
 
 # Standards manifest validation
 python3 .ai/tests/validate-standards.py
+
+# Solution scaffold
+python3 .ai/tests/validate-scaffold.py
 
 # Upgrade script validation (pytest only — not run by run-all-tests.sh)
 python3 .ai/tests/validate-upgrade-script.py

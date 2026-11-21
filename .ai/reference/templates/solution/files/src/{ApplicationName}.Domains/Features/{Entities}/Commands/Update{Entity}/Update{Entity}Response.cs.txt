@@ -1,0 +1,7 @@
+namespace {ApplicationName}.Domains.Features.{Entities}.Commands.Update{Entity};
+
+/// <summary>
+/// Response indicating whether the {entity} was updated.
+/// </summary>
+/// <param name="Success">True when the update was applied.</param>
+public sealed record Update{Entity}Response(bool Success);

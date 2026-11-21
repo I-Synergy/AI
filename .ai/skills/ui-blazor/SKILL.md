@@ -10,187 +10,93 @@ sources:
 license: See license.md in repository root
 ---
 
-# I-Synergy Framework UI Blazor Library Skill (SKILL.md)
+# Blazor Web Head (plain Razor)
 
-Focus on the actual implementation under [src/ISynergy.Framework.UI.Blazor](src/ISynergy.Framework.UI.Blazor). Each section cites concrete types and behavior taken directly from the library.
+This skill covers the Blazor web head of a generated solution, `{ApplicationName}.App.Web`. The head is plain Razor on interactive server rendering. It is not built on the I-Synergy Blazor UI library, so there is no `View<TViewModel>`, no ViewModel layer, and no `ConfigureServices` bootstrapper in this head.
 
----
+If you need the I-Synergy Blazor UI library instead (`View<TViewModel>`, its bootstrapper, and its services), that is a different head design. Take it through the architect; it is not what the generator writes.
 
-## 1. Bootstrap pipeline (ConfigureServices)
-
-`ServiceCollectionExtensions.ConfigureServices` in [src/ISynergy.Framework.UI.Blazor/Extensions/ServiceCollectionExtensions.cs](src/ISynergy.Framework.UI.Blazor/Extensions/ServiceCollectionExtensions.cs) wires the entire Blazor stack:
+## 1. Program.cs
 
 ```csharp
-services.Configure<ClientApplicationOptions>(configuration.GetSection(nameof(ClientApplicationOptions)).Bind);
-services.Configure<AnalyticOptions>(configuration.GetSection(nameof(AnalyticOptions)).Bind);
+var builder = WebApplication.CreateBuilder(args);
 
-var languageService = new LanguageService();
-languageService.AddResourceManager(typeof(ISynergy.Framework.Mvvm.Properties.Resources));
-languageService.AddResourceManager(typeof(ISynergy.Framework.UI.Properties.Resources));
-languageService.AddResourceManager(typeof(TResource));
+// telemetry: builder.Logging.AddTelemetry(...), then OTLP in Development, Application Insights elsewhere
 
-services.TryAddSingleton<IInfoService>(s => infoService);
-services.TryAddSingleton<ILanguageService>(s => languageService);
-services.TryAddSingleton<IMessengerService, MessengerService>();
-services.TryAddSingleton<IScopedContextService, ScopedContextService>();
-services.TryAddSingleton<IBusyService, BusyService>();
+builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 
-services.TryAddScoped<TContext>();
-services.TryAddScoped<IContext>(s => s.GetRequiredService<TContext>());
-services.TryAddSingleton<IExceptionHandlerService, TExceptionHandlerService>();
-services.TryAddScoped<ISettingsService, TSettingsService>();
-services.TryAddScoped<IAuthenticationProvider, AuthenticationProvider>();
-services.TryAddSingleton<TCommonServices>();
-services.TryAddSingleton<ICommonServices>(s => s.GetRequiredService<TCommonServices>());
+// Registers the API client and I{ApplicationName}ApiService from the HttpClientSettings section.
+builder.AddAcmeApiServices();   // Acme = {ApplicationName}
 
-services.AddAuthorizationCore();
-services.AddCascadingAuthenticationState();
-services.AddHttpClient<IStaticAssetService, StaticAssetService>();
-services.TryAddTransient<IAntiforgeryHttpClientFactory, AntiforgeryHttpClientFactory>();
-services.TryAddSingleton<IFormFactorService, FormFactorService>();
-services.TryAddSingleton<RequestCancellationService>();
+builder.Services.AddWebHealthChecks();
 
-services.RegisterAssemblies(assembly, assemblyFilter);
-action.Invoke(services);
+var app = builder.Build();
+
+if (!app.Environment.IsDevelopment())
+    app.UseHsts();
+
+app.UseHttpsRedirection();
+app.UseAntiforgery();
+app.MapStaticAssets();
+
+app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = check => check.Tags.Contains("live") });
+app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = check => check.Tags.Contains("ready") });
+
+app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
+
+app.Run();
 ```
 
-- The generic signature enforces application-specific context (`TContext : IContext`), common services, exception handling, and settings infrastructure.
-- Language/translation support is composed by stacking resource managers for MVVM, UI, and caller-provided assemblies before registering `ILanguageService`.
-- Static asset access, antiforgery handling, and form-factor detection are injected once and shared across components via DI.
+`/health/live` does no I/O. `/health/ready` also runs `ApiHealthCheck`, which calls the API's `/health` route with a 5-second timeout. That probe uses a raw `HttpClient`: it is the one documented exception to the Kiota-only rule, because a health check must not depend on the generated client.
 
----
+## 2. Components and pages
 
-## 2. MVVM-ready `View<TViewModel>` component
-
-[src/ISynergy.Framework.UI.Blazor/Components/Controls/View.cs](src/ISynergy.Framework.UI.Blazor/Components/Controls/View.cs) implements a scoped Blazor component that binds a DI-provided ViewModel:
+- `App.razor` is the document root. `Routes.razor` maps the router. `Layouts/MainLayout.razor` is the shell layout.
+- Pages live under `Pages/{Entities}/` and declare their route with `@page`.
+- A page injects the API service directly:
 
 ```razor
-@inherits ComponentBase
-
-@code {
-    [Inject] public required TViewModel ViewModel { get; set; }
-
-    protected override async Task OnInitializedAsync()
-    {
-        if (!ViewModel.IsInitialized)
-            await ViewModel.InitializeAsync();
-
-        ViewModel.PropertyChanged += OnViewModelPropertyChanged;
-        SubscribeToViewModelCommands();
-    }
-
-    private void SubscribeToViewModelCommands()
-    {
-        var commandProperties = ViewModel.GetType()
-            .GetProperties(BindingFlags.Public | BindingFlags.Instance)
-            .Where(p => typeof(ICommand).IsAssignableFrom(p.PropertyType));
-
-        foreach (var property in commandProperties)
-        {
-            if (property.GetValue(ViewModel) is ICommand command)
-            {
-                command.CanExecuteChanged += OnCommandCanExecuteChanged;
-                _subscribedCommands.Add(command);
-            }
-        }
-    }
-}
+@page "/items"
+@inject I{ApplicationName}ApiService ApiService
+@implements IDisposable
 ```
 
-- Any ViewModel deriving from `IViewModel` is resolved, initialized once, and disposed when the component is destroyed.
-- The helper stores every discovered `ICommand` property and refreshes the UI whenever `CanExecute` changes, giving native MVVM command semantics inside Razor components.
+- Loading and error state are fields. Load in `OnInitializedAsync`, and handle the failure on the page, not with an exception that escapes the component.
+- Work that outlives the page is cancelled in `Dispose` through a `CancellationTokenSource`. The sample's `ItemsList` page does this.
+- Forms bind a private class with Data Annotations (`[Required]`, `[MaxLength]`) through `EditForm` and `DataAnnotationsValidator`.
 
----
+## 3. State
 
-## 3. Command helpers for Razor components
-
-`ComponentExtensions` in [src/ISynergy.Framework.UI.Blazor/Extensions/ComponentExtensions.cs](src/ISynergy.Framework.UI.Blazor/Extensions/ComponentExtensions.cs) exposes two helpers:
-
-- `CommandBinding(component, command, parameter, disabled)` returns attribute dictionaries wiring `onclick` and `disabled` so a `<FluentButton @attributes="@this.CommandBinding(ViewModel.SaveCommand)" />` stays in sync with `CanExecute`.
-- `CommandClick(component, command, parameter)` yields an `EventCallback<MouseEventArgs>` for direct binding when you do not need to control other attributes.
-
-Both helpers call `command.Execute(parameter)` only when `CanExecute` returns true, preventing accidental double submits.
-
----
-
-## 4. Form factor reporting
-
-`FormFactorService` ([src/ISynergy.Framework.UI.Blazor/Services/FormFactorService.cs](src/ISynergy.Framework.UI.Blazor/Services/FormFactorService.cs)) currently reports a constant form factor:
+The sample keeps no shared state between components. When a page needs state that outlives it, add a scoped class (one per circuit under interactive server rendering) and register it in the head's `ServiceCollectionExtensions`:
 
 ```csharp
-public class FormFactorService : IFormFactorService
-{
-    public string GetFormFactor() => "Web";
-    public string GetPlatform() => Environment.OSVersion.ToString();
-}
+services.AddScoped<ItemFilterState>();
 ```
 
-- The abstraction `IFormFactorService` lives under [src/ISynergy.Framework.UI.Blazor/Abstractions/Services/IFormFactorService.cs](src/ISynergy.Framework.UI.Blazor/Abstractions/Services/IFormFactorService.cs); swap this implementation to push richer device data through the same DI contract without touching consumers.
+Inject it into the components that share it. Do not put state in a static field: under interactive server rendering a static field is shared between every user.
 
----
+## 4. Where an optional component library goes
 
-## 5. Static asset caching via HttpClient + cache storage
+The generated head uses no component library. If you add one:
 
-`StaticAssetService` ([src/ISynergy.Framework.UI.Blazor/Services/StaticAssetService.cs](src/ISynergy.Framework.UI.Blazor/Services/StaticAssetService.cs)) is injected wherever `IStaticAssetService` is requested:
+1. Reference the NuGet package in `{ApplicationName}.App.Web.csproj`.
+2. Register its services in `Program.cs` (for Microsoft Fluent UI, `AddFluentUIComponents()`).
+3. Import its namespaces in `_Imports.razor`.
+4. Load its stylesheet or script from `App.razor` if it does not add them itself.
 
-- Accepts the ambient `NavigationManager` to derive the base URI for relative asset URLs.
-- Uses an injected `ICacheStorageService` to read/write cached payloads keyed on the crafted `HttpRequestMessage`.
-- Falls back to `HttpClient.SendAsync` and returns `string.Empty` when the download is not successful, letting callers decide how to handle missing resources.
+Keep the component library out of `{ApplicationName}.App.Shared`. The shared layer has no UI dependency.
 
-Because this service is registered through `AddHttpClient<IStaticAssetService, StaticAssetService>()`, you can layer Polly handlers or resilience policies at the host level without modifying the implementation.
+For Fluent UI specifically, `.ai/skills/blazor-fluentui/SKILL.md` is an optional add-on guide. Its I-Synergy-specific sections (`View<TViewModel>`, the `ConfigureServices` bootstrapper) do not apply to this head.
 
----
+## 5. Styling
 
-## 6. Antiforgery-aware HttpClient factory
+Styles are in `wwwroot/css/app.css`, referenced from `App.razor`. Keep the styles plain CSS unless the component library above is added.
 
-`IAntiforgeryHttpClientFactory` ([src/ISynergy.Framework.UI.Blazor/Abstractions/Security/IAntiforgeryHttpClientFactory.cs](src/ISynergy.Framework.UI.Blazor/Abstractions/Security/IAntiforgeryHttpClientFactory.cs)) is realized by [src/ISynergy.Framework.UI.Blazor/Security/AntiforgeryHttpClientFactory.cs](src/ISynergy.Framework.UI.Blazor/Security/AntiforgeryHttpClientFactory.cs):
+## Pitfalls
 
-```csharp
-public async Task<HttpClient> CreateClientAsync(string clientName = "authorizedClient")
-{
-    var token = await _jSRuntime.InvokeAsync<string>("getAntiForgeryToken");
-
-    var client = _httpClientFactory.CreateClient(clientName);
-    client.DefaultRequestHeaders.Add("X-XSRF-TOKEN", token);
-
-    return client;
-}
-```
-
-- Relies on a JavaScript function (`getAntiForgeryToken`) to pull the server-issued token before stamping the outgoing request header.
-- Registered as a transient dependency so each call can fetch the most recent token and client configuration.
-
----
-
-## 7. Minimal JS interop helpers
-
-[src/ISynergy.Framework.UI.Blazor/Extensions/JsRuntimeExtensions.cs](src/ISynergy.Framework.UI.Blazor/Extensions/JsRuntimeExtensions.cs) currently adds `FocusElementById`, implemented by invoking `document.getElementById` and calling `focus()` on the returned element reference. Extend this module when more DOM utilities are needed instead of sprinkling raw `IJSRuntime` calls through components.
-
----
-
-## 8. Static typing for caching and navigation menus
-
-All service abstractions live under [src/ISynergy.Framework.UI.Blazor/Abstractions/Services](src/ISynergy.Framework.UI.Blazor/Abstractions/Services). Besides form-factor and static assets, it contains `ICacheStorageService` and `INavigationMenuService`, giving consumers a stable contract regardless of platform. When implementing custom behavior, keep the namespace alignment (`ISynergy.Framework.UI.Abstractions.Services`) so `ConfigureServices` will pick up replacements automatically through DI.
-
----
-
-## 9. Usage checklist
-
-- Always call `ConfigureServices<...>` from your host builder to ensure `ILanguageService`, `IMessengerService`, antiforgery, and static asset plumbing are registered once.
-- Inherit UI components from `View<TViewModel>` whenever you need automatic initialization, property change refreshes, and command subscription.
-- Use `CommandBinding`/`CommandClick` helpers instead of manual lambda wiring so the disabled state and `CanExecute` remain synchronized.
-- Fetch server-hosted JSON or text through `IStaticAssetService` instead of creating ad-hoc `HttpClient` instances; caching is automatic and mockable.
-- Request `IAntiforgeryHttpClientFactory` whenever you need to post to protected endpoints from client code.
-
----
-
-## 10. Troubleshooting tips
-
-| Symptom | Likely cause | Remedy |
-| --- | --- | --- |
-| ViewModel logic never runs | `View<TViewModel>` not registered as scoped or not injected | Add the component through DI (lifetime `Scoped`) and ensure the ViewModel itself is registered. |
-| Buttons stay disabled | Command not exposing `CanExecuteChanged` or component not using `CommandBinding` | Use `CommandBinding` so the helper subscribes to events discovered via reflection. |
-| Static assets return empty string | Remote fetch failed and service returned `string.Empty` | Inspect server logs/responses; the service only suppresses errors by returning empty payloads. |
-| Antiforgery header missing | JS function `getAntiForgeryToken` absent on page | Ensure `_Host.cshtml` or your layout defines the script before calling `IAntiforgeryHttpClientFactory`. |
-
-Pair this skill with **ui-core** for shared abstractions and **ui-maui** when hosting Razor content inside `BlazorWebView`.
+| Symptom | Cause | Fix |
+|---|---|---|
+| Page shows an error but the API is up | The API base address does not match the service-discovery name | Check `HttpClientSettings:BaseAddress` and the AppHost resource name |
+| Button clicks do nothing | Interactive render mode is not applied to the page | Confirm `AddInteractiveServerRenderMode()` on `MapRazorComponents` |
+| Form posts without validation messages | `DataAnnotationsValidator` missing from the `EditForm` | Add it inside the form |
+| Antiforgery error on a form | `UseAntiforgery()` missing or out of order | Call it after `UseHttpsRedirection` |

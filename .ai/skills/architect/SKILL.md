@@ -105,13 +105,19 @@ Infrastructure Layer (Data, External Services)
 ### Project Structure Pattern
 
 ```
-{ApplicationName}.Contracts.{Domain}/      # Interfaces
-{ApplicationName}.Entities.{Domain}/       # EF Core entities
-{ApplicationName}.Models.{Domain}/         # DTOs
-{ApplicationName}.Domain.{Domain}/         # CQRS logic
-{ApplicationName}.Services.{Domain}/       # API endpoints
-{ApplicationName}.Data/                    # DataContext
+src/
+  {ApplicationName}.Common/         # shared enums and constants (one place for shared types)
+  {ApplicationName}.Entities/       # EF Core entities and their configurations
+  {ApplicationName}.Models/         # read models and request bodies (no Dto suffix)
+  {ApplicationName}.Data/           # IDataContext, and an Abstractions/ folder for data interfaces
+  {ApplicationName}.Data.SqlServer/ # or .Data.Postgres: DataContext, design-time factory
+  {ApplicationName}.Domains/        # Features/{Entities}/ CQRS slices, one folder per operation
+  {ApplicationName}.Services/       # endpoints library: Endpoints/{Entities}Endpoints.cs
+  {ApplicationName}.Service.Api/    # API host: Program.cs, health checks
+  {ApplicationName}.Clients/        # Kiota client, Api/ regenerated on the API's Debug build
 ```
+
+Interfaces are not a project. Each one sits in an `Abstractions/` folder of the highest project that both its consumers and its implementation reference (see `.ai/reference/critical-rules.md`, rule 27). A solution has no `Abstractions` project.
 
 ### Bounded Context Example
 
@@ -136,13 +142,13 @@ Authentication Context:
 | Category | Technology | Reason |
 |----------|-----------|--------|
 | **Orchestration** | .NET Aspire | Infrastructure management |
-| **Database** | PostgreSQL | Open source, performant |
+| **Database** | SQL Server or PostgreSQL (the generator's `--database` flag) | Chosen per solution; the provider project is `{ApplicationName}.Data.SqlServer` or `.Data.Postgres` |
 | **ORM** | EF Core 10 | Microsoft standard |
 | **Caching** | Azure Redis | Distributed caching |
 | **CQRS** | I-Synergy.Framework.CQRS | Project standard |
 | **Logging** | I-Synergy.Framework.OpenTelemetry | Observability |
 | **Testing** | MSTest | Microsoft standard |
-| **Auth** | OpenIddict | OAuth2/OIDC |
+| **Auth** | OAuth2 / OIDC provider, chosen per project | OAuth2/OIDC |
 
 ### Architecture Decision Template
 
@@ -201,7 +207,7 @@ L3: Database (source of truth)
 - Centralized log aggregation (Application Insights)
 
 ### Security Architecture
-- Authentication: OpenIddict (OAuth2/OIDC)
+- Authentication: OAuth2 / OIDC provider, chosen per project
 - Authorization: Claims-based, policies
 - API keys for service-to-service
 - Azure Key Vault for secrets

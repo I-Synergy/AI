@@ -96,13 +96,15 @@
 **Project Structure:**
 
 ```
-{ApplicationName}.Contracts.{Domain}/       # Service contracts, interfaces
-{ApplicationName}.Entities.{Domain}/        # EF Core entity classes
-{ApplicationName}.Models.{Domain}/          # DTOs, view models
-{ApplicationName}.Domain.{Domain}/          # CQRS handlers, domain logic
-{ApplicationName}.Services.{Domain}/        # API endpoints
-{ApplicationName}.ViewModels.{Domain}/      # MVVM ViewModels (if applicable)
+{ApplicationName}.Entities/                # EF Core entity classes (POCOs)
+{ApplicationName}.Models/                  # Read models and request records
+{ApplicationName}.Domains/Features/{Entities}/   # CQRS commands, queries, handlers
+{ApplicationName}.Services/                # API endpoints ({Entities}Endpoints)
+{ApplicationName}.App.Shared/              # Shared head services (interfaces in Abstractions/)
+{ApplicationName}.App/ViewModels/          # MVVM ViewModels (MAUI head, if applicable)
 ```
+
+The solution has one flat set of projects. A business domain is a feature folder under `Features/{Entities}/` in the shared projects, not a project of its own. The shared `Common`, `Data` and `Data.{Provider}` projects hold the cross-domain types and persistence.
 
 **Dependencies:**
 
@@ -158,9 +160,9 @@ Example:
 **Example:**
 | Concept | Domains | Approach | Location |
 |---------|---------|----------|----------|
-| {ValueObject} | {Domain1}, {Domain2} | Shared value object | Common.ValueObjects |
-| Money | {Domain1}, {Domain2} | Shared value object with currency | Common.ValueObjects |
-| AuditFields | All domains | Base entity | Common.Entities.BaseEntity |
+| {ValueObject} | {Domain1}, {Domain2} | Shared value object | `{ApplicationName}.Common` |
+| Money | {Domain1}, {Domain2} | Shared value object with currency | `{ApplicationName}.Common` |
+| AuditFields | All domains | Base entity, if adopted (none is scaffolded) | `{ApplicationName}.Common` |
 
 ## Domain Maturity
 

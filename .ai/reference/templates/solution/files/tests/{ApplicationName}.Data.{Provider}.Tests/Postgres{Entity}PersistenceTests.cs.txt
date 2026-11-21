@@ -1,0 +1,73 @@
+using {ApplicationName}.Common.Enumerations;
+using {ApplicationName}.Data.{Provider}.Tests.Infrastructure;
+using {ApplicationName}.Entities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Npgsql;
+
+namespace {ApplicationName}.Data.{Provider}.Tests;
+
+/// <summary>
+/// Proves the {Entity} configuration against a real PostgreSQL server: what the in-memory provider cannot
+/// show is how the provider stores and returns each column.
+/// </summary>
+/// <remarks>
+/// Traces: US-&lt;Domain&gt;-NNN (placeholder; see .ai/reference/traceability.md). Tagged
+/// <c>Postgres</c> so a run without a container runtime can exclude the whole class with
+/// <c>--filter "TestCategory!=Postgres"</c>.
+/// </remarks>
+[TestClass]
+[TestCategory("Postgres")]
+public sealed class Postgres{Entity}PersistenceTests
+{
+    [TestMethod]
+    public async Task {Entity}_SavedThroughARealServer_RoundTripsEveryColumn()
+    {
+        // Arrange
+        var database = await PostgresFixture.CreateDatabaseAsync();
+        var id = Guid.NewGuid();
+        var createdAt = new DateTimeOffset(2026, 1, 2, 3, 4, 5, TimeSpan.Zero);
+
+        await using (var writer = database.CreateContext())
+        {
+            writer.{Entities}.Add(new {Entity}
+            {
+                {Entity}Id = id,
+                Name = "Alpha",
+                Description = null,
+                Status = {Entity}Status.Active,
+                CreatedAt = createdAt
+            });
+
+            // Act
+            await writer.SaveChangesAsync();
+        }
+
+        // Assert: read back through a context of its own so nothing comes from the change tracker.
+        await using var reader = database.CreateContext();
+        var stored = await reader.{Entities}.SingleAsync(row => row.{Entity}Id == id);
+
+        Assert.AreEqual("Alpha", stored.Name);
+        Assert.IsNull(stored.Description);
+        Assert.AreEqual({Entity}Status.Active, stored.Status);
+        Assert.AreEqual(createdAt, stored.CreatedAt);
+    }
+
+    [TestMethod]
+    public async Task Database_CreatedFromTheModel_HasTheApplicationSchema()
+    {
+        // Arrange
+        var database = await PostgresFixture.CreateDatabaseAsync();
+        await using var connection = await database.OpenConnectionAsync();
+        await using var command = new NpgsqlCommand(
+            "SELECT count(*) FROM information_schema.schemata WHERE schema_name = @schema",
+            connection);
+        command.Parameters.AddWithValue("schema", "{applicationname}");
+
+        // Act
+        var count = (long)(await command.ExecuteScalarAsync())!;
+
+        // Assert
+        Assert.AreEqual(1L, count, "The application schema was not created from the model.");
+    }
+}

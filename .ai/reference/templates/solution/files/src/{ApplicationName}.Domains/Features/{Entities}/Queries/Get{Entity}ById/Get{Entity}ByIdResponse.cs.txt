@@ -1,0 +1,7 @@
+namespace {ApplicationName}.Domains.Features.{Entities}.Queries.Get{Entity}ById;
+
+/// <summary>
+/// Response containing the requested {entity}, or null when it does not exist.
+/// </summary>
+/// <param name="{Entity}">The {entity} model, or null.</param>
+public sealed record Get{Entity}ByIdResponse(Models.{Entity}? {Entity});

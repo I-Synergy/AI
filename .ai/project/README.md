@@ -55,7 +55,7 @@ Each file has a **distinct, non-overlapping purpose**. No duplication between fi
 **Contains:**
 - Architectural patterns (Clean Architecture, CQRS, DDD)
 - Layer definitions and dependencies
-- Project structure template
+- Flat solution layout and the project dependency matrix
 - CQRS implementation patterns with code examples
 - Data access patterns
 - Mapping strategy (manual — no library)
@@ -121,7 +121,7 @@ edit domains.md          # Your business domains
 
 ### 2. Replace Tokens
 
-Throughout your customized files, replace:
+Rendering the solution with `python .ai/scripts/scaffold-solution.py` fills the scaffold tokens. Throughout your customized files, replace:
 - `{ApplicationName}` → Your application name
 - `{Domain}` → Your domain names
 - `{Entity}` → Your entity names

@@ -90,7 +90,7 @@ codesign --force --sign "$KEY" \
 
 ## 5. Strip Dangling XCFramework Symlinks Before Packaging; Use NUL-Delimited Loops
 
-**Root cause:** A framework can ship a `Frameworks -> Versions/Current/Frameworks` symlink whose target doesn't exist in that slice. Apple rejects the upload (`ITMS-90332`). Naive `find | xargs rm` word-splits on spaces (e.g. the app name "I-Synergy Quran.app") and silently no-ops, leaving the dangling symlink in place.
+**Root cause:** A framework can ship a `Frameworks -> Versions/Current/Frameworks` symlink whose target doesn't exist in that slice. Apple rejects the upload (`ITMS-90332`). Naive `find | xargs rm` word-splits on spaces (e.g. the app name "Acme App.app") and silently no-ops, leaving the dangling symlink in place.
 
 **Fix:** Use a NUL-delimited loop:
 
@@ -100,4 +100,4 @@ while IFS= read -r -d '' L; do
 done < <(find "$FRAMEWORK" -type l ! -exec test -e {} \; -print0)
 ```
 
-**NEVER use `find | xargs rm`** — `xargs` word-splits on spaces and silently no-ops on paths like `I-Synergy Quran.app`, so the dangling symlink survives and the upload still fails.
+**NEVER use `find | xargs rm`** — `xargs` word-splits on spaces and silently no-ops on paths like `Acme App.app`, so the dangling symlink survives and the upload still fails.

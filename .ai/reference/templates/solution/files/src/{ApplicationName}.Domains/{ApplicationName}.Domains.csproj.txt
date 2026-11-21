@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net11.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="I-Synergy.Framework.CQRS" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\{ApplicationName}.Entities\{ApplicationName}.Entities.csproj" />
+    <ProjectReference Include="..\{ApplicationName}.Models\{ApplicationName}.Models.csproj" />
+    <ProjectReference Include="..\{ApplicationName}.Data.{Provider}\{ApplicationName}.Data.{Provider}.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,118 +1,110 @@
 ---
 name: solution-generator
-description: Generates a complete .NET solution scaffold from an architecture document and design interrogation deliverables. Use after running design-interrogation to translate the architecture document, ubiquitous language, and use cases into a working solution structure with all projects, CQRS handlers, and entity configurations. Trigger whenever the user says "generate the solution", "scaffold the project", "create the solution structure", or wants to turn an architecture document into code.
+description: Generates a complete .NET solution scaffold with the template generator (python .ai/scripts/scaffold-solution.py), then adds the feature slices of each bounded context from the architecture document. Use after design-interrogation to turn the architecture document, ubiquitous language, and use cases into a working solution. Trigger whenever the user says "generate the solution", "scaffold the project", "create the solution structure", or wants to turn an architecture document into code.
 ---
 
 # Solution Generator
 
-Translates a completed architecture document into a .NET solution scaffold — projects, folder structure, domain entities, and CQRS handler stubs — following Clean Architecture and the patterns in this template.
+Creates a runnable solution from the templates in `.ai/reference/templates/solution/`, then adds the domain slices. The generator owns the shared shape (projects, configuration, client, hosts, tests). This skill owns the part that differs per product: the `Features/{Entities}/` slices and the entities, models, and endpoints behind them.
 
-## Inputs
-
-| Input | Source | Role |
-|-------|--------|------|
-| Architecture document | `docs/architecture/{SolutionName}-architecture.md` | Primary input — all parameters derived from here |
-| Ubiquitous Language | `UBIQUITOUS_LANGUAGE.md` | Domain naming, aggregate identification |
-| Use Cases | `docs/bounded-contexts/{Domain}/use-cases.md` | Each use case → CQRS Command or Query stub |
-| User Stories | `docs/bounded-contexts/{Domain}/user-stories.md` | Acceptance criteria → test stubs |
-| Session Decisions | `docs/session-decisions.md` | Technology and pattern choices |
-
-## Generation Steps
-
-1. **Parse the architecture document** for:
-   - Solution name
-   - Bounded contexts and their aggregates
-   - Technology stack choices (ORM, auth, caching, etc.)
-   - Architectural patterns (event sourcing, CQRS, etc.)
-   - Integration points and external services
-
-2. **Map aggregates to entities** — one EF Core entity class per aggregate root per bounded context
-
-3. **Map use cases to CQRS** — each use case main flow becomes a Command or Query + Handler stub:
-   - Create/Update/Delete flows → Commands
-   - Read flows → Queries
-
-4. **Generate the solution structure** (see below)
-
-5. **Generate entity configurations** — `IEntityTypeConfiguration<T>` per entity
-
-6. **Generate service registration** — `Extensions/ServiceCollectionExtensions.cs` per domain project
-
-7. **Generate test stubs** — one test class per handler, every stub traced to the acceptance
-   criterion it is evidence for:
-   - a `// Traces: US-{Domain}-{NNN} / AC-{Domain}-{NNN}.{n}, AC-{Domain}-{NNN}.{m}` header line directly
-     below the `// File:` line
-   - exactly one `[TestCategory("AC-{Domain}-{NNN}.{n}")]` per test method, with `[TestMethod]`
-     written first
-   - at least one test method per acceptance criterion the slice's `source` references — from
-     `source.acceptance_criteria`, or from the criteria of its `source.user_stories` when that
-     key is omitted; a criterion may have several methods
-   - the generated shape follows `.ai/reference/templates/test-class.cs.txt`; the identifier rules
-     are in `.ai/reference/traceability.md`
-   - a slice whose `source` is absent or unlabelled is in legacy mode — generate the stub without
-     an identifier rather than inventing one
-
-## Solution Structure
-
-Generate this layout for each bounded context, following the reference architecture in `.ai/project/architecture.md`:
+## Step 1: Run the generator
 
 ```
-src/
-├── {Solution}.Contracts.{Domain}/
-├── {Solution}.Entities.{Domain}/
-├── {Solution}.Models.{Domain}/
-├── {Solution}.Domain.{Domain}/
-│   ├── Features/
-│   │   └── {Entity}/
-│   │       ├── Commands/
-│   │       │   ├── Create{Entity}/
-│   │       │   │   ├── Create{Entity}Command.cs
-│   │       │   │   ├── Create{Entity}CommandHandler.cs
-│   │       │   │   └── Create{Entity}Response.cs
-│   │       │   ├── Update{Entity}/
-│   │       │   └── Delete{Entity}/
-│   │       ├── Queries/
-│   │       │   ├── Get{Entity}ById/
-│   │       │   └── Get{Entities}List/
-│   │       └── Events/
-│   ├── Models/
-│   │   └── {Entity}.cs
-│   └── Extensions/
-│       └── ServiceCollectionExtensions.cs
-└── {Solution}.Services.{Domain}/
-tests/
-└── {Solution}.{Domain}.Tests/
+python .ai/scripts/scaffold-solution.py
 ```
 
-## CQRS Stubs
+With no flags it prompts for every value. For a scripted run, pass the values as flags and add `--yes` so it never prompts:
 
-Follow the patterns in:
-- `.ai/reference/templates/command-handler.cs.txt`
-- `.ai/reference/templates/query-handler.cs.txt`
-
-Key rules (from AGENTS.md Critical Coding Rules):
-- Commands use individual parameters, not model objects
-- Handlers use EF Core primitives only (no repositories, no extension methods)
-- All mapping is manual — use `/* map entity to {Entity} model */` placeholders
-- Always include `CancellationToken` on all async methods
-- Responses wrap model types — never return domain entities directly
-- Interfaces live in `Abstractions/` folders in the highest shared project — not the implementing project
-- One type per file — model, response and request types are never merged into one file
-- Models are named after the concept — never a `Dto` suffix
-
-## Service Registration Stub
-
-```csharp
-// Extensions/ServiceCollectionExtensions.cs
-public static IServiceCollection With{Domain}DomainHandlers(
-    this IServiceCollection services)
-{
-    var assembly = typeof(ServiceCollectionExtensions).Assembly;
-    services.AddCQRS().AddHandlers(assembly);
-    return services;
-}
+```
+python .ai/scripts/scaffold-solution.py --name Acme --company "Acme Corp" \
+  --application-id com.example.acme --entity Item --entities Items \
+  --database sqlserver --with apphost,web,maui,sqlite-device --output ./Acme --yes
 ```
 
-## After Generation
+| Flag | Meaning |
+|---|---|
+| `--name` | Application name, PascalCase, a valid C# identifier segment. Required with `--yes`. |
+| `--company` | Company written to `Directory.Build.props`. Required with `--yes`. |
+| `--application-id` | Lower-case reverse DNS identifier of the MAUI head (Android package, Apple bundle, Windows identity). Default `com.example.<name>`. |
+| `--entity` / `--entities` | First sample entity, singular and plural, PascalCase. Default `Item` / plural of the entity. |
+| `--database` | `sqlserver` (default) or `postgres`. Selects `{Name}.Data.SqlServer` or `{Name}.Data.Postgres`. |
+| `--with a,b,c` | Optional heads and stores. Skips the flag prompts. Values: `apphost`, `maui`, `web`, `sqlite-device`. |
+| `--output` | Output directory, default `./<name>`. |
+| `--yes` | Do not prompt; use defaults for values not given. |
+| `--dry-run` | Report what would be created, write nothing. |
+| `--force-token KEY=VALUE` | Override `Version`, `Year`, `AppHostHttpsPort`, or `ApiHttpsPort` for reproducible renders. |
+| `--check-templates` | Verify the template set against its manifest and token table. Run this after editing any template. |
 
-Run `gap-review` to validate the generated solution against the original architecture document and session decisions.
+Existing files are never overwritten. Use an empty output directory.
+
+`worker`, `tests-acceptance`, and `tests-ui` are offered by the script, but their templates do not exist yet. Choosing one prints `templates not available yet` and the flag is treated as not set. Do not promise those projects to the user.
+
+Next steps the script prints (the repository's build rules apply to any build you run from it, see `.ai/project/preferences.md`):
+
+```
+dotnet tool restore
+dotnet restore
+dotnet build -nodeReuse:false
+dotnet test
+dotnet ef migrations add Initial --project src/{Name}.Data.SqlServer --startup-project src/{Name}.Service.Api
+```
+
+## Step 2: What the generator produces
+
+Projects are flat under `src/` and `tests/`. Each name is `{Name}.{Layer}`:
+
+| Project | Role |
+|---|---|
+| `{Name}.Common` | Shared constants, enumerations (`{Entity}Status` and any other shared enum), `HttpClientSettings`, `AspireNames` |
+| `{Name}.Resources` | Localised strings (`.resx` and the generated `Properties.Resources`) |
+| `{Name}.Entities` | EF Core entities and their `IEntityTypeConfiguration<T>` classes, one file each |
+| `{Name}.Models` | Read models and `Create{Entity}Request` / `Update{Entity}Request` bodies |
+| `{Name}.Data` | `IDataContext` abstraction shared by the handlers |
+| `{Name}.Data.SqlServer` or `{Name}.Data.Postgres` | Provider `DataContext`, design-time `DataContextFactory`, `DatabaseInitializer` |
+| `{Name}.Domains` | `Features/{Entities}/{Commands,Queries}/{Operation}/` slices, `ResourceNotFoundException`, `With{Name}DomainHandlers` registration |
+| `{Name}.Services` | The endpoints library: `Endpoints/{Entities}Endpoints.cs` and validation extensions |
+| `{Name}.Service.Api` | The API host (`Program.cs`), health checks, database check, `Program.Partial.cs` |
+| `{Name}.Clients` | Kiota client in `Api/`, regenerated from the API's OpenAPI document on a Debug build |
+| `{Name}.AppHost` | Aspire host (`apphost`) |
+| `{Name}.App.Shared` | Shared layer for the heads: `I{Name}ApiService` abstraction, `HostApplicationBuilderExtensions`, settings models (`maui`, `web`, or `sqlite-device`) |
+| `{Name}.App` | MAUI head (`maui`) |
+| `{Name}.App.Web` | Blazor web head, plain Razor (`web`) |
+| `{Name}.Data.Sqlite` | Device-local SQLite store (`sqlite-device`) |
+| `{Name}.Domains.Tests`, `{Name}.Service.Tests`, `{Name}.Data.{Provider}.Tests` | Test projects by layer, on a real EF Core provider |
+
+The sample `Item` slice that the generator writes (read it, do not invent a second shape):
+
+- `Domains/Features/Items/Commands/CreateItem/` holds `CreateItemCommand`, `CreateItemCommandHandler`, `CreateItemResponse`. Update and Delete follow the same shape.
+- `Domains/Features/Items/Queries/GetItemById/` and `GetItemsList/` hold the query, handler, and response.
+- `Services/Endpoints/ItemsEndpoints.cs` maps the group. It catches `ResourceNotFoundException` as 404 and any other `InvalidOperationException` as a validation problem.
+
+## Step 3: Add the bounded context's slices
+
+The generator writes one sample entity. Replace it with the bounded context from the architecture document. Work through the use cases in `docs/bounded-contexts/{Domain}/use-cases.md`, one slice per use case main flow:
+
+1. **Entities.** One class per aggregate root in `{Name}.Entities/{Entity}.cs`, with a matching `{Entity}Configuration.cs` in the same project. Use enum types for status properties, not `int`.
+2. **Enums.** Put every enum in `{Name}.Common/Enumerations/`, plural name unless it ends in `Status`. Pin the values (`= 0, = 1`) when they are persisted.
+3. **Models.** Read model in `{Name}.Models/{Entity}.cs`. Request bodies carry Data Annotations (`Create{Entity}Request`, `Update{Entity}Request`). No `Dto` suffix.
+4. **Slices.** For each use case, create `Features/{Entities}/Commands/{Operation}{Entity}/` or `Queries/{Operation}{Entities}/` with its command or query, handler, and response, one type per file. Command parameters are individual values, never a model object.
+5. **Data set.** Add the `DbSet` property to `DataContext` in the provider project, and apply the configuration with `ApplyConfigurationsFromAssembly` (already in the generated context).
+6. **Endpoints.** Add the operation to `{Name}.Services/Endpoints/{Entities}Endpoints.cs`. Declare every status code with `.Produces` and `.ProducesValidationProblem()`. Add `.WithValidation<T>()` to POST and PUT routes.
+7. **Migration.** Generate the first migration once the entities settle (see `database-migration`).
+8. **Tests.** One test class per handler under `tests/{Name}.Domains.Tests/Handlers/{Entities}/`, and one endpoint test class under `tests/{Name}.Service.Tests/`.
+
+The handler, endpoint, and entity conventions are in `.ai/patterns/cqrs-patterns.md`, `.ai/patterns/api-patterns.md`, and `.ai/patterns/testing-patterns.md`. Do not restate them here.
+
+## Step 4: Traceability in test stubs
+
+Generate every test stub with the identifiers the slice carries, so the traceability validator stays green:
+
+- A `// Traces: US-{Domain}-{NNN} / AC-{Domain}-{NNN}.{n}, AC-{Domain}-{NNN}.{m}` line directly below the file's header comment.
+- Exactly one `[TestCategory("AC-{Domain}-{NNN}.{n}")]` on each test method that is evidence for a criterion, with `[TestMethod]` written first.
+- At least one test method per acceptance criterion the slice's `source` references. Read `source.acceptance_criteria`, or the criteria of `source.user_stories` when that key is omitted.
+- Use the shape in `.ai/reference/templates/test-class.cs.txt`. The identifier rules are in `.ai/reference/traceability.md`.
+- A slice whose `source` is absent or unlabelled is in legacy mode. Generate the stub without an identifier rather than inventing one.
+
+## Step 5: Verify
+
+- Run `python .ai/scripts/scaffold-solution.py --check-templates` if you changed a template.
+- Build and run the tests in the generated solution (`dotnet build -nodeReuse:false`, `dotnet test`).
+- Run `gap-review` to check the generated solution against the architecture document and the session decisions.

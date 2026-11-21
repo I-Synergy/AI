@@ -1,0 +1,49 @@
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+namespace {ApplicationName}.Data.{Provider}.Tests.Infrastructure;
+
+/// <summary>
+/// The one place a container test gets its database from. Its job is to turn "there is no container runtime
+/// here" into an explicit, loud skip instead of a failure or a silent pass.
+/// </summary>
+/// <remarks>
+/// A static fixture rather than a base class: MSTest requires a <c>[TestClass]</c> to be public, and a public
+/// test class cannot inherit from an internal base. Skipping rather than failing: a machine without a
+/// container runtime cannot run these tests, and a build that goes red for that is a build people learn to
+/// ignore. What it must not do is report success; <see cref="Assert.Inconclusive(string)"/> prints the reason
+/// and does not count as a pass.
+/// </remarks>
+internal static class PostgresFixture
+{
+    /// <summary>
+    /// Creates a database in the shared container with the schema built from the current model, or skips the
+    /// calling test when no container runtime answers.
+    /// </summary>
+    /// <remarks>
+    /// The schema comes from <c>EnsureCreatedAsync</c> because a fresh solution ships no migrations. Once
+    /// migrations exist, call <c>Database.MigrateAsync</c> here instead so the tests run on the schema the
+    /// deployment gets.
+    /// </remarks>
+    /// <param name="cancellationToken">Token used to cancel the creation.</param>
+    /// <returns>The database.</returns>
+    public static async Task<PostgresDatabase> CreateDatabaseAsync(CancellationToken cancellationToken = default)
+    {
+        var server = await PostgresServer.GetAsync();
+
+        if (!server.IsAvailable)
+        {
+            Assert.Inconclusive(
+                "SKIPPED: no PostgreSQL container could be started, so this test asserted nothing. " +
+                $"Reason: {server.UnavailableReason}. " +
+                "Start a container runtime and run the project explicitly. If the runtime lives somewhere " +
+                "unusual, set DOCKER_HOST. Set POSTGRES_TESTS_SKIP=1 to see this skip on purpose.");
+        }
+
+        var database = await PostgresDatabase.CreateAsync(server.ConnectionString!, cancellationToken);
+
+        await using var context = database.CreateContext();
+        await context.Database.EnsureCreatedAsync(cancellationToken);
+
+        return database;
+    }
+}

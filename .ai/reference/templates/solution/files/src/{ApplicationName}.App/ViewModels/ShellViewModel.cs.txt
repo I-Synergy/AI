@@ -1,0 +1,53 @@
+using ISynergy.Framework.Core.Abstractions.Services;
+using ISynergy.Framework.Mvvm.Abstractions.Services;
+using ISynergy.Framework.Mvvm.Abstractions.ViewModels;
+using ISynergy.Framework.UI.ViewModels.Base;
+using Microsoft.Extensions.Logging;
+
+namespace {ApplicationName}.ViewModels;
+
+/// <summary>
+/// The shell of the application. It hosts the tabs that show the pages. The sample has no settings, help or sign-in,
+/// so those commands complete without work.
+/// </summary>
+public class ShellViewModel : BaseShellViewModel, IShellViewModel
+{
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ShellViewModel"/> class.
+    /// </summary>
+    /// <param name="commonServices">The common services of the framework.</param>
+    /// <param name="dialogService">The dialog service.</param>
+    /// <param name="navigationService">The navigation service.</param>
+    /// <param name="settingsService">The settings service.</param>
+    /// <param name="themeService">The theme service.</param>
+    /// <param name="logger">The logger.</param>
+    public ShellViewModel(
+        ICommonServices commonServices,
+        IDialogService dialogService,
+        INavigationService navigationService,
+        ISettingsService settingsService,
+        IThemeService themeService,
+        ILogger<ShellViewModel> logger)
+        : base(commonServices, dialogService, navigationService, settingsService, themeService, logger)
+    {
+        Title = commonServices.InfoService.ProductName;
+    }
+
+    /// <inheritdoc />
+    public override Task ShellLoadedAsync() => Task.CompletedTask;
+
+    /// <inheritdoc />
+    public override Task InitializeFirstRunAsync() => Task.CompletedTask;
+
+    /// <summary>
+    /// Opens the settings. The sample has no settings page.
+    /// </summary>
+    /// <returns>A completed task.</returns>
+    protected override Task OpenSettingsAsync() => Task.CompletedTask;
+
+    /// <summary>
+    /// Signs the user out. The sample has no sign-in, so there is nothing to sign out from.
+    /// </summary>
+    /// <returns>A completed task.</returns>
+    protected override Task SignOutAsync() => Task.CompletedTask;
+}

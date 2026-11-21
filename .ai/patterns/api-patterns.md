@@ -16,30 +16,37 @@ Based on the reference implementation in `ISynergy.Service.Api/Endpoints/`.
 
 ## Complete Endpoint Example
 
+The endpoints of one entity live in one class in the `{ApplicationName}.Services` project, `Endpoints/{Entities}Endpoints.cs`. The class exposes one `Map{Entities}Endpoints` extension that the host calls once. Handlers are injected with `[FromServices]`, and each handler method returns `Results<...>` so the OpenAPI document and the code declare the same status codes.
+
 ```csharp
-// File: {ApplicationName}.Services.{Domain}/Endpoints/v1/{Entity}Endpoints.cs
-
-namespace {ApplicationName}.Services.{Domain}.Endpoints.v1;
-
+// File: {ApplicationName}.Services/Endpoints/{Entities}Endpoints.cs
 using Asp.Versioning;
 using Asp.Versioning.Builder;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
+using ISynergy.Framework.CQRS.Abstractions.Commands;
+using ISynergy.Framework.CQRS.Queries;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Routing;
+using {ApplicationName}.Common.Constants;
+using {ApplicationName}.Domains;
+using {ApplicationName}.Domains.Features.{Entities}.Commands.Create{Entity};
+using {ApplicationName}.Domains.Features.{Entities}.Queries.Get{Entity}ById;
+
+namespace {ApplicationName}.Services.Endpoints;
 
 /// <summary>
-/// Defines endpoints for {Entity} operations.
+/// Defines the endpoints for {entity} operations.
 /// </summary>
-public static class {Entity}Endpoints
+public static class {Entities}Endpoints
 {
+    /// <summary>The key a refusal is reported under in a validation problem.</summary>
+    private const string RefusalKey = "{Entity}";
+
     /// <summary>
-    /// Maps all {entity} endpoints to the application route builder.
+    /// Maps the {entity} endpoints to the application route builder.
     /// </summary>
-    public static void Map{Entity}Endpoints(
-        this IEndpointRouteBuilder app,
-        params string[] authenticationSchemes)
+    /// <param name="app">The route builder to map into.</param>
+    /// <returns>The same route builder, so calls can be chained.</returns>
+    public static IEndpointRouteBuilder Map{Entities}Endpoints(this IEndpointRouteBuilder app)
     {
         var version = app.NewApiVersionSet()
             .HasApiVersion(new ApiVersion(1, 0))
@@ -50,146 +57,93 @@ public static class {Entity}Endpoints
             .MapGroup("/{entities}")
             .WithDisplayName("{Entities}")
             .WithTags("{Entities}")
-            .WithGroupName("v1")
             .WithApiVersionSet(version)
-            .RequireAuthorization(options =>
-            {
-                options.RequireAuthenticatedUser();
-                options.AddAuthenticationSchemes(authenticationSchemes);
-            });
+            .RequireRateLimiting(RateLimits.Api);
 
-        // POST: Create
         group.MapPost("", Add{Entity}Async)
-            .WithSummary("Create a new {entity}")
-            .WithDescription("Creates a new {entity} with the provided details")
-            .Accepts<{Entity}>("application/json")
-            .WithValidation<{Entity}>()
+            .WithSummary("Create {entity}")
+            .WithDescription("Creates the {entity} from the provided details")
+            .Produces(StatusCodes.Status429TooManyRequests)
+            .Accepts<Models.Create{Entity}Request>("application/json")
+            .WithValidation<Models.Create{Entity}Request>()
             .Produces<Guid>(StatusCodes.Status201Created)
-            .Produces(StatusCodes.Status401Unauthorized)
             .ProducesValidationProblem();
 
-        // GET: Get by ID
-        group.MapGet("{id}", Get{Entity}ByIdAsync)
+        group.MapGet("{id:guid}", Get{Entity}ByIdAsync)
             .WithSummary("Get {entity} by ID")
             .WithDescription("Retrieves a specific {entity} by its unique identifier")
-            .Produces<{Entity}>(StatusCodes.Status200OK)
-            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status429TooManyRequests)
+            .Produces<Models.{Entity}>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound);
 
-        // GET: Get list
-        group.MapGet("", Get{Entity}ListAsync)
-            .WithSummary("Get all {entities}")
-            .WithDescription("Retrieves a paginated list of {entities}")
-            .Produces<List<{Entity}>>(StatusCodes.Status200OK)
-            .Produces(StatusCodes.Status401Unauthorized);
-
-        // PUT: Update
-        group.MapPut("", Update{Entity}Async)
-            .WithSummary("Update an existing {entity}")
-            .WithDescription("Updates an existing {entity} with the provided details")
-            .Accepts<{Entity}>("application/json")
-            .WithValidation<{Entity}>()
-            .Produces<bool>(StatusCodes.Status200OK)
-            .Produces(StatusCodes.Status401Unauthorized)
-            .ProducesValidationProblem();
-
-        // DELETE: Delete
-        group.MapDelete("{id}", Remove{Entity}Async)
-            .WithSummary("Delete a {entity}")
-            .WithDescription("Deletes a {entity} by its unique identifier")
-            .Produces(StatusCodes.Status204NoContent)
-            .Produces(StatusCodes.Status401Unauthorized)
-            .Produces(StatusCodes.Status404NotFound);
+        return app;
     }
 
-    #region {Entity} Methods
-
     /// <summary>
-    /// Creates a new {entity}.
+    /// Creates the {entity}.
     /// </summary>
-    public static async Task<Results<Created<Guid>, BadRequest>> Add{Entity}Async(
+    /// <param name="handler">The command handler.</param>
+    /// <param name="request">The request body.</param>
+    /// <param name="cancellationToken">Cancels the operation.</param>
+    /// <returns>201 with the new identifier, or a validation problem when the handler refuses the command.</returns>
+    public static async Task<Results<Created<Guid>, ValidationProblem>> Add{Entity}Async(
         [FromServices] ICommandHandler<Create{Entity}Command, Create{Entity}Response> handler,
-        [FromBody] {Entity} e,
+        [FromBody] Models.Create{Entity}Request request,
         CancellationToken cancellationToken = default)
     {
-        var command = new Create{Entity}Command(
-            e.Property1,
-            e.Property2,
-            e.Property3);
+        var command = new Create{Entity}Command(request.Name, request.Description);
 
-        var result = await handler.HandleAsync(command, cancellationToken);
-
-        return TypedResults.Created($"/{entities}/{result.{Entity}Id}", result.{Entity}Id);
+        try
+        {
+            var result = await handler.HandleAsync(command, cancellationToken);
+            return TypedResults.Created($"/{entities}/{result.{Entity}Id}", result.{Entity}Id);
+        }
+        catch (InvalidOperationException exception)
+        {
+            return Refused(exception.Message);
+        }
     }
 
     /// <summary>
-    /// Retrieves a {entity} by its unique identifier.
+    /// Retrieves the {entity} with the given identifier.
     /// </summary>
-    public static async Task<Results<Ok<{Entity}>, NotFound>> Get{Entity}ByIdAsync(
+    /// <param name="handler">The query handler.</param>
+    /// <param name="id">The identifier of the {entity}.</param>
+    /// <param name="cancellationToken">Cancels the operation.</param>
+    /// <returns>200 with the {entity}, or 404 when it does not exist.</returns>
+    public static async Task<Results<Ok<Models.{Entity}>, NotFound>> Get{Entity}ByIdAsync(
         [FromServices] IQueryHandler<Get{Entity}ByIdQuery, Get{Entity}ByIdResponse> handler,
         [FromRoute] Guid id,
         CancellationToken cancellationToken = default)
     {
-        var query = new Get{Entity}ByIdQuery(id);
-        var result = await handler.HandleAsync(query, cancellationToken);
+        var response = await handler.HandleAsync(new Get{Entity}ByIdQuery(id), cancellationToken);
 
-        if (result.{Entity} is not null)
-            return TypedResults.Ok(result.{Entity});
+        if (response.{Entity} is null)
+            return TypedResults.NotFound();
 
-        return TypedResults.NotFound();
+        return TypedResults.Ok(response.{Entity});
     }
 
     /// <summary>
-    /// Retrieves a paginated list of {entities}.
+    /// Answers a refused command with the declared validation problem.
     /// </summary>
-    public static async Task<Ok<List<{Entity}>>> Get{Entity}ListAsync(
-        [FromServices] IQueryHandler<Get{Entity}ListQuery, Get{Entity}ListResponse> handler,
-        [FromQuery] int pageIndex = 0,
-        [FromQuery] int pageSize = GenericConstants.DefaultPageSize,
-        CancellationToken cancellationToken = default)
-    {
-        var query = new Get{Entity}ListQuery(pageIndex, pageSize);
-        var result = await handler.HandleAsync(query, cancellationToken);
-        return TypedResults.Ok(result.{Entities} ?? []);
-    }
-
-    /// <summary>
-    /// Updates an existing {entity}.
-    /// </summary>
-    public static async Task<Results<Ok<bool>, BadRequest>> Update{Entity}Async(
-        [FromServices] ICommandHandler<Update{Entity}Command, Update{Entity}Response> handler,
-        [FromBody] {Entity} e,
-        CancellationToken cancellationToken = default)
-    {
-        var command = new Update{Entity}Command(
-            e.{Entity}Id,
-            e.Property1,
-            e.Property2);
-
-        var result = await handler.HandleAsync(command, cancellationToken);
-
-        return TypedResults.Ok(result.Success);
-    }
-
-    /// <summary>
-    /// Deletes a {entity} by its unique identifier.
-    /// </summary>
-    public static async Task<Results<NoContent, NotFound>> Remove{Entity}Async(
-        [FromServices] ICommandHandler<Delete{Entity}Command, Delete{Entity}Response> handler,
-        [FromRoute] Guid id,
-        CancellationToken cancellationToken = default)
-    {
-        var command = new Delete{Entity}Command(id);
-        await handler.HandleAsync(command, cancellationToken);
-
-        return TypedResults.NoContent();
-    }
-
-    #endregion
+    /// <param name="reason">The caller-facing reason.</param>
+    /// <returns>A validation problem carrying the reason.</returns>
+    private static ValidationProblem Refused(string reason) =>
+        TypedResults.ValidationProblem(new Dictionary<string, string[]>
+        {
+            [RefusalKey] = [reason]
+        });
 }
 ```
 
----
+Rules this example follows:
+
+- **Catch `ResourceNotFoundException` before the generic case.** It derives from `InvalidOperationException`, so a `catch (ResourceNotFoundException)` placed after `catch (InvalidOperationException)` never runs. Update and delete routes catch it first and return `TypedResults.NotFound()`. Every other `InvalidOperationException` is a refusal, answered as a validation problem (400).
+- **Update and delete routes** follow the same shape: `Results<Ok<bool>, NotFound, ValidationProblem>` for update, `Results<NoContent, NotFound, ValidationProblem>` for delete. Bodies use `Accepts<T>` and `WithValidation<T>`.
+- **Declare every status code.** Each route lists 429 (rate limit), its success type, 404 where the target can be missing, and `ProducesValidationProblem()` where a body or a refusal can fail. See "Produces Metadata".
+- **Pass the request's values into the command.** The command takes individual parameters, never the request object.
+- **Thread the cancellation token.** The endpoint method takes `CancellationToken cancellationToken = default` and passes it to the handler.
 
 ## HTTP Method Patterns
 
@@ -440,7 +394,7 @@ Use Data Annotations on request models and a reusable validation filter. Every P
 **Model with validation attributes:**
 
 ```csharp
-// File: {ApplicationName}.Models.{Domain}/{Entity}.cs
+// File: {ApplicationName}.Models/{Entity}.cs
 
 using System.ComponentModel.DataAnnotations;
 
@@ -460,7 +414,7 @@ public sealed record {Entity}
 **Reusable validation filter:**
 
 ```csharp
-// File: {ApplicationName}.Service.Api/Extensions/ValidationExtensions.cs
+// File: {ApplicationName}.Services/Extensions/ValidationExtensions.cs
 
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -652,42 +606,40 @@ group.MapDelete("{id}", Remove{Entity}Async)
 
 ### Project Configuration for OpenAPI Document Generation
 
-Every API project `.csproj` must include the MSBuild properties and package reference to generate the OpenAPI spec at build time:
+The API project writes its OpenAPI document on a **Debug** build only. The Debug configuration sets the output directory, the generation switches, and the environment the generator runs under. The `Microsoft.Extensions.ApiDescription.Server` package is referenced for Debug too, with `PrivateAssets=all` so it does not leak to consumers:
 
 ```xml
 <!-- File: {ApplicationName}.Service.Api/{ApplicationName}.Service.Api.csproj -->
-
 <Project Sdk="Microsoft.NET.Sdk.Web">
-
   <PropertyGroup>
+    <TargetFramework>net11.0</TargetFramework>
+    <OpenApiGenerateDocuments>false</OpenApiGenerateDocuments>
+    <OpenApiGenerateDocumentsOnBuild>false</OpenApiGenerateDocumentsOnBuild>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
     <OpenApiDocumentsDirectory>../../openapi</OpenApiDocumentsDirectory>
     <OpenApiGenerateDocuments>true</OpenApiGenerateDocuments>
     <OpenApiGenerateDocumentsOnBuild>true</OpenApiGenerateDocumentsOnBuild>
-    <OpenApiGenerateEnvironment>Development</OpenApiGenerateEnvironment>
+    <OpenApiGenerationEnvironment>Development</OpenApiGenerationEnvironment>
   </PropertyGroup>
 
-  <!-- ... other PropertyGroups and ItemGroups ... -->
-
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.ApiDescription.Server">
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Microsoft.Extensions.ApiDescription.Server" Condition="'$(Configuration)' == 'Debug'">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
 
-  <!-- Generate Kiota client from OpenAPI spec on every build -->
-  <Target Name="OpenAPI" AfterTargets="Build">
-    <Exec Command="dotnet kiota generate -l CSharp --output ../{ApplicationName}.Clients.Api --namespace-name {ApplicationName}.Clients.Api --class-name ApiClient --exclude-backward-compatible --openapi ../../openapi/{ApplicationName}.Api.json" WorkingDirectory="$(ProjectDir)" />
-  </Target>
-
+  <!-- Kiota client regeneration follows the Debug build of this project; see "Kiota API Client Generation". -->
 </Project>
 ```
 
-- `OpenApiDocumentsDirectory` — relative path from the project file to the output directory (typically `../../openapi` for a solution layout)
-- `OpenApiGenerateDocumentsOnBuild` — ensures the spec stays in sync with every build
-- `Microsoft.Extensions.ApiDescription.Server` — the MSBuild-integrated generator; PrivateAssets prevents it from leaking to consumers
-- The generated `{ProjectName}.json` OpenAPI spec lands in the specified directory on every build
-- The `OpenAPI` MSBuild target — runs `dotnet kiota generate` after every build, regenerating the client from the latest spec
+- `OpenApiDocumentsDirectory` is relative to the project file. `../../openapi` writes the document into the solution-level `openapi/` folder, which Kiota reads.
+- `OpenApiGenerationEnvironment=Development` makes the generator run the pipeline in Development, so the API's Development-only configuration is in effect while it runs.
+- The Release configuration neither writes the document nor regenerates the client. A Release build of the API is the artifact that ships.
+- The API's `Program.cs` skips database initialization while the document is generated (it checks the command line for `GetDocument`), so generation never needs a reachable database.
 
 ### Document Transformer: Servers Entry
 
@@ -889,64 +841,43 @@ This transformer is non-negotiable — without it, the OpenAPI spec omits type i
 
 ## Kiota API Client Generation
 
-[Kiota](https://learn.microsoft.com/en-us/openapi/kiota/) generates strongly-typed API clients from the OpenAPI spec produced at build time. Every API project that exposes endpoints needs a corresponding client project so consumers get compile-time safety instead of raw `HttpClient` calls.
+Kiota turns the API's OpenAPI document into a strongly typed client. The heads call that client through an `I{ApplicationName}ApiService` abstraction, so they never reference the generated types.
 
-### Naming Convention
+### Layout
 
-For a **single-app** project, the client is simply `{ApplicationName}.Clients.Api`:
-
-| Consuming App | | Kiota Client |
-|---------------|---|--------------|
-| `{ApplicationName}.App.Api` | → | `{ApplicationName}.Clients.Api` |
-
-For **multi-app** projects, each consuming app gets its own client by swapping `App` for `Clients`:
-
-| Consuming App | | Kiota Client |
-|---------------|---|--------------|
-| `{ApplicationName}.App.Business` | → | `{ApplicationName}.Clients.Business` |
-| `{ApplicationName}.App.Business.Web` | → | `{ApplicationName}.Clients.Business.Web` |
-| `{ApplicationName}.App.Business.Maui` | → | `{ApplicationName}.Clients.Business.Maui` |
-
-Pattern: `{ApplicationName}.Clients.Api` for single-app; `{ApplicationName}.Clients.{AppName}` for multi-app.
-
-### Solution Layout
+The generator writes one flat client project per solution, `{ApplicationName}.Clients`. It is not named per consuming app. Its generated source is in `Api/`:
 
 ```
-solution/
-├── openapi/                                    # Generated OpenAPI specs
-│   └── {ApplicationName}.Service.Api.json
-├── src/
-│   ├── {ApplicationName}.Service.Api/          # API project (produces spec)
-│   │   └── {ApplicationName}.Service.Api.csproj
-│   ├── {ApplicationName}.App.Business/         # Consuming app (Blazor Server)
-│   ├── {ApplicationName}.App.Business.Web/     # Consuming app (WebAssembly)
-│   ├── {ApplicationName}.Clients.Api/          # Default client (single-app)
-│   │   ├── {ApplicationName}.Clients.Api.csproj
-│   │   ├── ApiClient.cs                        # Kiota-generated entry point
-│   │   ├── Api/                                # Kiota-generated request builders
-│   │   ├── Models/                             # Kiota-generated models
-│   │   └── kiota-lock.json                     # Generation lock file
-│   ├── {ApplicationName}.Clients.Business/     # Client for App.Business
-│   │   ├── {ApplicationName}.Clients.Business.csproj
-│   │   ├── ApiClient.cs
-│   │   ├── Api/
-│   │   ├── Models/
-│   │   └── kiota-lock.json
-│   └── {ApplicationName}.Clients.Business.Web/ # Client for App.Business.Web
-│       └── ...
+src/{ApplicationName}.Clients/
+├── {ApplicationName}.Clients.csproj
+└── Api/                              # Kiota output, committed
+    ├── ApiClient.cs                  # entry point (BaseRequestBuilder)
+    ├── {Entities}/                   # request builders, one folder per path segment
+    └── Models/                       # request and response models, enums
 ```
 
-### Client Project .csproj
+Kiota reads `openapi/{ApplicationName}.Service.Api.json` at the solution root. The API project writes that document on a Debug build.
+
+### When the client regenerates
+
+Generation is a Debug-only development step. The API project's csproj carries a target that runs `dotnet kiota generate` after the Debug build, writing into `{ApplicationName}.Clients/Api`. A Release build does not touch the committed client.
+
+- A fresh render compiles with no generator run, in Debug and in Release: the template ships the Kiota output for the sample entity.
+- A route change adds or removes generated files on the next Debug build of the API. The client compiles whatever is in `Api/` at that point.
+- Opt out with `-p:{ApplicationName}GenerateApiClient=false` on the top-level build (CI, or a test run that must not rewrite committed files). The API project reads the option, so pass it on the command line of the build that runs.
+- Kiota is pinned as a local tool in `.config/dotnet-tools.json`. Restore it with `dotnet tool restore`.
+
+### Client project
+
+The client project references the API project as a build-order dependency only:
 
 ```xml
-<!-- File: {ApplicationName}.Clients.Api/{ApplicationName}.Clients.Api.csproj -->
-
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
+    <TargetFramework>net11.0</TargetFramework>
+    <RootNamespace>{ApplicationName}.Clients</RootNamespace>
+    <!-- The compile list is built at compile time by IncludeGeneratedApiClient below, never from the default glob. -->
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
 
   <ItemGroup>
@@ -954,148 +885,62 @@ solution/
     <PackageReference Include="Microsoft.Kiota.Bundle" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Build-order reference only: the client builds after the API's Debug build has regenerated Api/. -->
+    <ProjectReference Include="..\{ApplicationName}.Service.Api\{ApplicationName}.Service.Api.csproj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <!-- Reads Api/ through a property function, not a wildcard item, so a file the generator added or removed is seen. -->
+  <Target Name="IncludeGeneratedApiClient" BeforeTargets="CoreCompile">
+    <ItemGroup>
+      <Compile Include="$([System.IO.Directory]::GetFiles('$(MSBuildProjectDirectory)/Api', '*.cs', System.IO.SearchOption.AllDirectories))" Condition="Exists('$(MSBuildProjectDirectory)/Api')" />
+    </ItemGroup>
+  </Target>
 </Project>
 ```
 
-### Setup: Install Kiota as a Local Tool
+- `EnableDefaultCompileItems=false` plus the target reads the compile list from disk at compile time. A wildcard item can come from MSBuild's file-enumeration cache, which may still list files a previous generation removed.
+- `ReferenceOutputAssembly="false"` adds no assembly dependency on the API. The client never needs the server types.
 
-From the solution root, create the tool manifest (if it doesn't exist) and install Kiota:
+### Registration
 
-```bash
-dotnet new tool-manifest          # Creates .config/dotnet-tools.json (skip if it exists)
-dotnet tool install Microsoft.OpenApi.Kiota
-```
-
-This pins the Kiota CLI version in `.config/dotnet-tools.json`:
-
-```json
-// File: .config/dotnet-tools.json
-{
-  "version": 1,
-  "isRoot": true,
-  "tools": {
-    "microsoft.openapi.kiota": {
-      "version": "1.31.1",
-      "commands": [
-        "kiota"
-      ],
-      "rollForward": false
-    }
-  }
-}
-```
-
-- `rollForward: false` — ensures the exact pinned version is used; no automatic upgrades
-- The manifest is **committed** to source control
-- Run `dotnet tool restore` to install the pinned version on a fresh checkout
-
-### Client Project Structure
-
-```
-{ApplicationName}.Clients.Api/
-├── {ApplicationName}.Clients.Api.csproj
-├── ApiClient.cs               # Kiota-generated entry point (BaseRequestBuilder)
-├── Api/                        # Kiota-generated request builders
-├── Models/                     # Kiota-generated models
-├── Extensions/                 # DI registration (hand-written)
-└── kiota-lock.json             # Generation lock file
-```
-
-### Client Registration in DI
+The client is registered in the shared UI layer (`{ApplicationName}.App.Shared`, in its `HostApplicationBuilderExtensions`), not in the API. The shared layer chooses the base address and the authentication provider:
 
 ```csharp
-// File: {ApplicationName}.Clients.Api/Extensions/ServiceCollectionExtensions.cs
+builder.Services.AddSingleton<IAuthenticationProvider, AnonymousAuthenticationProvider>();
 
-namespace {ApplicationName}.Clients.Api.Extensions;
-
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Kiota.Abstractions.Authentication;
-using Microsoft.Kiota.Http.HttpClientLibrary;
-
-public static class ServiceCollectionExtensions
+builder.Services.AddScoped(serviceProvider =>
 {
-    public static IServiceCollection AddApiClient(
-        this IServiceCollection services,
-        string baseUrl)
+    var httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
+    var authenticationProvider = serviceProvider.GetRequiredService<IAuthenticationProvider>();
+    var requestAdapter = new HttpClientRequestAdapter(authenticationProvider, httpClient: httpClientFactory.CreateClient(HttpClientSettings.Name))
     {
-        services.AddSingleton<IAuthenticationProvider, AnonymousAuthenticationProvider>();
+        BaseUrl = baseAddress.TrimEnd('/'),
+    };
+    return new ApiClient(requestAdapter);
+});
 
-        services.AddHttpClient<ApiClient>(client =>
-        {
-            client.BaseAddress = new Uri(baseUrl);
-        });
-
-        services.AddScoped(sp =>
-        {
-            var httpClient = sp.GetRequiredService<IHttpClientFactory>()
-                .CreateClient(nameof(ApiClient));
-            var authProvider = sp.GetRequiredService<IAuthenticationProvider>();
-            var adapter = new HttpClientRequestAdapter(authProvider)
-            {
-                BaseUrl = httpClient.BaseAddress!.ToString()
-            };
-            return new ApiClient(adapter);
-        });
-
-        return services;
-    }
-}
+builder.Services.AddScoped<I{ApplicationName}ApiService, {ApplicationName}ApiService>();
 ```
 
-### Authenticated Client Registration
-
-When the target API requires authentication (Bearer token, API key), use the appropriate auth provider:
+The API service wraps the client and maps the generated models to the application models, so the heads never see generated types:
 
 ```csharp
-// Bearer token (delegating user identity or client credentials)
-services.AddSingleton<IAuthenticationProvider>(sp =>
-    new BaseBearerTokenAuthenticationProvider(
-        new TokenProvider(token)));
-
-// API key (header-based)
-services.AddSingleton<IAuthenticationProvider>(
-    new ApiKeyAuthenticationProvider(
-        apiKey, "X-Api-Key", KeyLocation.Header));
-```
-
-### Using the Generated Client from a Handler
-
-```csharp
-// File: {ApplicationName}.Services.{CallerDomain}/Queries/Get{Entity}List/Get{Entity}ListQueryHandler.cs
-
-public sealed class Get{Entity}ListQueryHandler(
-    ApiClient client
-) : IQueryHandler<Get{Entity}ListQuery, Get{Entity}ListResponse>
+public sealed class {ApplicationName}ApiService(ApiClient client) : I{ApplicationName}ApiService
 {
-    public async Task<Get{Entity}ListResponse> HandleAsync(
-        Get{Entity}ListQuery query,
-        CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<{Entity}>> Get{Entities}Async(CancellationToken cancellationToken = default)
     {
-        var result = await client.{Entities}.GetAsync(requestConfiguration =>
-        {
-            requestConfiguration.QueryParameters.Page = query.PageIndex;
-            requestConfiguration.QueryParameters.PageSize = query.PageSize;
-        }, cancellationToken);
-
-        return new Get{Entity}ListResponse(
-            result?.Select(e => /* map to model */).ToList() ?? []);
+        var items = await client.{Entities}.GetAsync(cancellationToken: cancellationToken);
+        return items?.Select(Map).ToList() ?? [];
     }
 }
 ```
 
-### Key Rules
+Handlers and heads depend on the abstraction, never on `ApiClient` directly.
 
-- **Default client** — `{ApplicationName}.Clients.Api` is the default for single-app projects
-- **Multi-app clients** — swap `App` for `Clients`: `{ApplicationName}.App.Business` → `{ApplicationName}.Clients.Business`
-- **Kiota version pinned in `dotnet-tools.json`** — `rollForward: false` ensures every developer and CI uses the exact same version
-- **Client generated via MSBuild target** — the API project's `.csproj` includes an `OpenAPI` target that runs `dotnet kiota generate` after every build
-- **Client source is committed** — `Api/`, `Models/`, `ApiClient.cs`, and `kiota-lock.json` are all committed as the client project's source code
-- **`Microsoft.Kiota.Bundle`** — single metapackage covering Abstractions, HttpClientLibrary, and all serializers
-- **Client registration is a consuming concern** — the client project owns its own `ServiceCollectionExtensions`
-- **Don't share request/response types from the API project** — Kiota generates its own models from the OpenAPI spec
-- **Always pass `cancellationToken`** — Kiota methods accept it as the last parameter
+### Schema types
 
----
+Kiota generates typed members only when the OpenAPI document carries types. The schema transformer in `Program.cs` (see "Schema Transformers") is what keeps `UntypedNode` out of the generated client, so it stays in the API.
 
 ## File Download Pattern
 
@@ -1127,47 +972,45 @@ public static async Task<Results<FileContentHttpResult, NotFound>> Download{Enti
 
 ## Endpoint Registration in Program.cs
 
+The API host registers the handlers once and maps each entity's endpoints. There is no per-domain registration class: the Domains project exposes `With{ApplicationName}DomainHandlers()`, and each endpoints class exposes its own `Map{Entities}Endpoints()`.
+
 ```csharp
 // File: {ApplicationName}.Service.Api/Program.cs
-
-using {ApplicationName}.Services.{Domain}.Endpoints.v1;
+using {ApplicationName}.Data;
+using {ApplicationName}.Data.Abstractions;
+using {ApplicationName}.Data.Initializers;
+using {ApplicationName}.Domains.Extensions;
+using {ApplicationName}.Services.Endpoints;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Register services
-builder.Services.With{Domain}Services();
+// CQRS: the handlers depend on IDataContext, which resolves to the provider DataContext.
+builder.Services
+    .AddScoped<IDataContext>(services => services.GetRequiredService<DataContext>())
+    .With{ApplicationName}DomainHandlers();
 
 var app = builder.Build();
 
-// Map endpoints (authentication schemes passed here)
-app.Map{Entity}Endpoints("Bearer", "ApiKey");
+app.MapOpenApi();
+app.UseHttpsRedirection();
+app.UseRateLimiter();
+
+app.Map{Entities}Endpoints();
+
+// Skip initialization while the OpenAPI document is generated, so generation needs no reachable database.
+if (!IsOpenApiDocumentGeneration())
+    await DatabaseInitializer.InitializeAsync(app.Services);
 
 app.Run();
+
+static bool IsOpenApiDocumentGeneration() =>
+    Environment.GetCommandLineArgs().Any(argument =>
+        argument.Contains("GetDocument", StringComparison.OrdinalIgnoreCase));
 ```
 
----
+The sample's `Program.cs` also wires telemetry, the provider `DataContext`, health checks, API versioning, and the OpenAPI transformers. Those sections of this file describe each one. The `DataContext` is registered by the provider project, not here.
 
-## Service Registration
-
-```csharp
-// File: {ApplicationName}.Services.{Domain}/Extensions/ServiceCollectionExtensions.cs
-
-namespace {ApplicationName}.Services.{Domain}.Extensions;
-
-using Microsoft.Extensions.DependencyInjection;
-
-public static class ServiceCollectionExtensions
-{
-    public static IServiceCollection With{Domain}Services(
-        this IServiceCollection services)
-    {
-        // Register domain handlers (CQRS)
-        services.With{Domain}DomainHandlers();
-
-        return services;
-    }
-}
-```
+`Program.Partial.cs` in the API project declares `public partial class Program`, so `WebApplicationFactory<Program>` in the service tests can reach the host.
 
 ---
 
@@ -1226,8 +1069,8 @@ public static class {Entity}Endpoints
 11. **`nameof()` for nested routes** — type-safe sub-entity route segments
 12. **`#region` blocks** — organize methods by entity type
 13. **Explicit `.Produces<T>()` on every route** — always declare both success and error response types; never rely on inference
-14. **OpenAPI document generation in `.csproj`** — every API project includes `OpenApiGenerateDocumentsOnBuild`, `OpenApiDocumentsDirectory`, and the `Microsoft.Extensions.ApiDescription.Server` package reference
+14. **OpenAPI document generation in `.csproj`** — the API project sets `OpenApiGenerateDocumentsOnBuild`, `OpenApiDocumentsDirectory` and the `Microsoft.Extensions.ApiDescription.Server` package reference in its Debug configuration
 15. **Document + schema transformers in `AddOpenApi()`** — always register a document transformer (servers URL) and a schema transformer (type mapping); missing either breaks Kiota client generation
-16. **Kiota client per application** — `{ApplicationName}.Clients.Api` by default; `{ApplicationName}.Clients.{AppName}` for multi-app; never use raw `HttpClient` to call an internal API
+16. **One Kiota client per solution** — the flat `{ApplicationName}.Clients` project, regenerated on the API's Debug build; never use raw `HttpClient` to call an internal API
 17. **Data Annotations validation** — every POST/PUT route uses `.WithValidation<T>()` with `[Required]`, `[MaxLength]`, `[Range]` on request models
-18. **Rate limiting + CORS + HTTPS** — every API project configures `AddRateLimiter` + `UseCors` + `UseHttpsRedirection`
+18. **Rate limiting + HTTPS** — every API project configures `AddRateLimiter` + `UseRateLimiter` + `UseHttpsRedirection`; add CORS only when a browser calls the API directly (the generated sample does not register it)

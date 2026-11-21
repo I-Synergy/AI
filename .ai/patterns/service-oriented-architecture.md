@@ -14,7 +14,7 @@ Service-Oriented Architecture is an architectural pattern where functionality is
 
 ```csharp
 // ✅ CORRECT - Well-defined service contract
-namespace {ApplicationName}.Contracts.{Entities};
+namespace {ApplicationName}.Abstractions.Services;
 
 /// <summary>
 /// Service contract for {entity} management operations.
@@ -79,7 +79,7 @@ public interface I{Entity}Service
 
 ```csharp
 // ✅ CORRECT - Loosely coupled services
-namespace {ApplicationName}.Services.{Entities};
+namespace {ApplicationName}.Services;
 
 public sealed class {Entity}Service : I{Entity}Service
 {
@@ -142,7 +142,7 @@ public sealed class {Entity}Service
 
 ```csharp
 // ✅ CORRECT - Well-abstracted service
-namespace {ApplicationName}.Services.{Entities};
+namespace {ApplicationName}.Services;
 
 public sealed class {Entity}CalculationService : I{Entity}CalculationService
 {
@@ -281,7 +281,7 @@ public sealed class {ChildEntity}ValidationService : IValidationService<{ChildEn
 
 ```csharp
 // ✅ CORRECT - Autonomous service with own data store
-namespace {ApplicationName}.Services.{Entities};
+namespace {ApplicationName}.Services;
 
 public sealed class {Entity}Service : I{Entity}Service
 {
@@ -360,7 +360,7 @@ public sealed class {Entity}Service
 
 ```csharp
 // ✅ CORRECT - Stateless service
-namespace {ApplicationName}.Services.{Entities};
+namespace {ApplicationName}.Services;
 
 public sealed class {Entity}Service : I{Entity}Service
 {
@@ -430,7 +430,7 @@ public sealed class {Entity}Service
 
 ```csharp
 // ✅ CORRECT - Discoverable service with metadata
-namespace {ApplicationName}.Services.{Entities};
+namespace {ApplicationName}.Services;
 
 [ServiceContract(
     Name = "{Entity}Service",
@@ -592,7 +592,7 @@ public sealed class NotificationService : IMessageHandler<{Entity}CreatedMessage
 
 ```csharp
 // ✅ CORRECT - Request-reply pattern
-namespace {ApplicationName}.Services.{Entities};
+namespace {ApplicationName}.Services;
 
 // Request
 public sealed record Calculate{Entity}SummaryRequest
@@ -857,7 +857,7 @@ public sealed class AuditEventHandler : IEventHandler<{Entity}CreatedEvent>
 
 ```csharp
 // ✅ CORRECT - URL versioning
-namespace {ApplicationName}.Services.{Entities}.V1;
+namespace {ApplicationName}.Services.V1;
 
 public static class {Entity}EndpointsV1
 {
@@ -893,7 +893,7 @@ public static class {Entity}EndpointsV1
     }
 }
 
-namespace {ApplicationName}.Services.{Entities}.V2;
+namespace {ApplicationName}.Services.V2;
 
 public static class {Entity}EndpointsV2
 {
@@ -976,7 +976,7 @@ public sealed class {Entity}Service : I{Entity}Service
 
 ```csharp
 // ✅ CORRECT - Idempotent service operations
-namespace {ApplicationName}.Services.{Entities};
+namespace {ApplicationName}.Services;
 
 public sealed class {Entity}Service : I{Entity}Service
 {

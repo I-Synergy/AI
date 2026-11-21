@@ -1,0 +1,71 @@
+<Solution>
+  <!-- {{#if maui|web|sqlite-device}} -->
+  <Folder Name="/Applications/">
+    <Project Path="src/{ApplicationName}.App.Shared/{ApplicationName}.App.Shared.csproj" />
+    <!-- {{#if maui}} -->
+    <Project Path="src/{ApplicationName}.App/{ApplicationName}.App.csproj">
+      <Deploy Solution="Debug|*" />
+    </Project>
+    <!-- {{/if}} -->
+    <!-- {{#if web}} -->
+    <Project Path="src/{ApplicationName}.App.Web/{ApplicationName}.App.Web.csproj" />
+    <!-- {{/if}} -->
+  </Folder>
+  <!-- {{/if}} -->
+  <Folder Name="/Clients/">
+    <Project Path="src/{ApplicationName}.Clients/{ApplicationName}.Clients.csproj" />
+  </Folder>
+  <Folder Name="/Data/">
+    <!-- {{#if postgres}} -->
+    <Project Path="src/{ApplicationName}.Data.Postgres/{ApplicationName}.Data.Postgres.csproj" />
+    <!-- {{/if}} -->
+    <!-- {{#if sqlserver}} -->
+    <Project Path="src/{ApplicationName}.Data.SqlServer/{ApplicationName}.Data.SqlServer.csproj" />
+    <!-- {{/if}} -->
+    <!-- {{#if sqlite-device}} -->
+    <Project Path="src/{ApplicationName}.Data.Sqlite/{ApplicationName}.Data.Sqlite.csproj" />
+    <!-- {{/if}} -->
+    <Project Path="src/{ApplicationName}.Data/{ApplicationName}.Data.csproj" />
+  </Folder>
+  <Folder Name="/Domains/">
+    <Project Path="src/{ApplicationName}.Domains/{ApplicationName}.Domains.csproj" />
+    <Project Path="src/{ApplicationName}.Entities/{ApplicationName}.Entities.csproj" />
+    <Project Path="src/{ApplicationName}.Models/{ApplicationName}.Models.csproj" />
+  </Folder>
+  <Folder Name="/Libraries/">
+    <Project Path="src/{ApplicationName}.Common/{ApplicationName}.Common.csproj" />
+    <Project Path="src/{ApplicationName}.Resources/{ApplicationName}.Resources.csproj" />
+  </Folder>
+  <Folder Name="/Services/">
+    <Project Path="src/{ApplicationName}.Service.Api/{ApplicationName}.Service.Api.csproj" />
+    <Project Path="src/{ApplicationName}.Services/{ApplicationName}.Services.csproj" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path=".config/dotnet-tools.json" />
+    <!-- {{#if apphost}} -->
+    <File Path="aspire.config.json" />
+    <!-- {{/if}} -->
+    <File Path=".editorconfig" />
+    <File Path=".gitattributes" />
+    <File Path=".gitignore" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+    <File Path="global.json" />
+    <File Path="nuget.config" />
+    <File Path="README.md" />
+  </Folder>
+  <Folder Name="/Tests/">
+    <!-- {{#if tests-acceptance}} -->
+    <Project Path="tests/{ApplicationName}.AcceptanceTests/{ApplicationName}.AcceptanceTests.csproj" />
+    <!-- {{/if}} -->
+    <Project Path="tests/{ApplicationName}.Data.{Provider}.Tests/{ApplicationName}.Data.{Provider}.Tests.csproj" />
+    <Project Path="tests/{ApplicationName}.Domains.Tests/{ApplicationName}.Domains.Tests.csproj" />
+    <Project Path="tests/{ApplicationName}.Service.Tests/{ApplicationName}.Service.Tests.csproj" />
+    <!-- {{#if tests-ui}} -->
+    <Project Path="tests/{ApplicationName}.UI.Tests/{ApplicationName}.UI.Tests.csproj" />
+    <!-- {{/if}} -->
+  </Folder>
+  <!-- {{#if apphost}} -->
+  <Project Path="src/{ApplicationName}.AppHost/{ApplicationName}.AppHost.csproj" />
+  <!-- {{/if}} -->
+</Solution>

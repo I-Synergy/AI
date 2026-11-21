@@ -1,0 +1,54 @@
+using {ApplicationName}.Domains.Features.{Entities}.Queries.Get{Entities}List;
+using {ApplicationName}.Domains.Tests.Infrastructure;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+namespace {ApplicationName}.Domains.Tests.Handlers.{Entities};
+
+// Traces: US-<Domain>-NNN (placeholder; fill in when the story exists, see .ai/reference/traceability.md).
+// Tag each test method with [TestCategory("AC-<Domain>-NNN.n")] once its acceptance criterion is declared.
+/// <summary>
+/// Verifies that the list query returns every stored row.
+/// </summary>
+[TestClass]
+public sealed class Get{Entities}ListQueryHandlerTests
+{
+    [TestMethod]
+    public async Task HandleAsync_MultipleRows_ReturnsEveryRowAsAModel()
+    {
+        // Arrange
+        using var db = new TestDatabase();
+        var firstId = await {Entity}TestData.AddAsync(db.Context, name: "Alpha");
+        var secondId = await {Entity}TestData.AddAsync(db.Context, name: "Beta");
+        var thirdId = await {Entity}TestData.AddAsync(db.Context, name: "Gamma");
+        var handler = new Get{Entities}ListQueryHandler(
+            db.Context,
+            NullLogger<Get{Entities}ListQueryHandler>.Instance);
+
+        // Act
+        var result = await handler.HandleAsync(new Get{Entities}ListQuery());
+
+        // Assert: the order is the handler's own business and is not pinned here.
+        Assert.AreEqual(3, result.{Entities}.Count);
+        CollectionAssert.AreEquivalent(
+            new[] { firstId, secondId, thirdId },
+            result.{Entities}.Select(model => model.{Entity}Id).ToArray());
+    }
+
+    [TestMethod]
+    public async Task HandleAsync_NoRows_ReturnsAnEmptyList()
+    {
+        // Arrange
+        using var db = new TestDatabase();
+        var handler = new Get{Entities}ListQueryHandler(
+            db.Context,
+            NullLogger<Get{Entities}ListQueryHandler>.Instance);
+
+        // Act
+        var result = await handler.HandleAsync(new Get{Entities}ListQuery());
+
+        // Assert
+        Assert.IsNotNull(result.{Entities});
+        Assert.AreEqual(0, result.{Entities}.Count);
+    }
+}

@@ -210,10 +210,19 @@ Description of architecture with reference to diagrams.
 
 ```
 src/
-  {ApplicationName}.Domain.{Domain}/
-  {ApplicationName}.Services.{Domain}/
+  {ApplicationName}.Common/       shared enums and constants
+  {ApplicationName}.Entities/     EF Core entities
+  {ApplicationName}.Models/       read models and request bodies
+  {ApplicationName}.Data/         IDataContext
+  {ApplicationName}.Data.SqlServer/   (or .Data.Postgres)
+  {ApplicationName}.Domains/      Features/{Entities}/ slices (CQRS)
+  {ApplicationName}.Services/     endpoints library
+  {ApplicationName}.Service.Api/  API host
+  {ApplicationName}.Clients/      Kiota client
   ...
 ```
+
+The README describes the flat layout the solution generator produces (see `.ai/skills/solution-generator/SKILL.md`). Only list the projects that exist in the repository.
 
 ## Contributing
 

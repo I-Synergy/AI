@@ -1,0 +1,24 @@
+using {ApplicationName}.Common.Enumerations;
+
+namespace {ApplicationName}.Entities;
+
+/// <summary>
+/// A persisted {Entity}. A plain class: no base class and no behaviour.
+/// </summary>
+public class {Entity}
+{
+    /// <summary>Gets or sets the primary key.</summary>
+    public Guid {Entity}Id { get; set; }
+
+    /// <summary>Gets or sets the display name.</summary>
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>Gets or sets an optional description.</summary>
+    public string? Description { get; set; }
+
+    /// <summary>Gets or sets the lifecycle state.</summary>
+    public {Entity}Status Status { get; set; }
+
+    /// <summary>Gets or sets when the row was created, in UTC.</summary>
+    public DateTimeOffset CreatedAt { get; set; }
+}

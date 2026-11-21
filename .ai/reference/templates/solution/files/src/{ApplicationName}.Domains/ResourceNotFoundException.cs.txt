@@ -1,0 +1,39 @@
+namespace {ApplicationName}.Domains;
+
+/// <summary>
+/// Signals that the target of an operation does not exist.
+/// </summary>
+/// <remarks>
+/// <para>
+/// Derives from <see cref="InvalidOperationException"/> so that existing catch blocks still treat the refusal as a failed operation.
+/// Endpoints catch this type first and answer 404; any other <see cref="InvalidOperationException"/> is answered as a validation problem (400).
+/// </para>
+/// </remarks>
+public sealed class ResourceNotFoundException : InvalidOperationException
+{
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ResourceNotFoundException"/> class.
+    /// </summary>
+    public ResourceNotFoundException()
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ResourceNotFoundException"/> class.
+    /// </summary>
+    /// <param name="message">The caller-facing text of the refusal.</param>
+    public ResourceNotFoundException(string message)
+        : base(message)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ResourceNotFoundException"/> class.
+    /// </summary>
+    /// <param name="message">The caller-facing text of the refusal.</param>
+    /// <param name="innerException">The exception that caused this one.</param>
+    public ResourceNotFoundException(string message, Exception innerException)
+        : base(message, innerException)
+    {
+    }
+}

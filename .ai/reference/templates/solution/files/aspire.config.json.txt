@@ -1,0 +1,6 @@
+{
+  "appHost": {
+    "path": "src/{ApplicationName}.AppHost/{ApplicationName}.AppHost.csproj",
+    "language": "csharp"
+  }
+}

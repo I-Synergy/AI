@@ -1,0 +1,123 @@
+@page "/{entities}"
+@using System.ComponentModel.DataAnnotations
+@implements IDisposable
+@inject I{ApplicationName}ApiService ApiService
+@inject ILogger<{Entities}List> Logger
+
+<PageTitle>{Entities}</PageTitle>
+
+<h1>{Entities}</h1>
+
+<section class="create-form" aria-labelledby="create-heading">
+    <h2 id="create-heading">Create {entity}</h2>
+    <EditForm Model="_form" OnValidSubmit="CreateAsync">
+        <DataAnnotationsValidator />
+        <div class="field">
+            <label for="name">Name</label>
+            <InputText id="name" @bind-Value="_form.Name" />
+            <ValidationMessage For="() => _form.Name" />
+        </div>
+        <div class="field">
+            <label for="description">Description</label>
+            <InputTextArea id="description" @bind-Value="_form.Description" />
+            <ValidationMessage For="() => _form.Description" />
+        </div>
+        <button type="submit" disabled="@_saving">Create</button>
+    </EditForm>
+</section>
+
+@if (_loading)
+{
+    <LoadingSpinner />
+}
+else if (_error is not null)
+{
+    <p class="error" role="alert">@_error</p>
+}
+else if (_items is null || _items.Count == 0)
+{
+    <p>No {entities} yet.</p>
+}
+else
+{
+    <ul class="item-list">
+        @foreach (var item in _items)
+        {
+            <li>
+                <strong>@item.Name</strong>
+                <span class="status">@item.Status</span>
+                @if (!string.IsNullOrWhiteSpace(item.Description))
+                {
+                    <p>@item.Description</p>
+                }
+            </li>
+        }
+    </ul>
+}
+
+@code {
+    private readonly CancellationTokenSource _lifetime = new();
+    private readonly CreateForm _form = new();
+    private IReadOnlyList<Item>? _items;
+    private bool _loading = true;
+    private bool _saving;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _items = await ApiService.Get{Entities}Async(_lifetime.Token);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            Logger.LogWarning(exception, "Loading the list failed.");
+            _error = "The {entities} could not be loaded. Try again.";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task CreateAsync()
+    {
+        _saving = true;
+        _error = null;
+        try
+        {
+            await ApiService.Create{Entity}Async(_form.Name, _form.Description, _lifetime.Token);
+            _form.Name = string.Empty;
+            _form.Description = null;
+            await LoadAsync();
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            Logger.LogWarning(exception, "Creating the entry failed.");
+            _error = "The {entity} could not be created. Try again.";
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    public void Dispose()
+    {
+        _lifetime.Cancel();
+        _lifetime.Dispose();
+    }
+
+    private sealed class CreateForm
+    {
+        [Required, MaxLength(100)]
+        public string Name { get; set; } = string.Empty;
+
+        [MaxLength(500)]
+        public string? Description { get; set; }
+    }
+}

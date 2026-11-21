@@ -1,0 +1,41 @@
+using {ApplicationName}.Data.Abstractions;
+using ISynergy.Framework.CQRS.Abstractions.Commands;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+
+namespace {ApplicationName}.Domains.Features.{Entities}.Commands.Delete{Entity};
+
+/// <summary>
+/// Handles deleting the {entity}.
+/// </summary>
+public sealed class Delete{Entity}CommandHandler(
+    IDataContext dataContext,
+    ILogger<Delete{Entity}CommandHandler> logger)
+    : ICommandHandler<Delete{Entity}Command, Delete{Entity}Response>
+{
+    /// <inheritdoc />
+    public async Task<Delete{Entity}Response> HandleAsync(
+        Delete{Entity}Command command,
+        CancellationToken cancellationToken = default)
+    {
+        var entity = await dataContext.{Entities}.FirstOrDefaultAsync(e => e.{Entity}Id == command.{Entity}Id, cancellationToken);
+
+        if (entity is null)
+        {
+            logger.LogWarning("{Entity} {EntityId} was not found for deletion", command.{Entity}Id);
+            throw new ResourceNotFoundException("The {entity} was not found.");
+        }
+
+        dataContext.{Entities}.Remove(entity);
+        var rowsAffected = await dataContext.SaveChangesAsync(cancellationToken);
+
+        if (rowsAffected == 0)
+        {
+            logger.LogWarning("Deleting {Entity} {EntityId} wrote no rows", command.{Entity}Id);
+            throw new InvalidOperationException("The {entity} could not be deleted.");
+        }
+
+        logger.LogInformation("Deleted {Entity} {EntityId}", command.{Entity}Id);
+        return new Delete{Entity}Response(true);
+    }
+}

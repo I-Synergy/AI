@@ -2,47 +2,36 @@
 
 ## Naming Convention
 
-**Single-app:** `{ApplicationName}.Clients.Api`
-**Multi-app:** `{ApplicationName}.Clients.{AppName}` (swap `App` → `Clients`)
-
-| Consuming App | → | Kiota Client |
-|---------------|---|--------------|
-| `App.Api` | → | `Clients.Api` |
-| `App.Business` | → | `Clients.Business` |
-| `App.Business.Web` | → | `Clients.Business.Web` |
+The solution has one client project, `{ApplicationName}.Clients`, regardless of how many heads consume it. It is flat under `src/`, like every other project, and its generated source sits in `Api/`.
 
 ## Client Project .csproj
 
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
+    <TargetFramework>net11.0</TargetFramework>
+    <RootNamespace>{ApplicationName}.Clients</RootNamespace>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Http" />
     <PackageReference Include="Microsoft.Kiota.Bundle" />
   </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\{ApplicationName}.Service.Api\{ApplicationName}.Service.Api.csproj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <Target Name="IncludeGeneratedApiClient" BeforeTargets="CoreCompile">
+    <ItemGroup>
+      <Compile Include="$([System.IO.Directory]::GetFiles('$(MSBuildProjectDirectory)/Api', '*.cs', System.IO.SearchOption.AllDirectories))" Condition="Exists('$(MSBuildProjectDirectory)/Api')" />
+    </ItemGroup>
+  </Target>
 </Project>
 ```
 
-`Microsoft.Kiota.Bundle` is a metapackage covering `Abstractions`, `HttpClientLibrary`, and all serializers (JSON, Text, Form, Multipart). Always use the bundle, not individual packages.
-
-## Project Structure
-
-```
-{ApplicationName}.Clients.Api/
-├── {ApplicationName}.Clients.Api.csproj
-├── ApiClient.cs               # Kiota-generated entry point
-├── Api/                        # Kiota-generated request builders
-├── Models/                     # Kiota-generated models
-├── Extensions/                 # DI registration (hand-written)
-│   └── ServiceCollectionExtensions.cs
-└── kiota-lock.json             # Generation lock file
-```
-
-All source files in the client project are committed: `Api/`, `Models/`, `ApiClient.cs`, `kiota-lock.json`, `Extensions/`, `.csproj`.
+The `ProjectReference` to the API is build order only (`ReferenceOutputAssembly="false"`): the API's Debug build regenerates `Api/`, and the client compiles after it. The `Target` reads the compile list from disk, so a removed generated file is not compiled. See `.ai/patterns/api-patterns.md`, "Kiota API Client Generation".
 
 ## Kiota Tool Version
 
@@ -71,50 +60,7 @@ dotnet tool restore               # On fresh checkout
 
 ## DI Registration
 
-```csharp
-// File: {ApplicationName}.Clients.Api/Extensions/ServiceCollectionExtensions.cs
-
-namespace {ApplicationName}.Clients.Api.Extensions;
-
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Kiota.Abstractions.Authentication;
-using Microsoft.Kiota.Http.HttpClientLibrary;
-
-public static class ServiceCollectionExtensions
-{
-    public static IServiceCollection AddApiClient(this IServiceCollection services)
-    {
-        services.AddSingleton<IAuthenticationProvider, AnonymousAuthenticationProvider>();
-
-        services.AddHttpClient("ApiClient", client =>
-        {
-            client.BaseAddress = new Uri("https+http://api");
-        });
-
-        services.AddScoped<ApiClient>(sp =>
-        {
-            var httpClient = sp.GetRequiredService<IHttpClientFactory>()
-                .CreateClient("ApiClient");
-            var authProvider = sp.GetRequiredService<IAuthenticationProvider>();
-            var adapter = new HttpClientRequestAdapter(authProvider, httpClient: httpClient);
-            return new ApiClient(adapter);
-        });
-
-        return services;
-    }
-}
-```
-
-For authenticated APIs, replace `AnonymousAuthenticationProvider` with:
-```csharp
-// Bearer token
-services.AddSingleton<IAuthenticationProvider>(sp =>
-    new BaseBearerTokenAuthenticationProvider(new TokenProvider(token)));
-
-// API key
-services.AddSingleton<IAuthenticationProvider>(
-    new ApiKeyAuthenticationProvider(apiKey, "X-Api-Key", KeyLocation.Header));
-```
+The client is registered in the shared UI layer, `{ApplicationName}.App.Shared`, in its `HostApplicationBuilderExtensions` (`Add{ApplicationName}ApiServices`). The client project itself has no registration class. The registration reads the base address from the `HttpClientSettings` configuration section, adds service discovery, and registers an anonymous Kiota authentication provider and the scoped `ApiClient`. See `.ai/patterns/api-patterns.md`, "Kiota API Client Generation", for the code.
 
 ## Using the Generated Client
 
@@ -141,11 +87,11 @@ public sealed class GetEntityListQueryHandler(
 
 ## Key Rules
 
-- Kiota client per application, not per API project
-- `Microsoft.Kiota.Bundle` — single metapackage, not individual packages
-- `dotnet-tools.json` — pinned version with `rollForward: false`
-- MSBuild `OpenAPI` target in the API project regenerates the client on every build
-- Client source files (`Api/`, `Models/`, `ApiClient.cs`, `kiota-lock.json`) are committed
-- Use Aspire service discovery URL (`https+http://api`) for the client base address
+- One Kiota client per solution, the flat `{ApplicationName}.Clients` project
+- `Microsoft.Kiota.Bundle` is the single metapackage, not individual packages
+- `dotnet-tools.json` pins the Kiota CLI with `rollForward: false`
+- Regeneration runs on the API's **Debug** build only; Release never rewrites the committed client. Opt out with `-p:{ApplicationName}GenerateApiClient=false`
+- Client source files (`Api/`, `Models/`, `ApiClient.cs`) are committed. `kiota-lock.json` holds a hash of the document and is written by the generator
+- The base address is the Aspire service-discovery name of the API (`https+http://{applicationname}-service-api`), set in the head's configuration
 - Never use raw `HttpClient` to call an internal API
-- .NET 10 emits `[FromQuery] int` as the union `["integer","string"]`; without an operation transformer to collapse it, Kiota falls back to `string` — see `references/openapi.md`
+- The API's schema transformer and operation transformer keep Kiota from falling back to `UntypedNode` or to a `string` member for `[FromQuery] int` (see `references/openapi.md`)

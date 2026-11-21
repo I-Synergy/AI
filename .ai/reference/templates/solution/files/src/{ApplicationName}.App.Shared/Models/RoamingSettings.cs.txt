@@ -1,0 +1,12 @@
+using ISynergy.Framework.Core.Abstractions.Base;
+using ISynergy.Framework.Core.Base;
+
+namespace {ApplicationName}.Models;
+
+/// <summary>
+/// Settings that roam with the user account. The shared layer defines no roaming values yet. A head that stores
+/// roaming values adds the properties here and implements the store in its own settings service.
+/// </summary>
+public class RoamingSettings : ObservableValidatedClass, IRoamingSettings
+{
+}

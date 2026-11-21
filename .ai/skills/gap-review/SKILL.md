@@ -32,9 +32,9 @@ Compare the generated project structure against the architecture document.
 
 | Check | Pass Condition |
 |-------|---------------|
-| All bounded contexts have corresponding projects | Each BC has `Entities`, `Models`, `Domain`, `Services` projects |
-| Vertical slice organization | Every entity has `Features/{Entity}/Commands/` and `Queries/` subfolders |
-| Service registration | Each domain has `Extensions/ServiceCollectionExtensions.cs` |
+| Layer projects exist | The solution has `Common`, `Resources`, `Entities`, `Models`, `Data`, `Data.{Provider}`, `Domains`, `Services`, `Service.Api` and `Clients` (`App`, `App.Shared` and `App.Web` when the UI heads are generated) |
+| Vertical slice organization | Every entity has a plural `Features/{Entities}/` folder with `Commands/{Operation}/` and `Queries/{Operation}/` subfolders |
+| Service registration | `Domains/Extensions/ServiceCollectionExtensions.cs` registers the handlers |
 
 ### 2. Domain Model Alignment
 

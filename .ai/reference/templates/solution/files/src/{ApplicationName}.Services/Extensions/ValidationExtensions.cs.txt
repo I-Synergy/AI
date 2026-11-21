@@ -1,0 +1,73 @@
+using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
+
+namespace {ApplicationName}.Services.Extensions;
+
+/// <summary>
+/// Minimal API endpoint filters shared by the endpoint groups.
+/// </summary>
+internal static class ValidationExtensions
+{
+    /// <summary>
+    /// Validates the <typeparamref name="TRequest"/> body argument of a route with its Data Annotations,
+    /// answering 400 with a validation problem when the body is missing or invalid.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The Data Annotations must sit on the request model's properties. Validation of a positional record reads
+    /// the constructor parameters, where attributes on the parameters are not checked, so request models use
+    /// explicit <c>{ get; init; }</c> properties.
+    /// </para>
+    /// <para>
+    /// A body that is absent, empty or malformed fails during Minimal API binding and is answered as 400 before
+    /// this filter runs. The null check covers a body that binds to <see langword="null"/>.
+    /// </para>
+    /// <para>
+    /// Errors are grouped by member, so two errors for the same member are reported together instead of throwing
+    /// on a duplicate key.
+    /// </para>
+    /// </remarks>
+    /// <typeparam name="TRequest">The request model bound from the body.</typeparam>
+    /// <param name="builder">The route handler builder to attach the filter to.</param>
+    /// <returns>The same builder, so calls can be chained.</returns>
+    public static RouteHandlerBuilder WithValidation<TRequest>(this RouteHandlerBuilder builder)
+        where TRequest : class
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+
+        builder.AddEndpointFilter(async (context, next) =>
+        {
+            var argument = context.Arguments.OfType<TRequest>().FirstOrDefault();
+
+            if (argument is null)
+            {
+                return TypedResults.ValidationProblem(new Dictionary<string, string[]>
+                {
+                    [typeof(TRequest).Name] = ["A request body is required."]
+                });
+            }
+
+            var validationResults = new List<ValidationResult>();
+
+            if (!Validator.TryValidateObject(argument, new ValidationContext(argument), validationResults, validateAllProperties: true))
+            {
+                var errors = validationResults
+                    .SelectMany(result => result.MemberNames.DefaultIfEmpty(string.Empty)
+                        .Select(member => (Member: member, Message: result.ErrorMessage)))
+                    .GroupBy(entry => entry.Member, StringComparer.Ordinal)
+                    .ToDictionary(
+                        group => group.Key,
+                        group => group.Select(entry => entry.Message ?? "The value is not valid.").ToArray(),
+                        StringComparer.Ordinal);
+
+                return TypedResults.ValidationProblem(errors);
+            }
+
+            return await next(context);
+        });
+
+        return builder;
+    }
+}

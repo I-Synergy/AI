@@ -404,9 +404,9 @@ Feature: Record a {entity}
     { "name": "{Entity}Id", "type": "Guid" }
   ],
   "files_to_create": [
-    "{Solution}.Domain.{Entity}/Features/{Entity}/Commands/Create{Entity}/Create{Entity}Command.cs",
-    "{Solution}.Domain.{Entity}/Features/{Entity}/Commands/Create{Entity}/Create{Entity}CommandHandler.cs",
-    "{Solution}.{Entity}.Tests/{Entity}/Create{Entity}CommandHandlerTests.cs"
+    "{Solution}.Domains/Features/{Entities}/Commands/Create{Entity}/Create{Entity}Command.cs",
+    "{Solution}.Domains/Features/{Entities}/Commands/Create{Entity}/Create{Entity}CommandHandler.cs",
+    "{Solution}.Domains.Tests/Handlers/{Entities}/Create{Entity}CommandHandlerTests.cs"
   ],
   "source": {
     "user_stories": ["US-{Domain}-014"],

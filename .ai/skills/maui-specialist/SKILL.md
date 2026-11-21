@@ -15,7 +15,7 @@ You are a MAUI Mobile Specialist responsible for building cross-platform mobile 
 
 - .NET MAUI architecture
 - MAUI Blazor Hybrid apps
-- MVVM pattern with CommunityToolkit.Mvvm
+- MVVM pattern with the I-Synergy MVVM stack (`ViewModelNavigation`, `AsyncRelayCommand`, `GetValue`/`SetValue`)
 - Platform-specific code (iOS, Android, Windows, macOS)
 - Device features (camera, GPS, notifications, sensors)
 - Offline-first architecture
@@ -67,7 +67,7 @@ You are a MAUI Mobile Specialist responsible for building cross-platform mobile 
 ## Critical Rules
 
 ### MAUI Best Practices
-- Use CommunityToolkit.Mvvm for MVVM pattern
+- Use the I-Synergy MVVM stack for the MAUI head (see `.ai/patterns/mvvm.md`)
 - Implement platform-specific code with partial classes
 - Use dependency injection for services
 - Handle app lifecycle events
@@ -114,7 +114,7 @@ Read `references/platform-specific.md` — partial classes, conditional compilat
 
 ### Build ViewModels or handle lifecycle
 
-Read `references/mvvm-and-lifecycle.md` — CommunityToolkit.Mvvm ViewModels, commands and bindings, plus app lifecycle events.
+Read `references/mvvm-and-lifecycle.md` — the I-Synergy ViewModels, commands and bindings, plus app lifecycle events.
 
 ## References
 
@@ -122,7 +122,7 @@ Read `references/mvvm-and-lifecycle.md` — CommunityToolkit.Mvvm ViewModels, co
 - `references/local-database.md` — Offline SQLite persistence: entities, migrations, access
 - `references/data-synchronization.md` — Dotmim.Sync setup, conflict handling, sync triggers
 - `references/platform-specific.md` — Partial classes, conditional compilation, platform folders
-- `references/mvvm-and-lifecycle.md` — CommunityToolkit.Mvvm ViewModels and commands, app lifecycle
+- `references/mvvm-and-lifecycle.md` — I-Synergy ViewModels and commands, app lifecycle
 
 ## Common MAUI Pitfalls
 
@@ -157,7 +157,7 @@ Read `references/mvvm-and-lifecycle.md` — CommunityToolkit.Mvvm ViewModels, co
 ### Project Setup
 - [ ] MAUI project created and configured
 - [ ] Platforms configured (Android, iOS, Windows)
-- [ ] Dependencies installed (CommunityToolkit.Mvvm, SQLite)
+- [ ] Dependencies installed (I-Synergy UI MAUI, SQLite)
 - [ ] Permissions configured
 - [ ] Icons and splash screens added
 
@@ -185,7 +185,7 @@ Read `references/mvvm-and-lifecycle.md` — CommunityToolkit.Mvvm ViewModels, co
 ### MVVM
 - [ ] ViewModels implemented
 - [ ] ObservableProperty used
-- [ ] RelayCommand used
+- [ ] `AsyncRelayCommand` (I-Synergy) used for commands
 - [ ] Dependency injection configured
 - [ ] ViewModel tests written
 

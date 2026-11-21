@@ -1,0 +1,143 @@
+using System.Collections.ObjectModel;
+using ISynergy.Framework.Core.Abstractions.Services;
+using ISynergy.Framework.Mvvm.Abstractions.Services;
+using ISynergy.Framework.Mvvm.Commands;
+using ISynergy.Framework.Mvvm.ViewModels;
+using Microsoft.Extensions.Logging;
+using {ApplicationName}.Abstractions.Services;
+using {ApplicationName}.Models;
+
+namespace {ApplicationName}.ViewModels;
+
+/// <summary>
+/// Lists the {entities} from the API and opens the detail page of the one the user selects.
+/// </summary>
+public class {Entities}ViewModel : ViewModelNavigation<object>
+{
+    private readonly I{ApplicationName}ApiService _apiService;
+    private readonly INavigationService _navigationService;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="{Entities}ViewModel"/> class.
+    /// </summary>
+    /// <param name="commonServices">The common services of the framework.</param>
+    /// <param name="logger">The logger.</param>
+    /// <param name="apiService">The application API service.</param>
+    /// <param name="navigationService">The navigation service.</param>
+    public {Entities}ViewModel(
+        ICommonServices commonServices,
+        ILogger<{Entities}ViewModel> logger,
+        I{ApplicationName}ApiService apiService,
+        INavigationService navigationService)
+        : base(commonServices, logger)
+    {
+        _apiService = apiService;
+        _navigationService = navigationService;
+
+        SelectItemCommand = new AsyncRelayCommand<{Entity}>((item, cancellationToken) => OpenDetailAsync(item, cancellationToken));
+        RetryCommand = new AsyncRelayCommand(cancellationToken => LoadAsync(cancellationToken));
+    }
+
+    /// <inheritdoc />
+    public override string Title => _commonServices.LanguageService.GetString("{Entities}");
+
+    /// <summary>Gets the {entities} that are shown.</summary>
+    public ObservableCollection<{Entity}> {Entities} { get; } = [];
+
+    /// <summary>Gets or sets the row that the user selected. It is cleared when the detail page opens, so the row can be chosen again.</summary>
+    public {Entity}? SelectedRow
+    {
+        get => GetValue<{Entity}?>();
+        set => SetValue(value);
+    }
+
+    /// <summary>Gets or sets a value indicating whether the list is being loaded.</summary>
+    public bool IsLoading
+    {
+        get => GetValue<bool>();
+        set => SetValue(value);
+    }
+
+    /// <summary>Gets or sets the message of the last failed load, or null when the last load succeeded.</summary>
+    public string? ErrorMessage
+    {
+        get => GetValue<string?>();
+        set
+        {
+            SetValue(value);
+            RaisePropertyChanged(nameof(HasError));
+        }
+    }
+
+    /// <summary>Gets a value indicating whether the last load failed.</summary>
+    public new bool HasError => !string.IsNullOrEmpty(ErrorMessage);
+
+    /// <summary>Gets a value indicating whether the list is loaded and holds no rows.</summary>
+    public bool IsEmpty => !IsLoading && !HasError && {Entities}.Count == 0;
+
+    /// <summary>Gets the command that opens the detail page of a row.</summary>
+    public AsyncRelayCommand<{Entity}> SelectItemCommand { get; }
+
+    /// <summary>Gets the command that loads the list again after a failure.</summary>
+    public AsyncRelayCommand RetryCommand { get; }
+
+    /// <inheritdoc />
+    public override async Task InitializeAsync()
+    {
+        await base.InitializeAsync();
+
+        if (!IsInitialized)
+        {
+            await LoadAsync();
+            IsInitialized = true;
+        }
+    }
+
+    /// <summary>
+    /// Loads the {entities} from the API. A failure is shown in <see cref="ErrorMessage"/>; it does not escape.
+    /// </summary>
+    /// <param name="cancellationToken">A token that cancels the request.</param>
+    /// <returns>A task that completes when the list is loaded or the failure is shown.</returns>
+    private async Task LoadAsync(CancellationToken cancellationToken = default)
+    {
+        IsLoading = true;
+        ErrorMessage = null;
+
+        try
+        {
+            var items = await _apiService.Get{Entities}Async(cancellationToken);
+
+            {Entities}.Clear();
+            foreach (var item in items)
+                {Entities}.Add(item);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // The request was cancelled by the caller; nothing is shown.
+        }
+        catch (Exception)
+        {
+            ErrorMessage = _commonServices.LanguageService.GetString("Error_Placeholder");
+        }
+        finally
+        {
+            IsLoading = false;
+            RaisePropertyChanged(nameof(IsEmpty));
+        }
+    }
+
+    /// <summary>
+    /// Opens the detail page of one row and clears the selection, so the same row can be opened again.
+    /// </summary>
+    /// <param name="item">The selected row. Null when the selection was cleared.</param>
+    /// <param name="cancellationToken">The token of the command. A cancelled command does not navigate.</param>
+    /// <returns>A task that completes when the navigation has finished.</returns>
+    private async Task OpenDetailAsync({Entity}? item, CancellationToken cancellationToken = default)
+    {
+        if (item is null || cancellationToken.IsCancellationRequested)
+            return;
+
+        SelectedRow = null;
+        await _navigationService.NavigateAsync<{Entity}DetailViewModel>(item.{Entity}Id);
+    }
+}

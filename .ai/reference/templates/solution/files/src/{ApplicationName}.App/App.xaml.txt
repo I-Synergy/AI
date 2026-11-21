@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<c:Application
+    x:Class="{ApplicationName}.App"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:c="clr-namespace:ISynergy.Framework.UI;assembly=ISynergy.Framework.UI.Maui"
+    xmlns:styles="clr-namespace:ISynergy.Framework.UI.Resources.Styles;assembly=ISynergy.Framework.UI.Maui">
+
+    <c:Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- The framework's default styles come first, so the application dictionaries can override them. -->
+                <styles:Generic />
+                <ResourceDictionary Source="Resources/Styles/Colors.xaml" />
+                <ResourceDictionary Source="Resources/Styles/Styles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </c:Application.Resources>
+</c:Application>

@@ -175,6 +175,14 @@ def test_standards():
 
 
 # ---------------------------------------------------------------------------
+# Suite 15 — Solution Scaffold (the build smoke inside it stays opt-in)
+# ---------------------------------------------------------------------------
+def test_solution_scaffold():
+    code, output = _run_python("validate-scaffold.py")
+    assert code == 0, f"\n{output}"
+
+
+# ---------------------------------------------------------------------------
 # Fixture regression — validate-traceability.py's T1-T4, the source-link and document-scope
 # checks, and the padded-child advisory
 #

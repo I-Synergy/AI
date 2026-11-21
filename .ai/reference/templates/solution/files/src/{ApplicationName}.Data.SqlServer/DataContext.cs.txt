@@ -1,0 +1,33 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using {ApplicationName}.Common.Constants;
+using {ApplicationName}.Data.Abstractions;
+using {ApplicationName}.Entities;
+
+namespace {ApplicationName}.Data;
+
+/// <summary>
+/// The SQL Server data context. Schema and migration-history conventions are applied here, so they hold
+/// whether the context comes from dependency injection, the design-time factory, or <c>new</c>.
+/// </summary>
+public class DataContext(DbContextOptions<DataContext> options)
+    : DbContext(options), IDataContext, IDbContextOptionsConfiguration<DataContext>
+{
+    /// <inheritdoc />
+    public DbSet<{Entity}> {Entities} => Set<{Entity}>();
+
+    /// <summary>
+    /// Applies this context's provider conventions regardless of how the context is instantiated.
+    /// </summary>
+    public void Configure(IServiceProvider serviceProvider, DbContextOptionsBuilder optionsBuilder)
+        => optionsBuilder.UseSqlServer(sqlServer => sqlServer.MigrationsHistoryTable("__EFMigrationsHistory", DatabaseConstants.SystemSchema));
+
+    /// <inheritdoc />
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+
+        modelBuilder.HasDefaultSchema("{applicationname}");
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof({Entity}Configuration).Assembly);
+    }
+}

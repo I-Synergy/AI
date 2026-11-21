@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<c:View
+    xmlns:c="clr-namespace:ISynergy.Framework.UI.Controls;assembly=ISynergy.Framework.UI.Maui"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:m="clr-namespace:ISynergy.Framework.UI.Markup;assembly=ISynergy.Framework.UI.Maui"
+    xmlns:viewmodels="clr-namespace:{ApplicationName}.ViewModels"
+    xmlns:models="clr-namespace:{ApplicationName}.Models;assembly={ApplicationName}.Models"
+    x:Class="{ApplicationName}.Views.{Entities}View"
+    x:DataType="viewmodels:{Entities}ViewModel">
+
+    <Grid RowDefinitions="Auto,*" Padding="16" RowSpacing="12">
+        <Label Grid.Row="0"
+               Text="{m:GetString {Entities}}"
+               Style="{StaticResource PageHeadingLabel}"
+               SemanticProperties.HeadingLevel="Level1" />
+
+        <Grid Grid.Row="1">
+            <ActivityIndicator IsRunning="{Binding IsLoading}"
+                               IsVisible="{Binding IsLoading}"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center"
+                               SemanticProperties.Description="{m:GetString Loading}" />
+
+            <VerticalStackLayout IsVisible="{Binding HasError}"
+                                 HorizontalOptions="Center"
+                                 VerticalOptions="Center"
+                                 Spacing="12">
+                <Label Text="{Binding ErrorMessage}"
+                       Style="{StaticResource MutedLabel}"
+                       HorizontalTextAlignment="Center" />
+                <Button Text="{m:GetString Retry}"
+                        Command="{Binding RetryCommand}"
+                        HorizontalOptions="Center"
+                        SemanticProperties.Hint="{m:GetString Retry}" />
+            </VerticalStackLayout>
+
+            <Label Text="{m:GetString NoItems}"
+                   IsVisible="{Binding IsEmpty}"
+                   Style="{StaticResource MutedLabel}"
+                   HorizontalTextAlignment="Center"
+                   HorizontalOptions="Center"
+                   VerticalOptions="Center" />
+
+            <CollectionView ItemsSource="{Binding {Entities}}"
+                            SelectionMode="Single"
+                            SelectedItem="{Binding SelectedRow, Mode=TwoWay}"
+                            SelectionChangedCommand="{Binding SelectItemCommand}">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="models:{Entity}">
+                        <Grid Padding="12,10"
+                              ColumnDefinitions="*,Auto"
+                              ColumnSpacing="12"
+                              SemanticProperties.Description="{Binding Name}">
+                            <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                <Label Text="{Binding Name}" FontAttributes="Bold" />
+                                <Label Text="{Binding Description}" Style="{StaticResource MutedLabel}" />
+                            </VerticalStackLayout>
+                            <Label Grid.Column="1"
+                                   Text="{Binding Status}"
+                                   Style="{StaticResource MutedLabel}"
+                                   VerticalOptions="Center" />
+                        </Grid>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </Grid>
+    </Grid>
+</c:View>

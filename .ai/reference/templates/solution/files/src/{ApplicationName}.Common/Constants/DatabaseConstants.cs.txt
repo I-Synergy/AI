@@ -1,0 +1,10 @@
+namespace {ApplicationName}.Common.Constants;
+
+/// <summary>
+/// Database names shared by the data projects.
+/// </summary>
+public static class DatabaseConstants
+{
+    /// <summary>The schema for migration history and other system tables, kept apart from the application schema.</summary>
+    public const string SystemSchema = "system";
+}

@@ -1,0 +1,11 @@
+using Foundation;
+
+namespace {ApplicationName}.Platforms.iOS;
+
+/// <summary>
+/// The scene delegate that the iOS scene lifecycle uses. The MAUI base class handles the window.
+/// </summary>
+[Register("SceneDelegate")]
+public class SceneDelegate : MauiUISceneDelegate
+{
+}

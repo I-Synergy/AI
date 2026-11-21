@@ -1,0 +1,47 @@
+using System.Globalization;
+using ISynergy.Framework.Core.Abstractions.Base;
+using ISynergy.Framework.Core.Base;
+using ISynergy.Framework.Core.Enumerations;
+
+namespace {ApplicationName}.Models;
+
+/// <summary>
+/// Settings that belong to one device. The head persists them.
+/// </summary>
+public class LocalSettings : ObservableValidatedClass, ILocalSettings
+{
+    /// <summary>Initializes a new instance with the default values.</summary>
+    public LocalSettings()
+    {
+        Language = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+        Color = string.Empty;
+        Theme = Themes.Default;
+    }
+
+    /// <inheritdoc />
+    public string Language { get; set; }
+
+    /// <inheritdoc />
+    public bool IsFullscreen { get; set; }
+
+    /// <inheritdoc />
+    public string Color { get; set; }
+
+    /// <inheritdoc />
+    public Themes Theme { get; set; }
+
+    /// <summary>
+    /// Gets a value indicating whether the light theme is used. The default theme counts as light until the head
+    /// resolves the system setting.
+    /// </summary>
+    public bool IsLightThemeEnabled => Theme != Themes.Dark;
+
+    /// <inheritdoc />
+    public bool IsAdvanced { get; set; }
+
+    /// <inheritdoc />
+    public bool ShowConsole { get; set; }
+
+    /// <inheritdoc />
+    public int MigrationVersion { get; set; }
+}

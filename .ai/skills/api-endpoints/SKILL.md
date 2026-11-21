@@ -33,16 +33,18 @@ Expert for creating and configuring .NET Minimal API endpoints with full OpenAPI
 1. Configure `.csproj` with OpenAPI document generation properties and Kiota MSBuild target (see `references/openapi.md`)
 2. Add `Microsoft.Extensions.ApiDescription.Server` package reference
 3. Set up `Program.cs` with combined document + schema transformers in a single `AddOpenApi()` call (see `references/openapi.md`)
-4. Configure security middleware in order: `UseHttpsRedirection` → `UseCors` → `UseRateLimiter` → `UseAuthentication` → `UseAuthorization` (see `references/security.md`)
+4. Configure security middleware in order: `UseHttpsRedirection` → `UseCors` (only when a browser calls the API directly) → `UseRateLimiter` → `UseAuthentication` → `UseAuthorization` (see `references/security.md`)
 5. Pin Kiota version in `.config/dotnet-tools.json` with `rollForward: false`
 
 ### New Kiota Client
 
-1. Follow the naming convention: `{ApplicationName}.Clients.Api` (single-app) or `{ApplicationName}.Clients.{AppName}` (multi-app)
-2. Create the client `.csproj` with `Microsoft.Kiota.Bundle` and `Microsoft.Extensions.Http` (see `references/kiota.md`)
-3. Create the `Extensions/ServiceCollectionExtensions.cs` for DI registration with `IAuthenticationProvider` + `HttpClientRequestAdapter` (see `references/kiota.md`)
-4. Commit all client source files: `Api/`, `Models/`, `ApiClient.cs`, `kiota-lock.json`
-5. The API project's MSBuild `OpenAPI` target regenerates the client on every build
+The solution has one client project, `{ApplicationName}.Clients`. A new API does not add a client project: the existing one regenerates `Api/` from the API's document.
+
+1. Keep the client flat: `src/{ApplicationName}.Clients/` with `Api/` for generated source (see `references/kiota.md`)
+2. The client `.csproj` references `Microsoft.Kiota.Bundle` and `Microsoft.Extensions.Http`, and references the API with `ReferenceOutputAssembly="false"` for build order only
+3. Registration lives in `{ApplicationName}.App.Shared` (`HostApplicationBuilderExtensions`), not in the client project
+4. Commit the generated source: `Api/` (including `Models/`), and `kiota-lock.json` if the generator wrote one
+5. The API's Debug build regenerates `Api/`; Release builds never do. Pass `-p:{ApplicationName}GenerateApiClient=false` to skip regeneration
 
 ### Security Hardening
 

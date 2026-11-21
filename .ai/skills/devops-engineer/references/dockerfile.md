@@ -3,10 +3,10 @@ Multi-stage .NET Dockerfiles, base-image choice, and production image hardening.
 
 ### Multi-Stage Build for .NET
 ```dockerfile
-# File: src/{ApplicationName}.Services.API/Dockerfile
+# File: src/{ApplicationName}.Service.Api/Dockerfile
 
 # Build stage
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:11.0 AS build
 WORKDIR /src
 
 # Copy solution and project files
@@ -14,29 +14,32 @@ COPY ["global.json", "./"]
 COPY ["Directory.Build.props", "./"]
 COPY ["Directory.Packages.props", "./"]
 
-# Copy all project files
-COPY ["src/{ApplicationName}.Services.API/{ApplicationName}.Services.API.csproj", "src/{ApplicationName}.Services.API/"]
-COPY ["src/{ApplicationName}.Domain.{Domain}/{ApplicationName}.Domain.{Domain}.csproj", "src/{ApplicationName}.Domain.{Domain}/"]
+# Copy the project files the API references, transitively (flat layout: one project per layer)
+COPY ["src/{ApplicationName}.Service.Api/{ApplicationName}.Service.Api.csproj", "src/{ApplicationName}.Service.Api/"]
+COPY ["src/{ApplicationName}.Services/{ApplicationName}.Services.csproj", "src/{ApplicationName}.Services/"]
+COPY ["src/{ApplicationName}.Domains/{ApplicationName}.Domains.csproj", "src/{ApplicationName}.Domains/"]
+COPY ["src/{ApplicationName}.Models/{ApplicationName}.Models.csproj", "src/{ApplicationName}.Models/"]
+COPY ["src/{ApplicationName}.Data.SqlServer/{ApplicationName}.Data.SqlServer.csproj", "src/{ApplicationName}.Data.SqlServer/"]
 COPY ["src/{ApplicationName}.Data/{ApplicationName}.Data.csproj", "src/{ApplicationName}.Data/"]
-COPY ["src/{ApplicationName}.Entities.{Domain}/{ApplicationName}.Entities.{Domain}.csproj", "src/{ApplicationName}.Entities.{Domain}/"]
-COPY ["src/{ApplicationName}.Models.{Domain}/{ApplicationName}.Models.{Domain}.csproj", "src/{ApplicationName}.Models.{Domain}/"]
+COPY ["src/{ApplicationName}.Entities/{ApplicationName}.Entities.csproj", "src/{ApplicationName}.Entities/"]
+COPY ["src/{ApplicationName}.Common/{ApplicationName}.Common.csproj", "src/{ApplicationName}.Common/"]
 
 # Restore dependencies
-RUN dotnet restore "src/{ApplicationName}.Services.API/{ApplicationName}.Services.API.csproj"
+RUN dotnet restore "src/{ApplicationName}.Service.Api/{ApplicationName}.Service.Api.csproj"
 
 # Copy all source code
 COPY . .
 
 # Build application
-WORKDIR "/src/src/{ApplicationName}.Services.API"
-RUN dotnet build "{ApplicationName}.Services.API.csproj" -c Release -o /app/build
+WORKDIR "/src/src/{ApplicationName}.Service.Api"
+RUN dotnet build "{ApplicationName}.Service.Api.csproj" -c Release -o /app/build
 
 # Publish stage
 FROM build AS publish
-RUN dotnet publish "{ApplicationName}.Services.API.csproj" -c Release -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "{ApplicationName}.Service.Api.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 # Runtime stage
-FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
+FROM mcr.microsoft.com/dotnet/aspnet:11.0 AS final
 WORKDIR /app
 
 # Create non-root user
@@ -60,7 +63,7 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
 EXPOSE 8080
 
 # Entry point
-ENTRYPOINT ["dotnet", "{ApplicationName}.Services.API.dll"]
+ENTRYPOINT ["dotnet", "{ApplicationName}.Service.Api.dll"]
 ```
 
 ### Docker Compose for Local Development
@@ -102,7 +105,7 @@ services:
   api:
     build:
       context: .
-      dockerfile: src/{ApplicationName}.Services.API/Dockerfile
+      dockerfile: src/{ApplicationName}.Service.Api/Dockerfile
     container_name: {applicationname}-api
     environment:
       - ASPNETCORE_ENVIRONMENT=Development

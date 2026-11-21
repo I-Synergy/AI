@@ -1,0 +1,91 @@
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using {ApplicationName}.Common.Constants;
+
+// Orchestration host for the solution. Run it with `aspire run` from the repository root, or with
+// `dotnet run --project src/{ApplicationName}.AppHost`.
+//
+// The database password is a secret parameter and is never stored in the repository. Set it once per machine:
+//
+//     aspire secret set Parameters:{applicationname}-database-password <password>
+//
+// When the value is missing, the CLI or the dashboard prompts for it.
+var builder = DistributedApplication.CreateBuilder(args);
+
+// Keep the Aspire and HTTP client categories at Information. Application logs are unaffected.
+builder.Services.AddLogging(logging => logging
+    .AddFilter("Aspire.Hosting", LogLevel.Information)
+    .AddFilter("Microsoft.Extensions.Http", LogLevel.Information));
+
+var databasePassword = builder.AddParameter(AspireNames.{applicationname}_database_password, secret: true);
+
+{{#if sqlserver}}
+// Local SQL Server engine. The image name and tag are set here; the registry is the container runtime default.
+const string DatabaseImage = "mssql/server";
+const string DatabaseImageTag = "2022-latest";
+
+var databaseServer = builder.AddAzureSqlServer(AspireNames.{applicationname}_database_server)
+    .RunAsContainer(container =>
+    {
+        container
+            .WithImage(DatabaseImage)
+            .WithImageTag(DatabaseImageTag)
+            .WithPassword(databasePassword)
+            .WithEnvironment("ACCEPT_EULA", "Y")
+            .WithDataVolume(AspireNames.{applicationname}_data);
+    });
+
+var database = databaseServer.AddDatabase(AspireNames.{applicationname}_database);
+{{/if}}
+{{#if postgres}}
+// Local PostgreSQL engine. The user is a plain parameter; only the password is secret.
+const string DatabaseUser = "postgres";
+var databaseUser = builder.AddParameter("database-user", DatabaseUser);
+
+var databaseServer = builder.AddAzurePostgresFlexibleServer(AspireNames.{applicationname}_database_server)
+    .WithPasswordAuthentication(databaseUser, databasePassword)
+    .RunAsContainer(container =>
+    {
+        container
+            .WithImage("postgres")
+            // Pinned to a major version: a moving tag can change the engine under an existing data volume.
+            .WithImageTag("18")
+            .WithDataVolume(AspireNames.{applicationname}_data);
+    });
+
+var database = databaseServer.AddDatabase(AspireNames.{applicationname}_database);
+{{/if}}
+
+var api = builder.AddDotnetProject(AspireNames.{applicationname}_api, @"../{ApplicationName}.Service.Api/{ApplicationName}.Service.Api.csproj")
+    .WithReference(database)
+    .WaitFor(database)
+    .WithHttpHealthCheck("/health/ready")
+    .WithExternalHttpEndpoints();
+
+{{#if web}}
+var web = builder.AddDotnetProject(AspireNames.{applicationname}_app_web, @"../{ApplicationName}.App.Web/{ApplicationName}.App.Web.csproj")
+    .WithReference(api)
+    .WaitFor(api)
+    .WithHttpHealthCheck("/health/ready")
+    .WithExternalHttpEndpoints();
+{{/if}}
+{{#if maui}}
+var mauiApp = builder.AddMauiProject(AspireNames.{applicationname}_app, @"../{ApplicationName}.App/{ApplicationName}.App.csproj");
+
+mauiApp.AddWindowsDevice(AspireNames.{applicationname}_app_windows)
+    .WithReference(api)
+    .WithEnvironment("Environment", "Development")
+    .WithExplicitStart();
+
+// Apple devices run only on macOS hosts. This AppHost targets plain .NET, so an #if on Apple symbols would never be
+// true here; the runtime check selects the device instead.
+if (OperatingSystem.IsMacOS())
+{
+    mauiApp.AddMacCatalystDevice(AspireNames.{applicationname}_app_maccatalyst)
+        .WithReference(api)
+        .WithEnvironment("Environment", "Development")
+        .WithExplicitStart();
+}
+{{/if}}
+
+builder.Build().Run();

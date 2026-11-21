@@ -1,0 +1,66 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net11.0</TargetFramework>
+    <UserSecretsId>{applicationname}-apphost</UserSecretsId>
+    <IsPackable>false</IsPackable>
+    <!--
+    Package-only Aspire host on Microsoft.NET.Sdk. IsAspireHost enables the source generator that emits the
+    typed Projects.* classes. AspireHostingSDKVersion must equal the Aspire.Hosting.AppHost version pinned in
+    Directory.Packages.props; the SDK's deprecation check reads it. AspireUseCliBundle keeps the local
+    orchestration tooling enabled. The CI override below clears IsAspireHost.
+    -->
+    <IsAspireHost>true</IsAspireHost>
+    <AspireHostingSDKVersion>17.0.0</AspireHostingSDKVersion>
+    <AspireUseCliBundle>true</AspireUseCliBundle>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(CI)' == 'true'">
+    <!--
+    The AppHost is a local orchestration host and is not part of the unit-test pipeline. CI agents have no
+    Aspire CLI, so the orchestration tooling is skipped there.
+    -->
+    <IsAspireHost>false</IsAspireHost>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Using Include="Aspire.Hosting" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.AppHost" />
+    <PackageReference Include="Aspire.Hosting.Dotnet" />
+{{#if sqlserver}}
+    <PackageReference Include="Aspire.Hosting.Azure.Sql" />
+{{/if}}
+{{#if postgres}}
+    <PackageReference Include="Aspire.Hosting.Azure.PostgreSQL" />
+{{/if}}
+{{#if maui}}
+    <PackageReference Include="Aspire.Hosting.Maui" />
+{{/if}}
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\{ApplicationName}.Common\{ApplicationName}.Common.csproj" IsAspireProjectResource="false" />
+    <ProjectReference Include="..\{ApplicationName}.Service.Api\{ApplicationName}.Service.Api.csproj" />
+{{#if web}}
+    <ProjectReference Include="..\{ApplicationName}.App.Web\{ApplicationName}.App.Web.csproj" />
+{{/if}}
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+    The package-only AppHost does not add the metadata that the retired AppHost SDK used to add. Project
+    resources are marked here; a resource is not a compile reference, and the generator emits the typed
+    Projects.* classes only for references marked IsAspireProjectResource=true.
+    -->
+    <ProjectReference Update="@(ProjectReference)">
+      <IsAspireProjectResource Condition="'%(IsAspireProjectResource)' != 'false'">true</IsAspireProjectResource>
+      <ReferenceOutputAssembly Condition="'%(ReferenceOutputAssembly)' == '' and '%(IsAspireProjectResource)' == 'true'">false</ReferenceOutputAssembly>
+      <SkipGetTargetFrameworkProperties Condition="'%(SkipGetTargetFrameworkProperties)' == '' and '%(IsAspireProjectResource)' == 'true'">true</SkipGetTargetFrameworkProperties>
+      <ExcludeAssets Condition="'%(ExcludeAssets)' == '' and '%(IsAspireProjectResource)' == 'true'">all</ExcludeAssets>
+      <Private Condition="'%(Private)' == '' and '%(IsAspireProjectResource)' == 'true'">false</Private>
+    </ProjectReference>
+  </ItemGroup>
+
+</Project>

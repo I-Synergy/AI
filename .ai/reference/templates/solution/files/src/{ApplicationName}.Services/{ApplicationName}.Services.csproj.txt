@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net11.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Asp.Versioning.Http" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\{ApplicationName}.Domains\{ApplicationName}.Domains.csproj" />
+    <ProjectReference Include="..\{ApplicationName}.Models\{ApplicationName}.Models.csproj" />
+  </ItemGroup>
+</Project>

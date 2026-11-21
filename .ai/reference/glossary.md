@@ -4,40 +4,51 @@
 
 | Term | Definition | Example |
 |------|------------|---------|
-| **Entity** | Domain object with business logic, identity, and behavior. Lives in Domain layer. | `{Entity}` class with validation rules |
-| **Model** | Data Transfer Object (DTO) for persistence/API. No business logic. Lives in Models or Entities projects. | `{Entity}Model` for database mapping |
-| **DTO** | Data Transfer Object - POCO for moving data between layers | `{Entity}Response`, `Create{Entity}Request` |
-| **DataContext** | Your EF Core `DbContext` subclass. The gateway to your database. | `public class DataContext : DbContext` |
+| **Entity** | Persisted POCO: identity and state, no behaviour. Lives in `{ApplicationName}.Entities`. | `{Entity}` class with `{Entity}Id` |
+| **Model** | Read model or request record shared with the API and the heads. Lives in `{ApplicationName}.Models`. Never references Entities. | `{Entity}` (a `BaseModel` read model), `Create{Entity}Request` |
+| **DTO** | Generic term for data that crosses a boundary. In this template a model is the DTO, and it never takes a `Dto` suffix. | `{Entity}Response`, `Create{Entity}Request` |
+| **DataContext** | The EF Core `DbContext` of one provider, in `{ApplicationName}.Data.SqlServer` or `{ApplicationName}.Data.Postgres`. Only the composition root and the tests construct it. | `DataContext : DbContext, IDataContext` |
+| **IDataContext** | The data access surface that handlers depend on. Lives in `{ApplicationName}.Data/Abstractions/`. | `DbSet<Item> Items`, `SaveChangesAsync` |
 | **Command** | Write operation that changes state (Create, Update, Delete) | `Create{Entity}Command` |
 | **Query** | Read operation that returns data without side effects | `Get{Entity}ByIdQuery` |
 | **Handler** | Class that executes a Command or Query | `Create{Entity}CommandHandler` |
-| **Aggregate** | Cluster of domain objects treated as a single unit | `{Entity}` with its child `{ChildEntities}` |
-| **Bounded Context** | Domain boundary with its own models and language | `{Entities}`, `{ChildEntities}`, `Authentication` |
+| **Aggregate** | Cluster of domain objects treated as a single unit. Not scaffolded: entities are plain POCOs. | `{Entity}` with its child `{ChildEntities}` |
+| **Bounded Context** | A business boundary with its own language. In the scaffold it is a feature folder, `Features/{Entities}/` in `{ApplicationName}.Domains`, not a project. | `Features/{Entities}/` |
 | **Value Object** | Immutable object defined by its attributes, not identity | `Money`, `Address`, `DateRange` |
-| **Domain Event** | Notification that something significant happened in the domain | `{Entity}CreatedEvent` |
-| **Repository** | Abstraction over data access (NOTE: We don't use explicit repositories in this template) | N/A - Inject `DataContext` and use EF Core primitives on DbSet properties directly |
+| **Domain Event** | Notification that something significant happened in the domain. Not scaffolded. | `{Entity}CreatedEvent` |
+| **Repository** | Abstraction over data access. Not used in this template. | N/A. Handlers use `IDataContext` DbSet properties directly. |
 
 ## Project Type Purposes
 
-| Project Type | Purpose | Required? | Example |
-|--------------|---------|-----------|---------|
-| **Contracts.{Domain}** | Interfaces and service contracts | Optional | `I{Entity}Service` |
-| **Entities.{Domain}** | EF Core entity classes (database mapping) | **Required** | `{Entity}` entity with EF attributes |
-| **Models.{Domain}** | DTOs for API requests/responses | **Required** | `{Entity}Model`, `{Entity}Response` |
-| **Domain.{Domain}** | CQRS Commands/Queries/Handlers | **Required** | `Create{Entity}Command` |
-| **Services.{Domain}** | API Endpoints (Minimal APIs) | **Required** | `{Entity}Endpoints.cs` |
-| **ViewModels.{Domain}** | MVVM ViewModels for UI | Optional (UI only) | `{Entity}ViewModel` |
+| Project | Purpose | Required? | Example |
+|---------|---------|-----------|---------|
+| **Common** | Shared enumerations, constants, converters, factories | **Required** | `{Entity}Status` in `Enumerations/` |
+| **Resources** | Resource strings | **Required** | `Properties/Resources.resx` |
+| **Entities** | EF Core POCOs and their `IEntityTypeConfiguration` | **Required** | `{Entity}`, `{Entity}Configuration` |
+| **Models** | Read models and request records | **Required** | `{Entity}`, `Create{Entity}Request` |
+| **Data** | The `IDataContext` abstraction | **Required** | `IDataContext` |
+| **Data.SqlServer** or **Data.Postgres** | Provider `DataContext`, design-time factory, `Initializers/` | **Required** (one of the two) | `DataContext` |
+| **Data.Sqlite** | Device store for the MAUI head | Optional (`sqlite-device`) | `LocalDataContext` |
+| **Domains** | CQRS commands, queries and handlers | **Required** | `Create{Entity}Command` |
+| **Services** | Endpoint groups (Minimal APIs) | **Required** | `{Entities}Endpoints` |
+| **Service.Api** | Host and `Program.cs` | **Required** | The OpenAPI document and the Kiota source come from here |
+| **Clients** | Kiota client | **Required** | `ApiClient` |
+| **App.Shared** | Services and client registration shared by the heads | Optional (any head) | `I{ApplicationName}ApiService` |
+| **App** | MAUI head | Optional (`maui`) | `MauiProgram` |
+| **App.Web** | Blazor head | Optional (`web`) | `Routes.razor` |
+| **AppHost** | Aspire orchestration | Optional (`apphost`) | `DistributedApplication.CreateBuilder` |
 
-**Minimum required for a domain:** Entities, Models, Domain, Services (4 projects)
+**Minimum required for a solution:** Common, Resources, Entities, Models, Data, Data.{Provider}, Domains, Services, Service.Api and Clients (10 projects), plus the test projects.
 
 ## Architecture Layers
 
 | Layer | Purpose | Example Projects |
 |-------|---------|------------------|
-| **Presentation** | User interface (Blazor, MAUI, etc.) | `{ApplicationName}.UI.Web`, `{ApplicationName}.App.Mobile` |
-| **Application** | API endpoints, orchestration | `{ApplicationName}.Services.{Domain}` |
-| **Domain** | Business logic, CQRS handlers | `{ApplicationName}.Domain.{Domain}` |
-| **Infrastructure** | Data access, external integrations | `{ApplicationName}.Data`, `{ApplicationName}.Entities.{Domain}` |
+| **Clients and heads** | Heads and the generated client | `{ApplicationName}.App.Web`, `{ApplicationName}.App`, `{ApplicationName}.App.Shared`, `{ApplicationName}.Clients` |
+| **API** | Host and endpoint groups | `{ApplicationName}.Service.Api`, `{ApplicationName}.Services` |
+| **Use cases** | CQRS handlers | `{ApplicationName}.Domains` |
+| **Core model** | Entities, models and the data abstraction | `{ApplicationName}.Entities`, `{ApplicationName}.Models`, `{ApplicationName}.Data`, `{ApplicationName}.Common` |
+| **Persistence** | Provider data context and the device store | `{ApplicationName}.Data.SqlServer`, `{ApplicationName}.Data.Sqlite` |
 
 ## CQRS Terms
 
@@ -46,26 +57,28 @@
 | **Command** | Request to change system state | Create, Update, Delete operations |
 | **Query** | Request to read data without side effects | Get by ID, List, Search operations |
 | **Handler** | Executes a Command or Query | Every Command and Query has exactly one Handler |
-| **Response** | Result returned by Handler | `Create{Entity}Response`, `{Entity}Response` |
-| **Event** | Notification of state change | After successful Command execution |
+| **Response** | Result returned by Handler | `Create{Entity}Response`, `Get{Entity}ByIdResponse` |
+| **Event** | Notification of state change | After successful Command execution. Not scaffolded. |
 
 ## Clean Architecture Terms
 
 | Term | Definition | Rule |
 |------|------------|------|
-| **Dependency Inversion** | Outer layers depend on inner layers, not vice versa | Domain has no dependencies on Infrastructure |
-| **Separation of Concerns** | Each layer has distinct responsibilities | Don't mix API concerns with business logic |
-| **Vertical Slice** | Feature organized by business capability, not technical layer | All {Entity}-related code in {Entity} feature folder |
+| **Dependency Inversion** | Dependencies point towards the core (`Common`, `Entities`, `Models`) and the abstraction | Handlers depend on `IDataContext`, never on the concrete `DataContext` |
+| **Separation of Concerns** | Each project has one responsibility | Endpoints do not query the database; handlers do not know HTTP |
+| **Vertical Slice** | Feature organised by business capability, not technical layer | All `{Entity}` code in `Features/{Entities}/` of `{ApplicationName}.Domains` |
 
 ## Common Acronyms
 
 | Acronym | Full Term | Usage |
 |---------|-----------|-------|
-| **DDD** | Domain-Driven Design | Architecture philosophy |
+| **DDD** | Domain-Driven Design | Architecture philosophy (not applied by the scaffold) |
 | **CQRS** | Command Query Responsibility Segregation | Pattern for separating reads/writes |
-| **MVVM** | Model-View-ViewModel | UI pattern for Blazor/MAUI |
+| **MVVM** | Model-View-ViewModel | UI pattern for MAUI |
 | **DI** | Dependency Injection | Constructor injection pattern |
 | **DTO** | Data Transfer Object | Object for moving data between layers |
 | **EF Core** | Entity Framework Core | ORM for .NET |
 | **ORM** | Object-Relational Mapping | Database abstraction |
+| **Kiota** | Microsoft's OpenAPI client generator | Generates `{ApplicationName}.Clients/Api/` from the API document |
+| **OTLP** | OpenTelemetry Protocol | Telemetry exporter used in Development |
 | **SOLID** | Single responsibility, Open/closed, Liskov substitution, Interface segregation, Dependency inversion | Design principles |

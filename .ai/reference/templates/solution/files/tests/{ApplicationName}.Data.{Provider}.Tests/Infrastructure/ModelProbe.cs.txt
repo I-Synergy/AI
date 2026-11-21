@@ -1,0 +1,35 @@
+using {ApplicationName}.Data;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Metadata;
+
+namespace {ApplicationName}.Data.{Provider}.Tests.Infrastructure;
+
+/// <summary>
+/// Builds the context and the model the production code builds, without contacting a database.
+/// </summary>
+/// <remarks>
+/// The context comes from the design-time factory, the same path <c>dotnet ef migrations add</c> uses, so
+/// these tests see exactly the configuration the migrations are generated from. Building a model never opens
+/// a connection; a test that reached a server would only assert against whatever that server held.
+/// </remarks>
+internal static class ModelProbe
+{
+    /// <summary>
+    /// Creates a context through the design-time factory. Nothing connects.
+    /// </summary>
+    /// <returns>The context. The caller owns it.</returns>
+    public static DataContext CreateContext() => new DataContextFactory().CreateDbContext([]);
+
+    /// <summary>
+    /// Gets the design-time model of a context, the form that carries the relational annotations.
+    /// </summary>
+    /// <param name="context">The context to read the model from.</param>
+    /// <returns>The design-time model.</returns>
+    public static IModel GetModel(DataContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        return context.GetService<IDesignTimeModel>().Model;
+    }
+}

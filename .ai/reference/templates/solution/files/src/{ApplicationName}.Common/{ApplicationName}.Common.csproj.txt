@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net11.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="I-Synergy.Framework.Core" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\{ApplicationName}.Resources\{ApplicationName}.Resources.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="ISynergy.Framework.Core.Abstractions.Base" />
+    <Using Include="System.ComponentModel.DataAnnotations" />
+    <Using Include="ISynergy.Framework.Core.Attributes" />
+  </ItemGroup>
+
+</Project>

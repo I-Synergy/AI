@@ -1,0 +1,57 @@
+using ISynergy.Framework.Core.Base;
+using {ApplicationName}.Common.Enumerations;
+
+namespace {ApplicationName}.Models;
+
+/// <summary>
+/// Read model of the {Entity}. Derives from <c>BaseModel</c> so UI bindings receive change notification.
+/// </summary>
+public class {Entity} : BaseModel
+{
+    /// <summary>Gets or sets the primary key.</summary>
+    public Guid {Entity}Id
+    {
+        get => GetValue<Guid>();
+        set => SetValue(value);
+    }
+
+    /// <summary>Gets or sets the display name.</summary>
+    public string Name
+    {
+        get => GetValue<string>();
+        set => SetValue(value);
+    }
+
+    /// <summary>Gets or sets an optional description.</summary>
+    public string? Description
+    {
+        get => GetValue<string?>();
+        set => SetValue(value);
+    }
+
+    /// <summary>Gets or sets the lifecycle state.</summary>
+    public {Entity}Status Status
+    {
+        get => GetValue<{Entity}Status>();
+        set => SetValue(value);
+    }
+
+    /// <summary>Gets or sets when the row was created, in UTC.</summary>
+    public DateTimeOffset CreatedAt
+    {
+        get => GetValue<DateTimeOffset>();
+        set => SetValue(value);
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="{Entity}"/> class.
+    /// </summary>
+    public {Entity}(Guid {entity}Id, string name, string? description, {Entity}Status status, DateTimeOffset createdAt)
+    {
+        {Entity}Id = {entity}Id;
+        Name = name;
+        Description = description;
+        Status = status;
+        CreatedAt = createdAt;
+    }
+}

@@ -1,0 +1,97 @@
+using {ApplicationName}.Common.Constants;
+using Microsoft.EntityFrameworkCore;
+using Npgsql;
+
+namespace {ApplicationName}.Data.{Provider}.Tests.Infrastructure;
+
+/// <summary>
+/// One PostgreSQL database, created fresh inside the shared container and reachable through contexts built
+/// on its connection string.
+/// </summary>
+/// <remarks>
+/// A database per test rather than a container per test: the container start dominates a test's cost, and a
+/// database is isolated by construction. Databases are never dropped; the container is new for each test run
+/// and stopped when the process exits.
+/// </remarks>
+internal sealed class PostgresDatabase
+{
+    private PostgresDatabase(string connectionString, string databaseName)
+    {
+        ConnectionString = connectionString;
+        DatabaseName = databaseName;
+    }
+
+    /// <summary>Gets the name of the database, for failure messages.</summary>
+    public string DatabaseName { get; }
+
+    /// <summary>Gets the connection string, for tests that read the catalog directly.</summary>
+    public string ConnectionString { get; }
+
+    /// <summary>
+    /// Creates an empty database inside the server's container.
+    /// </summary>
+    /// <param name="serverConnectionString">The running container's connection string.</param>
+    /// <param name="cancellationToken">Token used to cancel the creation.</param>
+    /// <returns>The database.</returns>
+    public static async Task<PostgresDatabase> CreateAsync(
+        string serverConnectionString,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(serverConnectionString);
+
+        var name = $"test_{Guid.NewGuid():N}";
+
+        await using (var connection = new NpgsqlConnection(serverConnectionString))
+        {
+            await connection.OpenAsync(cancellationToken);
+
+            // The name is generated here, so it needs no escaping beyond the quoting the identifier
+            // requires: CREATE DATABASE takes no parameters.
+            await using var command = new NpgsqlCommand($"CREATE DATABASE \"{name}\"", connection);
+            await command.ExecuteNonQueryAsync(cancellationToken);
+        }
+
+        var connectionString = new NpgsqlConnectionStringBuilder(serverConnectionString)
+        {
+            Database = name,
+
+            // Npgsql pools per connection string and every database has its own, so without pruning each
+            // test would leave a pool of idle connections open for the rest of the run.
+            ConnectionIdleLifetime = 5,
+            ConnectionPruningInterval = 5
+        }.ConnectionString;
+
+        return new PostgresDatabase(connectionString, name);
+    }
+
+    /// <summary>
+    /// Creates a context on this database. The migrations history table is pinned to the system schema, the
+    /// way the host configures it, so a test that migrates reads and writes the same table the host does.
+    /// </summary>
+    /// <returns>A context the caller disposes; the database does not track or own it.</returns>
+    public DataContext CreateContext()
+    {
+        var options = new DbContextOptionsBuilder<DataContext>()
+            .UseNpgsql(
+                ConnectionString,
+                npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", DatabaseConstants.SystemSchema))
+            .Options;
+
+        return new DataContext(options);
+    }
+
+    /// <summary>
+    /// Opens a raw connection to the database, for assertions that read PostgreSQL's own catalog rather than
+    /// the application's model.
+    /// </summary>
+    /// <param name="cancellationToken">Token used to cancel the connection.</param>
+    /// <returns>An open connection; the caller disposes it.</returns>
+    public async Task<NpgsqlConnection> OpenConnectionAsync(CancellationToken cancellationToken = default)
+    {
+        var connection = new NpgsqlConnection(ConnectionString);
+
+        await connection.OpenAsync(cancellationToken);
+
+        return connection;
+    }
+}

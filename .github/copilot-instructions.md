@@ -129,7 +129,7 @@ Always map entities to Models before returning from handlers. Responses wrap Mod
 ### 6. File Organization: One Type Per File, Subfolder Per Operation
 Every top-level class, record, struct, interface, and enum gets its own file — never merge two types into one file. Each operation also gets its own subfolder.
 ```
-Features/{Entity}/
+{ApplicationName}.Domains/Features/{Entities}/
   Commands/Create{Entity}/
     Create{Entity}Command.cs
     Create{Entity}CommandHandler.cs
@@ -139,6 +139,7 @@ Features/{Entity}/
     Get{Entity}ByIdQueryHandler.cs
     Get{Entity}ByIdResponse.cs
 ```
+The feature folder is plural; the entity mapping (`ItemConfiguration.cs`) is its own file beside the entity in `{ApplicationName}.Entities`. Full rule: `.ai/reference/critical-rules.md` rule 10.
 
 ### 7. Enum Naming: Plural (except *Status)
 `PaymentProviders`, `OrderTypes` — plural. `PaymentStatus`, `SubscriptionStatus` — singular (Status suffix is exempt).
@@ -147,14 +148,14 @@ Features/{Entity}/
 EF Core converts enums automatically. Always use the enum type on entity properties, never raw `int`.
 
 ### 9. Common Project: Centralize Shared Types
-Every solution needs `{ApplicationName}.Common`. All enums and shared types go there. Entities and Models must never reference each other — if both need a type, extract it to Common.
+Every solution needs `{ApplicationName}.Common` and `{ApplicationName}.Resources`; Common references Resources. All enums and shared types go in Common (`Enumerations/`, `Constants/`). Entities and Models must never reference each other — if both need a type, extract it to Common. Full rule: `.ai/reference/critical-rules.md` rule 13.
 
 ### 10. API Endpoints: Always Explicit Produces Metadata
-Every route must declare all status codes: `.Produces<T>(201)` for success, `.Produces(401)` for auth, `.ProducesValidationProblem()` for validation, `.Produces(404)` for not-found.
+Every route must declare every status code it can return: `.Produces<T>(201)` for success, `.ProducesValidationProblem()` for validation, `.Produces(404)` for not-found, `.Produces(401)` only on routes that require authentication (the scaffold API is anonymous), and `.Produces(429)` on rate-limited routes.
 
 ### 11. API: OpenAPI Transformers + Kiota Clients + Validation + Rate Limiting
 - Register document transformer (servers URL) AND schema transformer (type mapping) in `AddOpenApi()`
-- Every API needs a Kiota-generated client project — never use raw HttpClient
+- Every API needs a Kiota-generated client project (`{ApplicationName}.Clients`) — never use raw HttpClient (rule 17)
 - POST/PUT routes: `.WithValidation<T>()` + Data Annotations on request models
 - Configure `AddRateLimiter` + `UseRateLimiter` + `UseHttpsRedirection`
 
@@ -165,10 +166,22 @@ If a type already exists, reuse or extend it. Never create duplicates. Every pla
 Never save plans to `docs/plans/`. Always use `.ai/plans/`.
 
 ### 14. Interfaces: `Abstractions/` Folder, Highest Shared Project
-Every interface goes in an `Abstractions/` folder — never inside the implementing project when a consumer sits above it. Place it in the highest project that both its consumers and its implementation already depend on. Exception: an interface used only inside one internal implementation stays beside it and is `internal`. Full rule: `.ai/reference/critical-rules.md` rule 27.
+Every interface goes in an `Abstractions/` folder — never inside the implementing project when a consumer sits above it. Place it in the highest project that both its consumers and its implementation already depend on. Exception: an interface used only inside one internal implementation stays beside it and is `internal`. For example, `IDataContext` lives in `{ApplicationName}.Data/Abstractions/`, not in the provider project. Full rule: `.ai/reference/critical-rules.md` rule 27.
 
 ### 15. Models: Never Use a `Dto` Suffix
 Models are DTOs by nature — never suffix a type or its file with `Dto` (`{Entity}DTO`, `{Entity}DtoModel`). Name it after the concept: `{Entity}`, `{Entity}Response`, `Create{Entity}Request`. Full rule: `.ai/reference/critical-rules.md` rule 28.
+
+### 16. Package Versions: Central Management and NuGet Audit
+Every package version lives in `Directory.Packages.props`; project files reference packages without a version. NuGet audit runs in `all` mode at `low` level, and NU1900–NU1905 are errors. Full rule: `.ai/reference/critical-rules.md` rule 29.
+
+### 17. Kiota Client: Layout and Regeneration
+The client project `{ApplicationName}.Clients` holds the generated `Api/` source. It is committed and never edited by hand. A Debug build of `{ApplicationName}.Service.Api` regenerates it from `openapi/{ApplicationName}.Service.Api.json`, using the Kiota version pinned in `.config/dotnet-tools.json`. Use `-p:{ApplicationName}GenerateApiClient=false` in CI and in test runs that must not rewrite committed files. Full rule: `.ai/reference/critical-rules.md` rule 21.
+
+### 18. UI Heads: Names and Sharing
+The UI projects are `{ApplicationName}.App` (MAUI head), `{ApplicationName}.App.Shared` (shared services and client registration) and `{ApplicationName}.App.Web` (Blazor head). Heads reference `App.Shared` and never reference `Clients`. Full rule: `.ai/reference/critical-rules.md` rule 30.
+
+### 19. Tests: Layering and Real Providers
+Test projects follow the layer they test: `{ApplicationName}.Domains.Tests`, `{ApplicationName}.Service.Tests`, `{ApplicationName}.Data.{Provider}.Tests`. Handler tests run the real `DataContext` on the in-memory provider with `NullLogger`, not a mocked context. Expected exceptions use `Assert.ThrowsExactly`; `[ExpectedException]` is not used. Full rule: `.ai/reference/critical-rules.md` rule 31.
 
 ## After Every Code Change
 
@@ -221,6 +234,7 @@ These files contain detailed guidance. Load them when the task type matches — 
 - `.ai/reference/quality-model.md` — ISO/IEC 25010 review vocabulary and severity taxonomy
 - `.ai/reference/test-documentation.md` — which test documents to write, which to skip, and why
 - `.ai/reference/standards.md` — per-standard compatibility manifest; `verify-config` computes it from validator runs
+- `.ai/reference/templates/solution/README.md` — solution scaffold: tokens, manifest and Kiota build order (generator: `.ai/scripts/scaffold-solution.py`)
 
 **Project:**
 - `.ai/project/architecture.md` — solution architecture
@@ -235,23 +249,23 @@ See `.ai/project/architecture.md` for complete architecture documentation and `.
 ## Architecture
 
 **Clean Architecture Layers:**
-- Domain: `{ApplicationName}.Domain.*` — CQRS handlers, domain logic
-- Application: `{ApplicationName}.Services.*` — API endpoints
-- Infrastructure: `{ApplicationName}.Data.*` — EF Core persistence
-- Presentation: `{ApplicationName}.UI.*` — Blazor/MAUI
+- Domain: `{ApplicationName}.Domains` — CQRS handlers and domain logic, one `Features/{Entities}/` folder per bounded context
+- Application: `{ApplicationName}.Services` — API endpoints
+- Infrastructure: `{ApplicationName}.Data` and `{ApplicationName}.Data.{Provider}` — EF Core persistence
+- Presentation: `{ApplicationName}.App`, `{ApplicationName}.App.Shared` and `{ApplicationName}.App.Web` — MAUI and Blazor heads
 
 **Vertical Slice Organization:**
 ```
-{ApplicationName}.Domain.{Domain}/
-  Features/{Entity}/
+{ApplicationName}.Domains/
+  Features/{Entities}/                 (plural feature folder)
     Commands/Create{Entity}/
       Create{Entity}Command.cs
       Create{Entity}CommandHandler.cs
       Create{Entity}Response.cs
     Queries/Get{Entity}ById/
       ...
-  Models/{Entity}.cs             (positional record, no "Model" suffix)
   Extensions/ServiceCollectionExtensions.cs
+{ApplicationName}.Models/{Entity}.cs   (positional record, no "Model" suffix)
 ```
 
 ## Forbidden Technologies
@@ -284,7 +298,7 @@ See `.ai/reference/forbidden-tech.md` for the complete list.
 See `.ai/reference/tokens.md` for complete definitions.
 
 - `{ApplicationName}` — your application name
-- `{Domain}` — domain/bounded context
+- `{Entities}` — plural feature folder and aggregate root name (PascalCase)
 - `{Entity}` — entity name (PascalCase)
 
 ## Core Operational Rules
@@ -317,6 +331,7 @@ Load these files based on task type:
 | Design Interrogation | `.ai/skills/design-interrogation/SKILL.md`, `.ai/skills/product-discovery/SKILL.md` |
 | Solution Scaffolding | `.ai/skills/solution-generator/SKILL.md`, `.ai/skills/vertical-slices/SKILL.md` |
 | Gap Validation | `.ai/skills/gap-review/SKILL.md` |
+| Existing-Repo Review | `.ai/skills/review-solution/SKILL.md`, `.ai/reference/critical-rules.md`, `.ai/reference/quality-model.md` |
 | Domain Modeling | `.ai/skills/ubiquitous-language/SKILL.md`, `.ai/skills/usecase-specification/SKILL.md`, `.ai/skills/user-story/SKILL.md` |
 | Skill Creation | `.ai/skills/skill-creator/SKILL.md` |
 | Council | `.ai/reference/council.md`, `.ai/skills/council/SKILL.md` |

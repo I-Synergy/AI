@@ -1,335 +1,255 @@
 # Testing Patterns
 
-Complete patterns for MSTest, Moq, and Reqnroll testing.
+Patterns for the test projects the solution generator writes: MSTest on the Microsoft Testing Platform runner, real EF Core providers behind the handlers, and `WebApplicationFactory` for the API. The unit-test approach is in `.ai/patterns/test-driven-development.md`.
 
-## MSTest Unit Test Pattern
+## Test projects
+
+One project per layer. The generator writes these, and new layers follow the same rules.
+
+| Project | Covers | Data | Notes |
+|---|---|---|---|
+| `{Name}.Domains.Tests` | Command and query handlers | EF Core InMemory through the real `DataContext` | Fast; no indexes or foreign keys are enforced |
+| `{Name}.Service.Tests` | Endpoints through the real pipeline (`WebApplicationFactory<Program>`) | InMemory, swapped in by the factory | Pins the HTTP contract (status codes, JSON) |
+| `{Name}.Data.{Provider}.Tests` | Model shape of the provider `DataContext` | None; built offline from the design-time factory | Checks keys, required columns, enum storage, the migrations history table |
+
+Every test project is a plain MSTest project:
+
+```xml
+<PropertyGroup>
+  <TargetFramework>net11.0</TargetFramework>
+  <EnableMSTestRunner>true</EnableMSTestRunner>
+  <OutputType>Exe</OutputType>
+</PropertyGroup>
+<ItemGroup>
+  <PackageReference Include="MSTest.TestAdapter" />
+  <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" />
+</ItemGroup>
+```
+
+Add `Microsoft.EntityFrameworkCore.InMemory` to the two projects that run handlers or endpoints. Add `Microsoft.AspNetCore.Mvc.Testing` to the service tests. Do not add Moq. A mock is allowed only for a narrow seam the handler must not call (an external service), and it needs a reason written in the project file.
+
+## Real provider, not a mocked DataContext
+
+Handlers take `IDataContext`, and the tests hand them the real `DataContext`. A mocked context cannot prove that a query translates, that a change is tracked, or that `SaveChangesAsync` writes anything. The InMemory provider does all three.
+
+`TestDatabase` (in `Infrastructure/`) gives each test its own store:
 
 ```csharp
-// File: tests/{ApplicationName}.{Domain}.Tests/Handlers/Create{Entity}CommandHandlerTests.cs
+public sealed class TestDatabase : IDisposable
+{
+    public TestDatabase(string? databaseName = null)
+    {
+        DatabaseName = databaseName ?? Guid.NewGuid().ToString();
 
-using Microsoft.Extensions.Logging;
+        var options = new DbContextOptionsBuilder<DataContext>()
+            .UseInMemoryDatabase(DatabaseName)
+            // A handler that opens a transaction would otherwise fail on the InMemory provider.
+            .ConfigureWarnings(warnings => warnings.Ignore(InMemoryEventId.TransactionIgnoredWarning))
+            .Options;
+
+        Context = new DataContext(options);
+    }
+
+    public DataContext Context { get; }
+    public string DatabaseName { get; }
+    public void Dispose() => Context.Dispose();
+}
+```
+
+Each test creates its own `TestDatabase` with `using var db = new TestDatabase();`. Tests never share rows, so they run in any order.
+
+Arrange rows through a small helper (`{Entity}TestData.AddAsync(db.Context, ...)`), not through the handler under test. Read results back through `db.Context`, which is the same store the handler wrote to.
+
+## Handler test
+
+```csharp
+// File: tests/{ApplicationName}.Domains.Tests/Handlers/{Entities}/Create{Entity}CommandHandlerTests.cs
+// Traces: US-{Domain}-{NNN} / AC-{Domain}-{NNN}.{n}
+
+using {ApplicationName}.Domains.Features.{Entities}.Commands.Create{Entity};
+using {ApplicationName}.Domains.Tests.Infrastructure;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Moq;
 
-namespace {ApplicationName}.{Domain}.Tests.Handlers;
+namespace {ApplicationName}.Domains.Tests.Handlers.{Entities};
 
 [TestClass]
-public class Create{Entity}CommandHandlerTests
+public sealed class Create{Entity}CommandHandlerTests
 {
-    private Mock<DataContext> _dataContextMock;
-    private Mock<ILogger<Create{Entity}CommandHandler>> _loggerMock;
-    private Create{Entity}CommandHandler _handler;
-
-    [TestInitialize]
-    public void Setup()
-    {
-        _dataContextMock = new Mock<DataContext>();
-        _loggerMock = new Mock<ILogger<Create{Entity}CommandHandler>>();
-        _handler = new Create{Entity}CommandHandler(
-            _dataContextMock.Object,
-            _loggerMock.Object);
-    }
-
     [TestMethod]
-    public async Task HandleAsync_ValidCommand_Creates{Entity}Successfully()
+    [TestCategory("AC-{Domain}-{NNN}.{n}")]
+    public async Task HandleAsync_ValidCommand_PersistsTheGivenValues()
     {
         // Arrange
-        var command = new Create{Entity}Command(
-            Property1: "Test Value",
-            Property2: 100.50m,
-            Property3: DateTimeOffset.UtcNow);
+        using var db = new TestDatabase();
+        var handler = new Create{Entity}CommandHandler(db.Context, NullLogger<Create{Entity}CommandHandler>.Instance);
 
         // Act
-        var result = await _handler.HandleAsync(command);
+        var result = await handler.HandleAsync(new Create{Entity}Command(Name: "Alpha", Description: "First sample"));
 
         // Assert
-        Assert.IsNotNull(result);
-        Assert.AreNotEqual(Guid.Empty, result.{Entity}Id);
-
-        _dataContextMock.Verify(
-            x => x.{Entities}.Add(It.IsAny<{Entity}Model>()),
-            Times.Once);
-        _dataContextMock.Verify(
-            x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
-            Times.Once);
-    }
-
-    [TestMethod]
-    [ExpectedException(typeof(ArgumentNullException))]
-    public async Task HandleAsync_NullCommand_ThrowsArgumentNullException()
-    {
-        // Act
-        await _handler.HandleAsync(null!);
-
-        // Assert - Exception expected
-    }
-
-    [TestMethod]
-    public async Task HandleAsync_ValidCommand_LogsInformation()
-    {
-        // Arrange
-        var command = new Create{Entity}Command(
-            Property1: "Test Value",
-            Property2: 100.50m,
-            Property3: DateTimeOffset.UtcNow);
-
-        // Act
-        await _handler.HandleAsync(command);
-
-        // Assert
-        _loggerMock.Verify(
-            x => x.Log(
-                LogLevel.Information,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => true),
-                It.IsAny<Exception>(),
-                It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)),
-            Times.AtLeastOnce);
+        var stored = await db.Context.{Entities}.SingleAsync(e => e.{Entity}Id == result.{Entity}Id);
+        Assert.AreEqual("Alpha", stored.Name);
     }
 }
 ```
 
-## Reqnroll Feature File Pattern
+Full template: `.ai/reference/templates/test-class.cs.txt`.
 
-```gherkin
-# File: tests/{ApplicationName}.{Domain}.Tests/Features/{Entity}Management.feature
+### Failure paths
 
-Feature: {Entity} Management
-  As a user
-  I want to manage {entities}
-  So that I can track my data
+Assert refusals with `Assert.ThrowsExactlyAsync` (or `Assert.ThrowsExactly` for a synchronous call). It fails when the type is wrong, which `Assert.ThrowsAsync` would allow. Do not use `[ExpectedException]`: it cannot assert the message, and it hides the line that threw.
 
-  @AC-{Domain}-{NNN}.1
-  Scenario: Create a new {entity}
-    Given I am an authenticated user
-    When I create a {entity} with the following details:
-      | Property1  | Property2 | Property3  |
-      | Test Value | 100.50    | 2025-12-31 |
-    Then the {entity} should be created successfully
-    And the {entity} should have a unique identifier
-    And the {entity} should be retrievable by its identifier
+```csharp
+[TestMethod]
+public async Task HandleAsync_MissingItem_ThrowsResourceNotFoundException()
+{
+    using var db = new TestDatabase();
+    var handler = new Delete{Entity}CommandHandler(db.Context, NullLogger<Delete{Entity}CommandHandler>.Instance);
 
-  @AC-{Domain}-{NNN}.2
-  Scenario: Cannot create {entity} with invalid data
-    Given I am an authenticated user
-    When I attempt to create a {entity} with negative Property2
-    Then the creation should fail with a validation error
-    And the error message should indicate Property2 must be positive
-
-  @AC-{Domain}-{NNN}.3
-  Scenario: Update an existing {entity}
-    Given I am an authenticated user
-    And a {entity} exists with Property1 "Original Value"
-    When I update the {entity} Property1 to "Updated Value"
-    Then the {entity} should be updated successfully
-    And the {entity} Property1 should be "Updated Value"
-
-  @AC-{Domain}-{NNN}.4
-  Scenario: Delete an existing {entity}
-    Given I am an authenticated user
-    And a {entity} exists
-    When I delete the {entity}
-    Then the {entity} should be deleted successfully
-    And the {entity} should not be retrievable
-
-  @AC-{Domain}-{NNN}.5
-  Scenario: Get list of {entities} with pagination
-    Given I am an authenticated user
-    And 25 {entities} exist
-    When I request page 1 with page size 10
-    Then I should receive 10 {entities}
-    When I request page 3 with page size 10
-    Then I should receive 5 {entities}
+    await Assert.ThrowsExactlyAsync<ResourceNotFoundException>(() => handler.HandleAsync(new Delete{Entity}Command(Guid.NewGuid())));
+}
 ```
+
+### Logging
+
+`NullLogger<T>.Instance` is the logger for every handler test. Do not assert on log output in a unit test. If a log line is the behaviour under test, use a fake `ILogger<T>` that records calls, written by hand in the test project. Do not use `Mock<ILogger>`.
+
+Correct and wrong, side by side:
+
+```csharp
+// Correct: the handler runs on the real DataContext; the assertion reads the stored row.
+using var db = new TestDatabase();
+var handler = new Create{Entity}CommandHandler(db.Context, NullLogger<Create{Entity}CommandHandler>.Instance);
+await handler.HandleAsync(new Create{Entity}Command(Name: "Alpha", Description: null));
+Assert.AreEqual(1, await db.Context.{Entities}.CountAsync());
+
+// Wrong: a mocked context proves only which methods were called, not that the row was saved.
+var dataContextMock = new Mock<DataContext>();
+dataContextMock.Verify(x => x.{Entities}.Add(It.IsAny<{Entity}>()), Times.Once);
+```
+
+## Endpoint test
+
+The service tests boot the real host through `WebApplicationFactory`. The factory replaces the provider-backed context with InMemory, so no database is needed:
+
+```csharp
+public class CustomWebApplicationFactory : WebApplicationFactory<Program>
+{
+    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    {
+        builder.ConfigureServices(services =>
+        {
+            services.RemoveAll<DataContext>();
+            services.RemoveAll<DbContextOptions<DataContext>>();
+            services.RemoveAll<IDataContext>();
+            services.RemoveAll<IDbContextOptionsConfiguration<DataContext>>();
+
+            services.AddDbContext<DataContext>(
+                options => options.UseInMemoryDatabase(Guid.NewGuid().ToString())
+                    .ConfigureWarnings(warnings => warnings.Ignore(InMemoryEventId.TransactionIgnoredWarning)),
+                contextLifetime: ServiceLifetime.Scoped,
+                optionsLifetime: ServiceLifetime.Singleton);
+
+            services.AddScoped<IDataContext>(provider => provider.GetRequiredService<DataContext>());
+        });
+    }
+}
+```
+
+`Program` is public because the host declares `public partial class Program` in `Program.Partial.cs`. The test project does not need `InternalsVisibleTo`.
+
+Each test creates its own factory and client:
+
+```csharp
+[TestMethod]
+public async Task GetById_UnknownId_ReturnsNotFound()
+{
+    await using var factory = new CustomWebApplicationFactory();
+    using var client = factory.CreateClient();
+
+    using var response = await client.GetAsync($"/items/{Guid.NewGuid()}");
+
+    Assert.AreEqual(HttpStatusCode.NotFound, response.StatusCode);
+}
+```
+
+Request bodies are anonymous objects and responses are read as `JsonElement`. The tests pin the wire contract, not the C# types behind it.
+
+## Data layer tests
+
+`{Name}.Data.{Provider}.Tests` checks the model without a server. The design-time factory is the same path `dotnet ef migrations add` uses, so these tests see the configuration the migrations come from:
+
+```csharp
+[TestMethod]
+public void Model_Item_IsKeyedByItemId()
+{
+    using var context = ModelProbe.CreateContext();   // new DataContextFactory().CreateDbContext([])
+    var entityType = ModelProbe.GetModel(context).FindEntityType(typeof(Item));
+
+    Assert.IsNotNull(entityType, "The Item entity is not part of the model.");
+    Assert.AreEqual(nameof(Item.ItemId), entityType.FindPrimaryKey()!.Properties[0].Name);
+}
+```
+
+What these tests cannot see: how the server stores a value, what an index enforces, or whether a migration does what the model says. Those need a real server, which the generated project does not start.
 
 ## Traceability
 
-Every scenario states which acceptance criterion it is evidence for, as a tag on the line directly
-above `Scenario:` — `@AC-{Domain}-{NNN}.{n}`, where `{Domain}` is the bounded context, `{NNN}` the story and
-`{n}` the criterion within it. The full convention, including how identifiers are allocated and
-retired, is `.ai/reference/traceability.md`.
-
-- Exactly one traceability tag per scenario. A criterion may be satisfied by several scenarios; a
-  scenario satisfies exactly one criterion.
-- Other tags (`@smoke`, `@e2e`) are allowed alongside the traceability tag.
-- `Feature:` and `Background:` carry no traceability tag.
-
-The MSTest side carries the same link: one `[TestCategory("AC-…")]` per test method, and a
-`// Traces: US-… / AC-…` header listing the file's story and criterion identifiers — see
-`.ai/reference/templates/test-class.cs.txt`.
-
-## Reqnroll Step Definitions Pattern
+Every test file carries a `// Traces:` header below its `// File:` line, and every test method that is evidence for a criterion carries exactly one `[TestCategory("AC-…")]`, written after `[TestMethod]`:
 
 ```csharp
-// File: tests/{ApplicationName}.{Domain}.Tests/Steps/{Entity}ManagementSteps.cs
-
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Reqnroll;
-
-namespace {ApplicationName}.{Domain}.Tests.Steps;
-
-[Binding]
-public class {Entity}ManagementSteps
-{
-    private readonly ScenarioContext _scenarioContext;
-    private Create{Entity}Response? _createResponse;
-    private {Entity}Response? _retrievedEntity;
-    private Exception? _exception;
-
-    public {Entity}ManagementSteps(ScenarioContext scenarioContext)
-    {
-        _scenarioContext = scenarioContext;
-    }
-
-    [Given(@"I am an authenticated user")]
-    public void GivenIAmAnAuthenticatedUser()
-    {
-        // Set up authentication context
-    }
-
-    [When(@"I create a {entity} with the following details:")]
-    public async Task WhenICreateEntityWithDetails(Table table)
-    {
-        var row = table.Rows[0];
-        var command = new Create{Entity}Command(
-            Property1: row["Property1"],
-            Property2: decimal.Parse(row["Property2"]),
-            Property3: DateTimeOffset.Parse(row["Property3"]));
-
-        try
-        {
-            _createResponse = await _handler.HandleAsync(command);
-        }
-        catch (Exception ex)
-        {
-            _exception = ex;
-        }
-    }
-
-    [Then(@"the {entity} should be created successfully")]
-    public void ThenEntityShouldBeCreatedSuccessfully()
-    {
-        Assert.IsNotNull(_createResponse);
-        Assert.AreNotEqual(Guid.Empty, _createResponse.{Entity}Id);
-    }
-}
-```
-
-## Test Naming Conventions
-
-```csharp
-// Pattern: MethodName_Scenario_ExpectedResult
+// Traces: US-{Domain}-014 / AC-{Domain}-014.1, AC-{Domain}-014.2
 
 [TestMethod]
-public async Task HandleAsync_ValidCommand_Creates{Entity}Successfully()
-
-[TestMethod]
-public async Task HandleAsync_NullCommand_ThrowsArgumentNullException()
-
-[TestMethod]
-public async Task HandleAsync_NegativeAmount_ThrowsArgumentException()
+[TestCategory("AC-{Domain}-014.1")]
+public async Task HandleAsync_ValidCommand_PersistsTheGivenValues()
 ```
 
-## Moq Patterns
+A method that checks a guard clause, a log line, or infrastructure carries no `AC-` category and sits outside the trace. Extra categories such as `Integration` are allowed. The full convention, including how identifiers are allocated and retired, is `.ai/reference/traceability.md`. The validator is `.ai/tests/validate-traceability.py`.
 
-```csharp
-// ─── EF Core DbSet Mock Helpers ─────────────────────────────────────
-// Place these in a test infrastructure project or base test class.
-// They enable FirstOrDefaultAsync/ToListAsync on mocked DbSet properties.
+Generated stubs carry the placeholder `US-<Domain>-NNN` until the story exists. Replace it with the real identifiers before the stub counts as evidence.
 
-internal class TestAsyncEnumerator<T> : IAsyncEnumerator<T>
-{
-    private readonly IEnumerator<T> _inner;
-    public TestAsyncEnumerator(IEnumerator<T> inner) => _inner = inner;
-    public ValueTask DisposeAsync() { _inner.Dispose(); return ValueTask.CompletedTask; }
-    public ValueTask<bool> MoveNextAsync() => ValueTask.FromResult(_inner.MoveNext());
-    public T Current => _inner.Current;
-}
+## Test naming
 
-internal class TestAsyncQueryProvider<T> : IQueryProvider
-{
-    private readonly IQueryProvider _inner;
-    public TestAsyncQueryProvider(IQueryProvider inner) => _inner = inner;
-    public IQueryable CreateQuery(Expression expression) =>
-        new TestAsyncEnumerable<T>(expression);
-    public IQueryable<TElement> CreateQuery<TElement>(Expression expression) =>
-        new TestAsyncEnumerable<TElement>(expression);
-    public object? Execute(Expression expression) => _inner.Execute(expression);
-    public TResult Execute<TResult>(Expression expression) =>
-        _inner.Execute<TResult>(expression);
-}
+`MethodName_Scenario_ExpectedResult`, in the sample's style:
 
-internal class TestAsyncEnumerable<T> : EnumerableQuery<T>, IAsyncEnumerable<T>, IQueryable<T>
-{
-    public TestAsyncEnumerable(IEnumerable<T> enumerable) : base(enumerable) { }
-    public TestAsyncEnumerable(Expression expression) : base(expression) { }
-    public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default) =>
-        new TestAsyncEnumerator<T>(this.AsEnumerable().GetEnumerator());
-    IQueryProvider IQueryable.Provider => new TestAsyncQueryProvider<T>(this);
-}
-
-internal static class DbSetMockHelper
-{
-    public static Mock<DbSet<T>> CreateMock<T>(List<T> source) where T : class
-    {
-        var queryable = source.AsQueryable();
-        var mock = new Mock<DbSet<T>>();
-        mock.As<IAsyncEnumerable<T>>()
-            .Setup(m => m.GetAsyncEnumerator(It.IsAny<CancellationToken>()))
-            .Returns(new TestAsyncEnumerator<T>(queryable.GetEnumerator()));
-        mock.As<IQueryable<T>>()
-            .Setup(m => m.Provider).Returns(new TestAsyncQueryProvider<T>(queryable.Provider));
-        mock.As<IQueryable<T>>()
-            .Setup(m => m.Expression).Returns(queryable.Expression);
-        mock.As<IQueryable<T>>()
-            .Setup(m => m.ElementType).Returns(queryable.ElementType);
-        mock.As<IQueryable<T>>()
-            .Setup(m => m.GetEnumerator()).Returns(queryable.GetEnumerator());
-        return mock;
-    }
-}
-
-// ─── Setup DbSet to return data from FirstOrDefaultAsync ───
-var expected{Entity} = new {Entity}Model { {Entity}Id = Guid.NewGuid(), Description = "Test" };
-var {entities}Mock = DbSetMockHelper.CreateMock(new List<{Entity}Model> { expected{Entity} });
-_dataContextMock.Setup(x => x.{Entities}).Returns({entities}Mock.Object);
-
-// ─── Verify Add + SaveChanges (Create) ───
-_dataContextMock.Verify(
-    x => x.{Entities}.Add(It.Is<{Entity}Model>(m => m.Description == "Test")),
-    Times.Once);
-_dataContextMock.Verify(
-    x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
-    Times.Once);
-
-// ─── Verify Remove + SaveChanges (Delete) ───
-_dataContextMock.Verify(
-    x => x.{Entities}.Remove(It.IsAny<{Entity}Model>()),
-    Times.Once);
-_dataContextMock.Verify(
-    x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
-    Times.Once);
-
-// ─── Setup empty DbSet (not found => FirstOrDefaultAsync returns null) ───
-var empty{Entities}Mock = DbSetMockHelper.CreateMock(new List<{Entity}Model>());
-_dataContextMock.Setup(x => x.{Entities}).Returns(empty{Entities}Mock.Object);
+```
+HandleAsync_ValidCommand_PersistsTheGivenValues
+HandleAsync_MissingItem_ThrowsResourceNotFoundException
+GetById_UnknownId_ReturnsNotFound
 ```
 
-## Test Organization
+## Test layout
 
 ```
 tests/
-  {ApplicationName}.{Domain}.Tests/
-    Features/
-      {Entity}Management.feature
-    Steps/
-      {Entity}ManagementSteps.cs
+  {ApplicationName}.Domains.Tests/
+    Infrastructure/
+      TestDatabase.cs
+      {Entity}TestData.cs
     Handlers/
-      Create{Entity}CommandHandlerTests.cs
-      Update{Entity}CommandHandlerTests.cs
-      Delete{Entity}CommandHandlerTests.cs
-      Get{Entity}ByIdQueryHandlerTests.cs
-      Get{Entities}ListQueryHandlerTests.cs
-    Integration/
-      {Entity}EndpointsTests.cs
+      {Entities}/
+        Create{Entity}CommandHandlerTests.cs
+        Get{Entity}ByIdQueryHandlerTests.cs
+  {ApplicationName}.Service.Tests/
+    CustomWebApplicationFactory.cs
+    {Entities}EndpointsTests.cs
+  {ApplicationName}.Data.{Provider}.Tests/
+    Infrastructure/
+      ModelProbe.cs
+    DataContextModelTests.cs
 ```
+
+## Reqnroll (not generated)
+
+Reqnroll acceptance tests are the `tests-acceptance` flag. Its templates do not exist yet, so the generator does not write them. When they are added, feature files carry the traceability tag on the line directly above each `Scenario:`:
+
+```gherkin
+@AC-{Domain}-{NNN}.1
+Scenario: Create a new {entity}
+  Given ...
+```
+
+Exactly one traceability tag per scenario; other tags (`@smoke`) may sit alongside it. `Feature:` and `Background:` carry none. Step definitions call the same handlers the unit tests use, through a `TestDatabase`, and do not mock the context.

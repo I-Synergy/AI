@@ -1,0 +1,19 @@
+using {ApplicationName}.ViewModels;
+
+namespace {ApplicationName}.Views;
+
+/// <summary>
+/// The page that shows one {entity}.
+/// </summary>
+public partial class {Entity}DetailView
+{
+    /// <summary>
+    /// Initializes a new instance of the <see cref="{Entity}DetailView"/> class.
+    /// </summary>
+    /// <param name="viewModel">The detail view model.</param>
+    public {Entity}DetailView({Entity}DetailViewModel viewModel)
+        : base(viewModel)
+    {
+        InitializeComponent();
+    }
+}

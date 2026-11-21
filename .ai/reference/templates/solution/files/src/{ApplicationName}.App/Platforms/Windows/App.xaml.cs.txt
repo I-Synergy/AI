@@ -1,0 +1,18 @@
+using Microsoft.Maui;
+
+namespace {ApplicationName}.WinUI;
+
+/// <summary>
+/// The Windows application object. It creates the MAUI application through the shared <see cref="MauiProgram"/>.
+/// </summary>
+public partial class App : MauiWinUIApplication
+{
+    /// <summary>Initializes the Windows application and its XAML resources.</summary>
+    public App()
+    {
+        this.InitializeComponent();
+    }
+
+    /// <inheritdoc />
+    protected override MauiApp CreateMauiApp() => MauiProgram.CreateMauiApp();
+}

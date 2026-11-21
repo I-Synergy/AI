@@ -1,0 +1,10 @@
+namespace {ApplicationName}.Common.Constants;
+
+/// <summary>
+/// Connection string names used by the host and the AppHost.
+/// </summary>
+public static class ConnectionStrings
+{
+    /// <summary>The application database connection string name.</summary>
+    public const string Data = AspireNames.{applicationname}_database;
+}

@@ -1,0 +1,42 @@
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Logging;
+using {ApplicationName}.Common.Models;
+
+namespace {ApplicationName}.HealthChecks;
+
+/// <summary>
+/// Checks that the API answers its liveness route. This is a documented exception to the Kiota-only rule: a health
+/// probe reads the status code of one route and does not need the typed client.
+/// </summary>
+public sealed class ApiHealthCheck(IHttpClientFactory httpClientFactory, ILogger<ApiHealthCheck> logger) : IHealthCheck
+{
+    /// <summary>The time limit for one probe.</summary>
+    public static readonly TimeSpan Timeout = TimeSpan.FromSeconds(5);
+
+    /// <inheritdoc />
+    public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
+    {
+        using var timeoutSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeoutSource.CancelAfter(Timeout);
+
+        try
+        {
+            var client = httpClientFactory.CreateClient(HttpClientSettings.Name);
+            using var response = await client.GetAsync("/health", timeoutSource.Token);
+
+            return response.IsSuccessStatusCode
+                ? HealthCheckResult.Healthy()
+                : HealthCheckResult.Unhealthy($"The API answered with status {(int)response.StatusCode}.");
+        }
+        catch (HttpRequestException exception)
+        {
+            logger.LogWarning(exception, "The API health probe could not reach the API.");
+            return HealthCheckResult.Unhealthy("The API is not reachable.");
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            logger.LogWarning("The API health probe timed out.");
+            return HealthCheckResult.Unhealthy("The API did not answer in time.");
+        }
+    }
+}

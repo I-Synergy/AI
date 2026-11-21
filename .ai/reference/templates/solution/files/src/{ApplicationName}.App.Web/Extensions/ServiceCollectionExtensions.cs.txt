@@ -1,0 +1,27 @@
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using {ApplicationName}.HealthChecks;
+
+namespace {ApplicationName}.Extensions;
+
+/// <summary>
+/// Registers the web head's health checks.
+/// </summary>
+public static class ServiceCollectionExtensions
+{
+    /// <summary>
+    /// Registers the liveness check, which does no I/O, and the readiness check, which probes the API.
+    /// </summary>
+    /// <param name="services">The service collection to register into.</param>
+    /// <returns>The same service collection, so calls can be chained.</returns>
+    public static IServiceCollection AddWebHealthChecks(this IServiceCollection services)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+
+        services.AddHealthChecks()
+            .AddCheck("self", () => HealthCheckResult.Healthy(), ["live"])
+            .AddCheck<ApiHealthCheck>("api", tags: ["ready"], timeout: ApiHealthCheck.Timeout);
+
+        return services;
+    }
+}

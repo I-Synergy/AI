@@ -1,0 +1,118 @@
+using System.Net;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.ServiceDiscovery;
+using Microsoft.Kiota.Abstractions.Authentication;
+using Microsoft.Kiota.Http.HttpClientLibrary;
+using {ApplicationName}.Abstractions.Services;
+using {ApplicationName}.Clients.Api;
+using {ApplicationName}.Common.Models;
+using {ApplicationName}.Services;
+
+namespace {ApplicationName}.Extensions;
+
+/// <summary>
+/// Registers the API client and the application API service on a host builder.
+/// </summary>
+public static class HostApplicationBuilderExtensions
+{
+    /// <summary>
+    /// Registers the named HTTP client, service discovery, the anonymous Kiota authentication provider, the scoped
+    /// Kiota client and the application API service. Settings are read key by key from the
+    /// <c>HttpClientSettings</c> section: binding by reflection is skipped under trimming and NativeAOT.
+    /// </summary>
+    /// <remarks>
+    /// <c>BaseAddress</c> may be a service-discovery address, which only the AppHost resolves. Every environment that
+    /// runs a head without the AppHost, such as Development, also sets <c>FallbackBaseAddress</c>.
+    /// </remarks>
+    /// <param name="builder">The host builder to register into.</param>
+    /// <returns>The same builder, so calls can be chained.</returns>
+    public static IHostApplicationBuilder Add{ApplicationName}ApiServices(this IHostApplicationBuilder builder)
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+
+        var section = builder.Configuration.GetSection("HttpClientSettings");
+        var settings = new HttpClientSettings
+        {
+            BaseAddress = section["BaseAddress"] ?? string.Empty,
+            FallbackBaseAddress = section["FallbackBaseAddress"] ?? string.Empty,
+            TimeoutSeconds = int.TryParse(section["TimeoutSeconds"], out var timeout) ? timeout : 30,
+        };
+
+        foreach (var header in section.GetSection("DefaultHeaders").GetChildren())
+        {
+            if (!string.IsNullOrWhiteSpace(header.Value))
+                settings.DefaultHeaders[header.Key] = header.Value;
+        }
+
+        var hasServiceDiscovery = Environment.GetEnvironmentVariables().Keys
+            .OfType<string>()
+            .Any(key => key.StartsWith("services__", StringComparison.OrdinalIgnoreCase));
+        var baseAddress = ResolveBaseAddress(settings, hasServiceDiscovery);
+
+        builder.Services.AddServiceDiscovery();
+        builder.Services.Configure<ServiceDiscoveryOptions>(options => options.AllowedSchemes = ["https"]);
+        builder.Services.ConfigureHttpClientDefaults(http => http.AddServiceDiscovery());
+        builder.Services.AddSingleton(settings);
+
+        // Brotli and gzip are accepted on the client side. Response compression on the server is a separate, opt-in decision.
+        builder.Services.AddHttpClient(HttpClientSettings.Name, client =>
+            {
+                client.BaseAddress = new Uri(baseAddress);
+                client.Timeout = TimeSpan.FromSeconds(settings.TimeoutSeconds);
+                foreach (var header in settings.DefaultHeaders)
+                    client.DefaultRequestHeaders.TryAddWithoutValidation(header.Key, header.Value);
+            })
+            .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+            {
+                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Brotli,
+            });
+
+        builder.Services.AddSingleton<IAuthenticationProvider, AnonymousAuthenticationProvider>();
+
+        builder.Services.AddScoped(serviceProvider =>
+        {
+            var httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
+            var authenticationProvider = serviceProvider.GetRequiredService<IAuthenticationProvider>();
+            var requestAdapter = new HttpClientRequestAdapter(authenticationProvider, httpClient: httpClientFactory.CreateClient(HttpClientSettings.Name))
+            {
+                BaseUrl = baseAddress.TrimEnd('/'),
+            };
+            return new ApiClient(requestAdapter);
+        });
+
+        builder.Services.AddScoped<I{ApplicationName}ApiService, {ApplicationName}ApiService>();
+
+        return builder;
+    }
+
+    /// <summary>
+    /// Picks the address the client uses. A service-discovery address (it contains '+') is resolved at run time by the
+    /// AppHost; when no resolver is present, for example a plain local run of a head, the configured fallback is used
+    /// instead. A service-discovery address with neither a resolver nor a fallback fails here, with both keys named,
+    /// rather than failing later inside the HTTP client.
+    /// </summary>
+    private static string ResolveBaseAddress(HttpClientSettings settings, bool hasServiceDiscovery)
+    {
+        var address = settings.BaseAddress;
+
+        if (address.Contains('+', StringComparison.Ordinal) && !hasServiceDiscovery)
+        {
+            if (string.IsNullOrWhiteSpace(settings.FallbackBaseAddress))
+            {
+                throw new InvalidOperationException(
+                    "HttpClientSettings:BaseAddress is a service-discovery address, but no service-discovery resolver is " +
+                    "present and HttpClientSettings:FallbackBaseAddress is empty. Set FallbackBaseAddress for this " +
+                    "environment, or run the head through the AppHost.");
+            }
+
+            address = settings.FallbackBaseAddress;
+        }
+
+        if (string.IsNullOrWhiteSpace(address))
+            throw new InvalidOperationException("HttpClientSettings:BaseAddress or HttpClientSettings:FallbackBaseAddress must be configured.");
+
+        return address;
+    }
+}

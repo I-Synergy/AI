@@ -1,0 +1,16 @@
+using Microsoft.EntityFrameworkCore;
+using {ApplicationName}.Entities;
+
+namespace {ApplicationName}.Data.Abstractions;
+
+/// <summary>
+/// The data access surface that handlers depend on. Implemented by the provider DataContext.
+/// </summary>
+public interface IDataContext
+{
+    /// <summary>Gets the {entities} set.</summary>
+    DbSet<{Entity}> {Entities} { get; }
+
+    /// <summary>Saves pending changes and returns the number of affected rows.</summary>
+    Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+}

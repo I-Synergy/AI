@@ -1,0 +1,32 @@
+using {ApplicationName}.Data.Abstractions;
+using ISynergy.Framework.CQRS.Queries;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+
+namespace {ApplicationName}.Domains.Features.{Entities}.Queries.Get{Entities}List;
+
+/// <summary>
+/// Handles retrieving all {entities}.
+/// </summary>
+public sealed class Get{Entities}ListQueryHandler(
+    IDataContext dataContext,
+    ILogger<Get{Entities}ListQueryHandler> logger)
+    : IQueryHandler<Get{Entities}ListQuery, Get{Entities}ListResponse>
+{
+    /// <inheritdoc />
+    public async Task<Get{Entities}ListResponse> HandleAsync(
+        Get{Entities}ListQuery query,
+        CancellationToken cancellationToken = default)
+    {
+        logger.LogDebug("Retrieving all {entities}");
+
+        var models = await dataContext.{Entities}
+            .OrderBy(e => e.Name)
+            .Select(e => new Models.{Entity}(e.{Entity}Id, e.Name, e.Description, e.Status, e.CreatedAt))
+            .ToListAsync(cancellationToken);
+
+        logger.LogDebug("Retrieved {Count} {entities}", models.Count);
+
+        return new Get{Entities}ListResponse(models);
+    }
+}

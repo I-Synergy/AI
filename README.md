@@ -66,6 +66,7 @@ name is the skill name (`/<skill-name>` invokes it explicitly).
 | **vertical-slices** | Translate use cases/stories into `AC-`-traced vertical slice blueprint JSON |
 | **solution-generator** | Scaffold a .NET solution from an architecture document, tests traced to `AC-` IDs |
 | **gap-review** | Validate a generated solution against the original design decisions |
+| **review-solution** | Review an existing repository against the template — install state, rule audit, structure delta, one prioritised fix list |
 | **council** | Expensive-to-reverse decisions — independent seat positions, chair synthesis, dissent recorded verbatim |
 
 #### .NET Implementation
@@ -232,8 +233,8 @@ Edit the source in `.ai/instructions/`, then run `python .ai/scripts/sync-platfo
 
 | Token | Meaning | Example Usage |
 |-------|---------|---------------|
-| `{ApplicationName}` | Your application name | `{ApplicationName}.Domain.{Domain}` |
-| `{Domain}` | Bounded context | `{ApplicationName}.Domain.{Domain}` |
+| `{ApplicationName}` | Your application name | `{ApplicationName}.Domains` |
+| `{Domain}` | Bounded context (a `Features/` folder, not a project) | `Domains/Features/{Entities}/` |
 | `{Entity}` | Aggregate root (PascalCase) | `Create{Entity}Command` |
 | `{Entities}` | Aggregate root plural (PascalCase) — used for DbSet names | `dataContext.{Entities}` |
 | `{entity}` | Aggregate root (camelCase) | `{entity}Id` |
@@ -246,6 +247,18 @@ Edit the source in `.ai/instructions/`, then run `python .ai/scripts/sync-platfo
 The template ships no concrete business domain; every example is expressed with these tokens.
 
 See `.ai/reference/tokens.md` for complete definitions.
+
+### Solution Scaffold
+
+`.ai/reference/templates/solution/` holds the templates, and `.ai/scripts/scaffold-solution.py` renders them into a new .NET solution. The generated solution:
+
+- uses a flat layout: one project per layer (`Common`, `Entities`, `Models`, `Data`, `Data.SqlServer` or `Data.Postgres`, `Domains`, `Services`, `Service.Api`, `Clients`), with optional heads;
+- manages package versions centrally (`Directory.Packages.props`), treats NuGet audit findings as errors, and sets `LangVersion` 15.0 on the .NET 11 SDK;
+- offers optional projects: an Aspire AppHost (`apphost`), a MAUI head for Windows, Android and Apple (`maui`), a plain-Razor web head (`web`) and a SQLite device store (`sqlite-device`);
+- regenerates its Kiota client from the API's OpenAPI document on every Debug build of `Service.Api`;
+- ships one sample entity (`Item` by default) with handlers, endpoints, client code and tests, so it builds before you write any code.
+
+Flags, the generated layout, prerequisites and what you still create yourself are in the "Scaffold the Solution (Optional)" section of [TEMPLATE-USAGE.md](TEMPLATE-USAGE.md).
 
 ## Quick Start
 
@@ -392,7 +405,15 @@ Copilot CLI and the cloud agent do not read the Local-harness settings. Some set
 
 Neither file is listed in VS Code's Customizations editor, because that editor lists customization items (skills, agents, `*.instructions.md`) rather than project instruction files — "not listed" does not mean ignored.
 
-### 6. Verify
+### 6. Scaffold the Solution (Optional)
+
+```bash
+python .ai/scripts/scaffold-solution.py
+```
+
+The script prompts for the application name, company, first sample entity, database provider and optional heads, then renders a .NET 11 solution into `./<Name>`. Existing files are never overwritten; `--dry-run` lists the files without writing them. Flags, the generated layout and the steps you still take (for example `dotnet ef migrations add Initial`) are in the "Scaffold the Solution (Optional)" section of [TEMPLATE-USAGE.md](TEMPLATE-USAGE.md).
+
+### 7. Verify
 
 ```bash
 bash .ai/tests/run-all-tests.sh
@@ -517,6 +538,7 @@ Edit `.ai/session-context.md` to establish your project's initial state.
     │       ├── compliance.md.txt
     │       ├── standards-section.md.txt
     │       ├── merge-rules.json     # Shared merge data: pinned Copilot keys, legacy Claude hook commands
+    │       ├── solution/            # Solution scaffold templates (files/, manifest.json, package-versions.json); contract in solution/README.md
     │       └── vscode/              # Fragments merged into a project's .vscode/settings.json and tasks.json
     │           ├── settings.json
     │           └── tasks.json
@@ -542,6 +564,7 @@ Edit `.ai/session-context.md` to establish your project's initial state.
     │   ├── hygiene-lint.py          # Read-only hygiene lint — stale progress, committed secrets
     │   ├── migrate-to-ai.py         # Migrate a repo from the old .claude/ layout to .ai/
     │   ├── jsonc_merge.py           # Comment-preserving JSON(C) edits used by upgrade-template.py (stdlib only)
+    │   ├── scaffold-solution.py     # Render a .NET solution from reference/templates/solution (prompts or flags; --dry-run, --check-templates)
     │   └── upgrade-template.py      # Safely upgrade an existing project from this template; merges .vscode/ and .claude/settings.json
     ├── agents/                      # Specialized subagents (source of truth)
     ├── skills/                      # Specialized agent personas (source of truth)
@@ -584,6 +607,7 @@ Edit `.ai/session-context.md` to establish your project's initial state.
         ├── validate-traceability.py
         ├── validate-standards.py
         ├── validate-adapters.py     # Copilot-parity adapter layout (suite 15)
+        ├── validate-scaffold.py     # solution scaffold: render matrix, template rules, forbidden terms (suite 16)
         ├── test_hooks.py            # pytest unit tests for scripts/hooks/ and the rules generator
         ├── test_jsonc_merge.py      # pytest unit tests for the JSONC merge and the .vscode / .claude/settings.json merges
         ├── test_sync_platforms.py   # pytest unit tests for the prompt-adapter rules in sync-platforms.py
@@ -722,6 +746,7 @@ CI installs the hash-pinned `requirements-dev.lock` (with `--require-hashes --on
 | `validate-traceability.py` | Identifier integrity across stories, criteria, `@AC-` scenario tags and `[TestCategory]` attributes |
 | `validate-standards.py` | Standards-compatibility surfaces agree with `.ai/reference/standards.md` and its validator runs |
 | `validate-adapters.py` | Copilot-parity layout (suite 15, 10 tests): no `${…}` prompt variables in skills, the template ships no `.ai/prompts/`, prompt adapters link to `.ai/prompts/` only while it has files, `.claude/instructions` absent, every agent body lists its skills and rules, the runtime block is embedded in `copilot-instructions.md`, `.claude/rules/` matches its source, hook commands resolve, `.vscode/tasks.json` is tracked and not auto-run, `chat.useAgentsMdFile` is off, `orchestrator.md` pins no agent inventory, and the VS Code fragments and `merge-rules.json` are valid and contained in the template's own `.vscode` files |
+| `validate-scaffold.py` | Solution scaffold (suite 16): `scaffold-solution.py` and `.ai/reference/templates/solution/` rendered for four flag combinations; checks the project set, solution file, naming and CQRS template rules, central package management, that no shipped path or rendered file names a private reference project, and CLI error handling. `SCAFFOLD_BUILD_SMOKE=1` adds an opt-in restore, build and test |
 | `test_hooks.py` | pytest only: unit tests for the shared hook scripts in `.ai/scripts/hooks/` and the rules generator, run against temporary directories |
 | `test_jsonc_merge.py` | pytest only: unit tests for `jsonc_merge.py` (comment and format preservation, invalid input, edits) and the `.vscode` and `.claude/settings.json` merges |
 | `test_sync_platforms.py` | pytest only: prompt-adapter behaviour of `sync-platforms.py` (linked only while `.ai/prompts/` has files; legacy otherwise), in temporary directories |
@@ -773,6 +798,14 @@ Claude will:
                          # AGENTS.md is updated (diffed), project-owned files are never touched
 ```
 
+### Reviewing an Existing Project
+
+```
+/review-solution         # Read-only review of a repo that was not generated from this template:
+                         # install state, Critical Coding Rule audit, structure delta vs a reference
+                         # render, one prioritised fix list. Fixes run only when you ask.
+```
+
 The upgrade does not copy `.vscode/settings.json` or `.vscode/tasks.json`. It merges the template's fragments into them, and merges the template's `.claude/settings.json` into the project's copy. Project values win on conflicts, except the pinned Copilot keys. Details are in [Shared Settings Merge](#shared-settings-merge).
 
 ### High-Stakes Decisions (Council)
@@ -804,7 +837,9 @@ Claude loads these files automatically based on your task type:
 | Bulk Refactoring | `.ai/skills/refactor/SKILL.md` |
 | Design Interrogation | `.ai/skills/design-interrogation/SKILL.md`, `.ai/reference/quality-model.md` |
 | Solution Scaffolding | `.ai/skills/solution-generator/SKILL.md`, `.ai/skills/vertical-slices/SKILL.md`, `.ai/reference/traceability.md` |
+| Solution Scaffold Templates | `.ai/reference/templates/solution/README.md`, `.ai/scripts/scaffold-solution.py` |
 | Gap Validation | `.ai/skills/gap-review/SKILL.md` |
+| Existing-Repo Review | `.ai/skills/review-solution/SKILL.md`, `.ai/reference/critical-rules.md`, `.ai/reference/quality-model.md` |
 | Domain Modeling | `.ai/skills/ubiquitous-language/SKILL.md`, `.ai/skills/usecase-specification/SKILL.md`, `.ai/skills/user-story/SKILL.md`, `.ai/reference/traceability.md` |
 | Skill Creation | `.ai/skills/skill-creator/SKILL.md` |
 | Council | `.ai/reference/council.md`, `.ai/skills/council/SKILL.md` |
@@ -838,7 +873,7 @@ Every session (Claude Code and GitHub Copilot):
 
 ### Default Stack (Fully Customizable)
 
-- **.NET:** 10+ (C# 14)
+- **.NET:** 10+ (C# 14); the solution scaffold targets .NET 11 (`LangVersion` 15.0)
 - **ORM:** Entity Framework Core 10
 - **Database:** PostgreSQL, SQL Server
 - **CQRS:** I-Synergy.Framework.CQRS (NOT MediatR)
@@ -871,6 +906,7 @@ Every session (Claude Code and GitHub Copilot):
 | `.ai/reference/test-documentation.md` | Which ISO/IEC/IEEE 29119-3 test documents are produced — and which are deliberate omissions |
 | `.ai/reference/standards.md` | Standards-compatibility manifest read by `verify-config` |
 | `.ai/reference/copilot-integration.md` | Copilot adapters, sync behaviour and troubleshooting when Copilot ignores the rules or agents |
+| `.ai/reference/templates/solution/README.md` | Solution scaffold template contract: tokens, conditional blocks, manifest and package groups |
 | `.ai/project/` | Project-specific context files |
 
 ## Release Versioning

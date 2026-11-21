@@ -1,0 +1,7 @@
+namespace {ApplicationName}.Domains.Features.{Entities}.Commands.Create{Entity};
+
+/// <summary>
+/// Response containing the identifier of the created {entity}.
+/// </summary>
+/// <param name="{Entity}Id">The identifier of the created {entity}.</param>
+public sealed record Create{Entity}Response(Guid {Entity}Id);

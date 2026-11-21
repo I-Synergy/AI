@@ -1,0 +1,31 @@
+using {ApplicationName}.Data.Abstractions;
+using ISynergy.Framework.CQRS.Queries;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+
+namespace {ApplicationName}.Domains.Features.{Entities}.Queries.Get{Entity}ById;
+
+/// <summary>
+/// Handles retrieving the {entity} by its identifier.
+/// </summary>
+public sealed class Get{Entity}ByIdQueryHandler(
+    IDataContext dataContext,
+    ILogger<Get{Entity}ByIdQueryHandler> logger)
+    : IQueryHandler<Get{Entity}ByIdQuery, Get{Entity}ByIdResponse>
+{
+    /// <inheritdoc />
+    public async Task<Get{Entity}ByIdResponse> HandleAsync(
+        Get{Entity}ByIdQuery query,
+        CancellationToken cancellationToken = default)
+    {
+        logger.LogDebug("Retrieving {Entity} {EntityId}", query.{Entity}Id);
+
+        // The projection maps straight to the model, so no entity is materialised outside the handler.
+        var model = await dataContext.{Entities}
+            .Where(e => e.{Entity}Id == query.{Entity}Id)
+            .Select(e => new Models.{Entity}(e.{Entity}Id, e.Name, e.Description, e.Status, e.CreatedAt))
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return new Get{Entity}ByIdResponse(model);
+    }
+}

@@ -1,0 +1,73 @@
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Maui.ApplicationModel;
+using {ApplicationName}.ViewModels;
+using Application = ISynergy.Framework.UI.Application;
+// {{#if sqlite-device}}
+using {ApplicationName}.Abstractions.Services;
+// {{/if}}
+
+namespace {ApplicationName};
+
+/// <summary>
+/// The application object of the MAUI head. The framework calls the overrides in order: startup first, then the
+/// shell once the UI and the startup are both ready.
+/// </summary>
+public partial class App : Application
+{
+    /// <summary>Initializes a new instance of the <see cref="App"/> class.</summary>
+    public App()
+        : base()
+    {
+        InitializeComponent();
+    }
+
+    /// <summary>
+    /// Runs the application startup. The framework calls it once. It must signal that the application is initialized
+    /// at the end, whether or not the steps before it succeeded.
+    /// </summary>
+    protected override async Task InitializeApplicationAsync()
+    {
+        try
+        {
+            _commonServices.BusyService.UpdateMessage(_commonServices.LanguageService.GetString("StartupMessage"));
+
+// {{#if sqlite-device}}
+            // Creates the device-local schema on first run. It is idempotent, so it is safe on every start.
+            var store = IPlatformApplication.Current!.Services.GetRequiredService<ISqliteLocalDataService>();
+            await store.EnsureCreatedAsync();
+// {{/if}}
+
+            _commonServices.BusyService.UpdateMessage(_commonServices.LanguageService.GetString("StartupComplete"));
+        }
+        catch (Exception exception)
+        {
+            _logger?.LogError(exception, "The application failed to initialize");
+
+            await _dialogService.ShowErrorAsync(
+                _commonServices.LanguageService.GetString("StartupFailed"),
+                _commonServices.LanguageService.GetString("Error_Placeholder"));
+        }
+
+        _lifecycleService?.SignalApplicationInitialized();
+    }
+
+    /// <summary>
+    /// Opens the shell after the UI and the startup are both ready.
+    /// </summary>
+    /// <param name="sender">The event source.</param>
+    /// <param name="e">The event arguments.</param>
+    protected override async void OnApplicationLoaded(object? sender, EventArgs e)
+    {
+        base.OnApplicationLoaded(sender, e);
+
+        try
+        {
+            await _navigationService.NavigateModalAsync<ShellViewModel>();
+        }
+        catch (Exception exception)
+        {
+            _logger?.LogError(exception, "The shell could not be opened");
+        }
+    }
+}

@@ -1,0 +1,119 @@
+using Microsoft.EntityFrameworkCore;
+using {ApplicationName}.Abstractions.Services;
+using {ApplicationName}.Data.Sqlite.Entities;
+using FavoriteModel = {ApplicationName}.Models.Favorite;
+
+namespace {ApplicationName}.Data.Sqlite.Services;
+
+/// <summary>
+/// Implements the device-local store on SQLite. SQLite allows one writer at a time, so every operation takes a gate
+/// and uses its own context.
+/// </summary>
+public sealed class SqliteLocalDataService(IDbContextFactory<LocalDataContext> contextFactory) : ISqliteLocalDataService
+{
+    private readonly SemaphoreSlim _gate = new(1, 1);
+
+    /// <inheritdoc />
+    public async Task EnsureCreatedAsync(CancellationToken cancellationToken = default)
+    {
+        await _gate.WaitAsync(cancellationToken);
+        try
+        {
+            await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
+            await context.Database.EnsureCreatedAsync(cancellationToken);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<FavoriteModel>> GetFavoritesAsync(CancellationToken cancellationToken = default)
+    {
+        await _gate.WaitAsync(cancellationToken);
+        try
+        {
+            await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
+            var entities = await context.Favorites
+                .AsNoTracking()
+                .ToListAsync(cancellationToken);
+
+            // SQLite cannot translate DateTimeOffset in ORDER BY, so the newest-first order is applied after the read.
+            return entities
+                .OrderByDescending(favorite => favorite.CreatedAt)
+                .Select(Map)
+                .ToList();
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<FavoriteModel?> GetFavoriteAsync(Guid itemId, CancellationToken cancellationToken = default)
+    {
+        await _gate.WaitAsync(cancellationToken);
+        try
+        {
+            await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
+            var entity = await context.Favorites
+                .AsNoTracking()
+                .FirstOrDefaultAsync(favorite => favorite.ItemId == itemId, cancellationToken);
+
+            return entity is null ? null : Map(entity);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> AddFavoriteAsync(Guid itemId, CancellationToken cancellationToken = default)
+    {
+        await _gate.WaitAsync(cancellationToken);
+        try
+        {
+            await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
+            var exists = await context.Favorites.AnyAsync(favorite => favorite.ItemId == itemId, cancellationToken);
+            if (exists)
+                return false;
+
+            context.Favorites.Add(new Favorite
+            {
+                ItemId = itemId,
+                CreatedAt = DateTimeOffset.UtcNow,
+            });
+
+            return await context.SaveChangesAsync(cancellationToken) > 0;
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> RemoveFavoriteAsync(Guid itemId, CancellationToken cancellationToken = default)
+    {
+        await _gate.WaitAsync(cancellationToken);
+        try
+        {
+            await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
+            var entity = await context.Favorites.FirstOrDefaultAsync(favorite => favorite.ItemId == itemId, cancellationToken);
+            if (entity is null)
+                return false;
+
+            context.Favorites.Remove(entity);
+            return await context.SaveChangesAsync(cancellationToken) > 0;
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    private static FavoriteModel Map(Favorite entity) => new(entity.ItemId, entity.CreatedAt);
+}

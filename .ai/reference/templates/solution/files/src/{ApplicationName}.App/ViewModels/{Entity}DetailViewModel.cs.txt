@@ -1,0 +1,122 @@
+using ISynergy.Framework.Core.Abstractions.Services;
+using ISynergy.Framework.Mvvm.Abstractions.Services;
+using ISynergy.Framework.Mvvm.Commands;
+using ISynergy.Framework.Mvvm.ViewModels;
+using Microsoft.Extensions.Logging;
+using {ApplicationName}.Abstractions.Services;
+using {ApplicationName}.Models;
+
+namespace {ApplicationName}.ViewModels;
+
+/// <summary>
+/// Shows one {entity}. The navigation parameter is the identifier of the {entity}.
+/// </summary>
+public class {Entity}DetailViewModel : ViewModelNavigation<Guid>
+{
+    private readonly I{ApplicationName}ApiService _apiService;
+    private readonly INavigationService _navigationService;
+    private Guid _{entity}Id;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="{Entity}DetailViewModel"/> class.
+    /// </summary>
+    /// <param name="commonServices">The common services of the framework.</param>
+    /// <param name="logger">The logger.</param>
+    /// <param name="apiService">The application API service.</param>
+    /// <param name="navigationService">The navigation service.</param>
+    public {Entity}DetailViewModel(
+        ICommonServices commonServices,
+        ILogger<{Entity}DetailViewModel> logger,
+        I{ApplicationName}ApiService apiService,
+        INavigationService navigationService)
+        : base(commonServices, logger)
+    {
+        _apiService = apiService;
+        _navigationService = navigationService;
+
+        RetryCommand = new AsyncRelayCommand(cancellationToken => LoadAsync(cancellationToken));
+        GoBackCommand = new AsyncRelayCommand(() => _navigationService.GoBackAsync());
+    }
+
+    /// <inheritdoc />
+    public override string Title => _commonServices.LanguageService.GetString("{Entity}");
+
+    /// <summary>Gets the {entity} that is shown, or null while it loads or when it does not exist.</summary>
+    public {Entity}? {Entity}
+    {
+        get => GetValue<{Entity}?>();
+        private set => SetValue(value);
+    }
+
+    /// <summary>Gets or sets a value indicating whether the {entity} is being loaded.</summary>
+    public bool IsLoading
+    {
+        get => GetValue<bool>();
+        set => SetValue(value);
+    }
+
+    /// <summary>Gets or sets the message of the last failed load, or null when the last load succeeded.</summary>
+    public string? ErrorMessage
+    {
+        get => GetValue<string?>();
+        set
+        {
+            SetValue(value);
+            RaisePropertyChanged(nameof(HasError));
+        }
+    }
+
+    /// <summary>Gets a value indicating whether the last load failed.</summary>
+    public new bool HasError => !string.IsNullOrEmpty(ErrorMessage);
+
+    /// <summary>Gets the command that loads the {entity} again after a failure.</summary>
+    public AsyncRelayCommand RetryCommand { get; }
+
+    /// <summary>Gets the command that returns to the list.</summary>
+    public AsyncRelayCommand GoBackCommand { get; }
+
+    /// <inheritdoc />
+    public override async Task InitializeAsync()
+    {
+        await base.InitializeAsync();
+
+        if (!IsInitialized)
+        {
+            _{entity}Id = Parameter is Guid identifier ? identifier : Guid.Empty;
+            await LoadAsync();
+            IsInitialized = true;
+        }
+    }
+
+    /// <summary>
+    /// Loads the {entity} from the API. A failure, or a missing {entity}, is shown in <see cref="ErrorMessage"/>.
+    /// </summary>
+    /// <param name="cancellationToken">A token that cancels the request.</param>
+    /// <returns>A task that completes when the {entity} is loaded or the failure is shown.</returns>
+    private async Task LoadAsync(CancellationToken cancellationToken = default)
+    {
+        IsLoading = true;
+        ErrorMessage = null;
+
+        try
+        {
+            var item = await _apiService.Get{Entity}ByIdAsync(_{entity}Id, cancellationToken);
+
+            {Entity} = item;
+            if (item is null)
+                ErrorMessage = _commonServices.LanguageService.GetString("ErrorNotFound");
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // The request was cancelled by the caller; nothing is shown.
+        }
+        catch (Exception)
+        {
+            ErrorMessage = _commonServices.LanguageService.GetString("Error_Placeholder");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+}

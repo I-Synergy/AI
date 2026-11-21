@@ -60,6 +60,7 @@ run_test "12. Traceability" "python3 '$SCRIPT_DIR/validate-traceability.py'"
 run_test "13. Standards" "python3 '$SCRIPT_DIR/validate-standards.py'"
 run_test "14. Release Versioning" "python3 '$SCRIPT_DIR/validate-release.py'"
 run_test "15. Adapters" "python3 '$SCRIPT_DIR/validate-adapters.py'"
+run_test "16. Solution Scaffold" "python3 '$SCRIPT_DIR/validate-scaffold.py'"
 
 # Final Summary
 echo "$SEPARATOR"

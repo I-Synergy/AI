@@ -1,0 +1,20 @@
+namespace {ApplicationName}.Common.Enumerations;
+
+/// <summary>
+/// Lifecycle state of the {Entity}.
+/// </summary>
+/// <remarks>
+/// The values are persisted and serialized, so they are pinned explicitly. Never renumber an existing
+/// member: doing so relabels every stored row. Add new members with the next free value.
+/// </remarks>
+public enum {Entity}Status
+{
+    /// <summary>Created but not yet published.</summary>
+    Draft = 0,
+
+    /// <summary>Published and in use.</summary>
+    Active = 1,
+
+    /// <summary>Retired and kept for history.</summary>
+    Archived = 2,
+}

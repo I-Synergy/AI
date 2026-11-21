@@ -1,0 +1,45 @@
+namespace {ApplicationName}.Common.Constants;
+
+/// <summary>
+/// Resource names shared by the AppHost and the services it starts.
+/// </summary>
+public static class AspireNames
+{
+    /// <summary>The application resource name.</summary>
+    public const string {applicationname} = "{applicationname}";
+
+    // {{#if sqlserver}}
+    /// <summary>The SQL Server resource name.</summary>
+    public const string {applicationname}_database_server = "{applicationname}-sql";
+    // {{/if}}
+    // {{#if postgres}}
+    /// <summary>The PostgreSQL resource name.</summary>
+    public const string {applicationname}_database_server = "{applicationname}-postgres";
+    // {{/if}}
+
+    /// <summary>The data volume name of the database server container.</summary>
+    public const string {applicationname}_data = "{applicationname}-data";
+
+    /// <summary>The password parameter for the database server. Set it with user secrets, never in source.</summary>
+    public const string {applicationname}_database_password = "{applicationname}-database-password";
+
+    /// <summary>The application database resource name.</summary>
+    public const string {applicationname}_database = "{applicationname}-db";
+
+    /// <summary>The API service resource name.</summary>
+    public const string {applicationname}_api = "{applicationname}-service-api";
+
+    /// <summary>The Blazor web head resource name.</summary>
+    public const string {applicationname}_app_web = "{applicationname}-app-web";
+
+    // {{#if maui}}
+    /// <summary>The MAUI app resource name.</summary>
+    public const string {applicationname}_app = "{applicationname}-app";
+
+    /// <summary>The Windows device resource name of the MAUI app.</summary>
+    public const string {applicationname}_app_windows = "{applicationname}-app-windows";
+
+    /// <summary>The Mac Catalyst device resource name of the MAUI app. It runs on macOS hosts only.</summary>
+    public const string {applicationname}_app_maccatalyst = "{applicationname}-app-maccatalyst";
+    // {{/if}}
+}

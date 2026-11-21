@@ -1,0 +1,24 @@
+using {ApplicationName}.Models;
+
+namespace {ApplicationName}.Abstractions.Services;
+
+/// <summary>
+/// Device-local store for data that stays on the device. The implementation lives in {ApplicationName}.Data.Sqlite.
+/// </summary>
+public interface ISqliteLocalDataService
+{
+    /// <summary>Creates the local schema when it does not exist yet.</summary>
+    Task EnsureCreatedAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>Gets all favorites, newest first.</summary>
+    Task<IReadOnlyList<Favorite>> GetFavoritesAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>Gets the favorite for one item, or null when the item is not a favorite.</summary>
+    Task<Favorite?> GetFavoriteAsync(Guid itemId, CancellationToken cancellationToken = default);
+
+    /// <summary>Adds a favorite for one item. Returns false when the item is already a favorite.</summary>
+    Task<bool> AddFavoriteAsync(Guid itemId, CancellationToken cancellationToken = default);
+
+    /// <summary>Removes the favorite for one item. Returns false when the item is not a favorite.</summary>
+    Task<bool> RemoveFavoriteAsync(Guid itemId, CancellationToken cancellationToken = default);
+}

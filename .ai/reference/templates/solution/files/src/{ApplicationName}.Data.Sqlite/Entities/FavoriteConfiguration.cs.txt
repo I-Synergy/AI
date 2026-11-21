@@ -1,0 +1,20 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+namespace {ApplicationName}.Data.Sqlite.Entities;
+
+/// <summary>
+/// Fluent configuration of <see cref="Favorite"/>.
+/// </summary>
+public sealed class FavoriteConfiguration : IEntityTypeConfiguration<Favorite>
+{
+    /// <inheritdoc />
+    public void Configure(EntityTypeBuilder<Favorite> builder)
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+
+        builder.ToTable("Favorites");
+        builder.HasKey(favorite => favorite.ItemId);
+        builder.Property(favorite => favorite.CreatedAt).IsRequired();
+    }
+}

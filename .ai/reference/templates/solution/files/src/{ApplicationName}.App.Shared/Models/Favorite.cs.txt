@@ -1,0 +1,32 @@
+using ISynergy.Framework.Core.Base;
+
+namespace {ApplicationName}.Models;
+
+/// <summary>
+/// A device-local favorite of one item. Favorites are kept on the device only.
+/// </summary>
+public class Favorite : BaseModel
+{
+    /// <summary>Initializes a new instance of the <see cref="Favorite"/> class.</summary>
+    /// <param name="itemId">The identifier of the favorited item.</param>
+    /// <param name="createdAt">When the favorite was added, in UTC.</param>
+    public Favorite(Guid itemId, DateTimeOffset createdAt)
+    {
+        ItemId = itemId;
+        CreatedAt = createdAt;
+    }
+
+    /// <summary>Gets or sets the identifier of the favorited item.</summary>
+    public Guid ItemId
+    {
+        get => GetValue<Guid>();
+        set => SetValue(value);
+    }
+
+    /// <summary>Gets or sets when the favorite was added, in UTC.</summary>
+    public DateTimeOffset CreatedAt
+    {
+        get => GetValue<DateTimeOffset>();
+        set => SetValue(value);
+    }
+}

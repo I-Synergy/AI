@@ -1,0 +1,7 @@
+namespace {ApplicationName}.Domains.Features.{Entities}.Queries.Get{Entities}List;
+
+/// <summary>
+/// Response containing the {entities}, ordered by name.
+/// </summary>
+/// <param name="{Entities}">The {entities} as models.</param>
+public sealed record Get{Entities}ListResponse(IReadOnlyList<Models.{Entity}> {Entities});

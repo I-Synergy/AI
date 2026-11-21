@@ -20,7 +20,7 @@ Audits project documentation against actual codebase conventions and enforces ha
    - Read `.ai/patterns/cqrs-patterns.md`
 
 ### 2. Codebase pattern audit (existing)
-   - Pick a representative domain from `{ApplicationName}.Domain.*` as the reference implementation
+   - Pick a representative feature from `{ApplicationName}.Domains/Features/` as the reference implementation
    - Read 2-3 command handlers (Create, Update, Delete)
    - Read 2-3 query handlers (GetById, GetList)
    - Read 2-3 Model records from `Models/`

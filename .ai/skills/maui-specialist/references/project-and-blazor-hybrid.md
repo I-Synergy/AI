@@ -1,4 +1,6 @@
 # MAUI Project Structure & Blazor Hybrid
+
+> **Alternative path.** The generated solution is not a Blazor Hybrid app. Its MAUI head is XAML with I-Synergy MVVM, and its web head is plain Razor (see `.ai/skills/maui-blazor/SKILL.md`). The hybrid host below is for a project that chooses BlazorWebView deliberately.
 MAUI solution layout, target frameworks, and hosting Blazor components inside a MAUI app. Load this when scaffolding a MAUI project or setting up Blazor Hybrid.
 
 ## MAUI Project Structure
