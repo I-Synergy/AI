@@ -31,5 +31,6 @@
     "github.copilot.chat.codeGeneration.useInstructionFiles": true,
     "chat.defaultConfiguration": {
         "approvals": "manual"
-    }
+    },
+    "python.terminal.useEnvFile": true
 }

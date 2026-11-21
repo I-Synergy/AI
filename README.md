@@ -66,6 +66,7 @@ name is the skill name (`/<skill-name>` invokes it explicitly).
 | **vertical-slices** | Translate use cases/stories into `AC-`-traced vertical slice blueprint JSON |
 | **solution-generator** | Scaffold a .NET solution from an architecture document, tests traced to `AC-` IDs |
 | **gap-review** | Validate a generated solution against the original design decisions |
+| **review-solution** | Review an existing repository against the template — install state, rule audit, structure delta, one prioritised fix list |
 | **council** | Expensive-to-reverse decisions — independent seat positions, chair synthesis, dissent recorded verbatim |
 
 #### .NET Implementation
@@ -797,6 +798,14 @@ Claude will:
                          # AGENTS.md is updated (diffed), project-owned files are never touched
 ```
 
+### Reviewing an Existing Project
+
+```
+/review-solution         # Read-only review of a repo that was not generated from this template:
+                         # install state, Critical Coding Rule audit, structure delta vs a reference
+                         # render, one prioritised fix list. Fixes run only when you ask.
+```
+
 The upgrade does not copy `.vscode/settings.json` or `.vscode/tasks.json`. It merges the template's fragments into them, and merges the template's `.claude/settings.json` into the project's copy. Project values win on conflicts, except the pinned Copilot keys. Details are in [Shared Settings Merge](#shared-settings-merge).
 
 ### High-Stakes Decisions (Council)
@@ -830,6 +839,7 @@ Claude loads these files automatically based on your task type:
 | Solution Scaffolding | `.ai/skills/solution-generator/SKILL.md`, `.ai/skills/vertical-slices/SKILL.md`, `.ai/reference/traceability.md` |
 | Solution Scaffold Templates | `.ai/reference/templates/solution/README.md`, `.ai/scripts/scaffold-solution.py` |
 | Gap Validation | `.ai/skills/gap-review/SKILL.md` |
+| Existing-Repo Review | `.ai/skills/review-solution/SKILL.md`, `.ai/reference/critical-rules.md`, `.ai/reference/quality-model.md` |
 | Domain Modeling | `.ai/skills/ubiquitous-language/SKILL.md`, `.ai/skills/usecase-specification/SKILL.md`, `.ai/skills/user-story/SKILL.md`, `.ai/reference/traceability.md` |
 | Skill Creation | `.ai/skills/skill-creator/SKILL.md` |
 | Council | `.ai/reference/council.md`, `.ai/skills/council/SKILL.md` |

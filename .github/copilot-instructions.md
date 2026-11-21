@@ -331,6 +331,7 @@ Load these files based on task type:
 | Design Interrogation | `.ai/skills/design-interrogation/SKILL.md`, `.ai/skills/product-discovery/SKILL.md` |
 | Solution Scaffolding | `.ai/skills/solution-generator/SKILL.md`, `.ai/skills/vertical-slices/SKILL.md` |
 | Gap Validation | `.ai/skills/gap-review/SKILL.md` |
+| Existing-Repo Review | `.ai/skills/review-solution/SKILL.md`, `.ai/reference/critical-rules.md`, `.ai/reference/quality-model.md` |
 | Domain Modeling | `.ai/skills/ubiquitous-language/SKILL.md`, `.ai/skills/usecase-specification/SKILL.md`, `.ai/skills/user-story/SKILL.md` |
 | Skill Creation | `.ai/skills/skill-creator/SKILL.md` |
 | Council | `.ai/reference/council.md`, `.ai/skills/council/SKILL.md` |
