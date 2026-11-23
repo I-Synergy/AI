@@ -8,6 +8,8 @@ sources:
   - samples/Sample.WinUI
   - docs/ThemeWindow-Selection-Fix.md
 license: See license.md in repository root
+requires:
+  - ui-core
 ---
 
 # I-Synergy Framework UI WinUI Skill (SKILL.md)

@@ -2,6 +2,10 @@
 name: review-solution
 description: >-
   Reviews an existing repository against this template and reports what to fix, in one pass: whether the AI setup is installed, whether the docs match the code, which Critical Coding Rules the code breaks, and how far the project structure is from the reference solution. Read-only by default; it installs the template or migrates structure only when you ask it to. Use when the user says "review this repo against the template", "audit my existing project", "can I use this template on my existing repo", "check my project against the rules", "review-solution", or wants one prioritised list of gaps for a repository that was not generated from this template.
+requires:
+  - verify-config
+  - gap-review
+  - code-reviewer
 ---
 
 # Review Solution

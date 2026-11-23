@@ -8,6 +8,9 @@ sources:
   - samples/Sample.Maui
   - docs/MAUI-Dynamic-Theme-System.md
 license: See license.md in repository root
+requires:
+  - ui-core
+  - maui-blazor
 ---
 
 # .NET MAUI Head (I-Synergy UI)

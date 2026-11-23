@@ -1,6 +1,9 @@
 ---
 name: solution-generator
 description: Generates a complete .NET solution scaffold with the template generator (python .ai/scripts/scaffold-solution.py), then adds the feature slices of each bounded context from the architecture document. Use after design-interrogation to turn the architecture document, ubiquitous language, and use cases into a working solution. Trigger whenever the user says "generate the solution", "scaffold the project", "create the solution structure", or wants to turn an architecture document into code.
+requires:
+  - database-migration
+  - gap-review
 ---
 
 # Solution Generator

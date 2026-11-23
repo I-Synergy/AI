@@ -69,6 +69,41 @@ skill-name/
     └── assets/     - Files used in output (templates, icons, fonts)
 ```
 
+#### Declaring Dependencies
+
+A skill that cannot do its job without another skill says so in `requires:`. The resolver installs
+those items automatically when someone installs this one, transitively, so the user never has to
+know the dependency exists.
+
+```yaml
+---
+name: review-solution
+description: ...
+requires:
+  - verify-config
+  - gap-review
+---
+```
+
+Each entry is one of:
+
+| Form | Resolves to |
+|---|---|
+| `name` | the **skill** called `name`, then the agent called `name` |
+| `skill:name` | the skill called `name`, whatever else carries it |
+| `agent:name` | the agent called `name`, whatever else carries it |
+
+Use the qualified form whenever the name exists as both a skill and an agent — `architect` and
+`security` do — otherwise the entry silently means the skill.
+
+Declare a dependency only when this skill **needs** the other one to work: it reads that skill's
+output, follows its rules, or hands work to it. Do not declare a dependency because the two are
+related, or because the other skill is mentioned in passing. A wrong `requires:` installs content
+the user did not ask for, and it cannot be undone by removing the dependent alone.
+
+An agent declares the skills it drives in `skills:` and may use `requires:` for the same
+kind-qualified dependencies.
+
 #### Progressive Disclosure
 
 Skills use a three-level loading model:

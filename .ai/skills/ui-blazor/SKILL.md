@@ -8,6 +8,9 @@ sources:
   - samples/Sample.Blazor
   - docs/IndicatorControl.md
 license: See license.md in repository root
+requires:
+  - ui-core
+  - blazor-fluentui
 ---
 
 # Blazor Web Head (plain Razor)

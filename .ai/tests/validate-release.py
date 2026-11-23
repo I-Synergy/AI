@@ -53,7 +53,11 @@ def fail(message: str) -> None:
 
 
 def read(path: Path) -> str:
-    return path.read_text(encoding="utf-8")
+    """Read a file the host may have written as UTF-16 (Windows PowerShell's default)."""
+    raw = path.read_bytes()
+    if raw.startswith((b"\xff\xfe", b"\xfe\xff")):
+        return raw.decode("utf-16")
+    return raw.decode("utf-8")
 
 
 def load_workflow() -> dict:
@@ -166,26 +170,110 @@ def test_tag_format(text: str) -> bool:
     return True
 
 
-def run_version_step(script: str, build_reason: str) -> dict:
-    pwsh = shutil.which("pwsh") or shutil.which("powershell")
-    if not pwsh:
-        raise RuntimeError("PowerShell (pwsh) is required to validate the inline version step")
+def find_powershell() -> tuple[str, bool] | None:
+    """Locate a PowerShell host and say whether it is a Windows binary.
 
+    The suite is often run with WSL's python3, whose PATH holds no Windows binaries.
+    WSL still exposes the Windows filesystem under /mnt/c, so the hosts are found
+    there when `which` cannot see them. A Windows host cannot read WSL paths such as
+    /tmp/..., so every path handed to it has to be translated first.
+    """
+    for name in ("pwsh", "powershell"):
+        found = shutil.which(name)
+        if found:
+            return found, sys.platform == "win32"
+
+    candidates = [
+        # PowerShell 7+ on Windows (WSL interop path).
+        "/mnt/c/Program Files/PowerShell/7/pwsh.exe",
+        "/mnt/c/Program Files/PowerShell/7-preview/pwsh.exe",
+        # Windows PowerShell 5.1, present on every supported Windows install.
+        "/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe",
+    ]
+    for candidate in candidates:
+        if Path(candidate).exists():
+            return candidate, True
+    return None
+
+
+def to_host_path(path: Path, windows_host: bool) -> str:
+    """Translate a WSL path into a Windows path when the host binary needs one."""
+    if not windows_host:
+        return str(path)
+    try:
+        translated = subprocess.run(
+            ["wslpath", "-w", str(path)],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            check=True,
+        )
+        return translated.stdout.strip()
+    except (OSError, subprocess.SubprocessError):
+        return str(path)
+
+
+# Passing values as arguments is the only transport that survives WSL interop: the
+# layer that launches a Windows binary from Linux drops the environment it was given.
+# The runner therefore prepends a preamble that restores the variables the step reads.
+PREAMBLE = """param(
+    [string]$BuildNumber,
+    [string]$BuildReason,
+    [string]$OutputPath
+)
+$env:BUILD_NUMBER = $BuildNumber
+$env:INPUT_BUILD_NUMBER = $BuildNumber
+$env:BUILD_REASON = $BuildReason
+$env:GITHUB_OUTPUT = $OutputPath
+$env:GITHUB_ACTIONS = 'true'
+"""
+
+
+def run_version_step(script: str, build_reason: str) -> dict:
+    host = find_powershell()
+    if not host:
+        raise RuntimeError(
+            "PowerShell (pwsh or powershell) is required to validate the inline "
+            "version step; install PowerShell 7 or run the suite from Windows"
+        )
+
+    pwsh, windows_host = host
     with tempfile.TemporaryDirectory() as tmp:
         script_path = Path(tmp) / "version-step.ps1"
         output_path = Path(tmp) / "github-output.txt"
-        script_path.write_text(script, encoding="utf-8")
+        script_path.write_text(PREAMBLE + script, encoding="utf-8")
         output_path.write_text("", encoding="utf-8")
 
+        host_output = to_host_path(output_path, windows_host)
         env = {
             **os.environ,
-            "GITHUB_OUTPUT": str(output_path),
-            "GITHUB_ACTIONS": "true",
+            "GITHUB_OUTPUT": host_output,
+            # The version step reads the build number the resolve step published, so the
+            # test supplies it under the name the workflow actually uses. BUILD_NUMBER is
+            # kept for the tag/check steps, which read it directly.
             "BUILD_NUMBER": BUILD_NUMBER,
+            "INPUT_BUILD_NUMBER": BUILD_NUMBER,
             "BUILD_REASON": build_reason,
         }
         process = subprocess.run(
-            [pwsh, "-NoProfile", "-NonInteractive", "-File", str(script_path)],
+            [
+                pwsh,
+                "-NoProfile",
+                "-NonInteractive",
+                # The script is a throwaway written into a temp directory; the host's
+                # execution policy (Restricted by default on Windows PowerShell 5.1)
+                # would otherwise refuse to run it.
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                to_host_path(script_path, windows_host),
+                "-BuildNumber",
+                BUILD_NUMBER,
+                "-BuildReason",
+                build_reason,
+                "-OutputPath",
+                host_output,
+            ],
             capture_output=True,
             text=True,
             env=env,

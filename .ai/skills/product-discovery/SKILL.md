@@ -11,6 +11,10 @@ description: >
   wireframes or mockups or clickable prototype for a new product.
   Gebruik wanneer: interview mij, nieuw product, productidee, wat moeten we bouwen, ontdekking,
   draadmodellen of mockups of klikbare prototype voor een nieuw product.
+requires:
+  - ubiquitous-language
+  - usecase-specification
+  - user-story
 ---
 
 # Product Discovery

@@ -2,6 +2,8 @@
 name: database-migration
 description: EF Core migrations and database specialist. Use when creating/applying database migrations, designing schemas, optimizing queries, or managing PostgreSQL databases.
 allowed-tools: [Bash, Read, Write, Edit, Grep, Find, Ls]
+requires:
+  - ef-core
 ---
 
 # Database Migration Specialist Skill

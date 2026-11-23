@@ -8,6 +8,8 @@ sources:
   - samples/Sample.UWP
   - docs/ThemeWindow-Synchronization.md
 license: See license.md in repository root
+requires:
+  - ui-core
 ---
 
 # I-Synergy Framework UI UWP Skill (SKILL.md)

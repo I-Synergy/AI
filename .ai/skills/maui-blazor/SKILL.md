@@ -9,6 +9,8 @@ sources:
   - src/ISynergy.Framework.Mvvm
   - docs/MAUI-Dynamic-Theme-System.md
 license: See license.md in repository root
+requires:
+  - blazor-fluentui
 ---
 
 # MAUI and Blazor Heads (I-Synergy)
