@@ -1,6 +1,10 @@
 ---
 name: council
 description: Convenes a council for a decision that is expensive to reverse — seats briefed with conflicting mandates return positions formed independently, each carrying a self-objection, and a chair synthesizes on the merits while recording dissent verbatim instead of averaging it away. Use when a change alters an established architecture decision, breaks a public contract that other code or consumers depend on, performs a destructive data migration, alters the existing security posture rather than applying the documented pattern, or when two documented rules conflict with no obvious winner. Trigger whenever the user says "run a council", "convene a council", "council this decision", "get independent positions on this", or flags a choice as irreversible. Advisory verdict, never a vote. Do not trigger for bug fixes with a known root cause, additive or backward-compatible changes, behavior-preserving refactors, tests, or documentation.
+requires:
+  - architect
+  - code-reviewer
+  - security
 ---
 
 # Council

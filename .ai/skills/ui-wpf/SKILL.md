@@ -8,6 +8,8 @@ sources:
   - samples/Sample.WPF
   - docs/ThemeWindow-Selection-Enhancement.md
 license: See license.md in repository root
+requires:
+  - ui-core
 ---
 
 # I-Synergy Framework UI WPF Skill (SKILL.md)

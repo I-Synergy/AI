@@ -9,6 +9,8 @@ description: >-
   cutting over from the TypeScript implementation without shipping two implementations. DO NOT
   USE FOR: writing the first VS Code extension, single-function interop, benchmarking an existing
   port (use vscode-csharp-sidecar-benchmark), or UI/webview work.
+requires:
+  - vscode-csharp-sidecar-benchmark
 ---
 
 # Converting a TypeScript VS Code extension to a C# sidecar

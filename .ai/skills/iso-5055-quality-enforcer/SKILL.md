@@ -2,6 +2,9 @@
 name: iso-5055-quality-enforcer
 description: "Analyseer geselecteerde of relevante broncode op ISO/IEC 5055 (Security, Reliability, Performance Efficiency, Maintainability) zwakheden en genereer gestructureerde risicorapporten + refactor diff fixes. Use when analyzing code for ISO/IEC 5055 security, reliability, performance and maintainability weaknesses."
 disable-model-invocation: true
+requires:
+  - code-reviewer
+  - security
 ---
 
 # ISO 5055 Code Quality Enforcer
